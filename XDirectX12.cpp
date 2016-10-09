@@ -91,7 +91,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	{
 		ThrowIfFailed(D3D12CreateDevice(
 			nullptr,
-			D3D_FEATURE_LEVEL_12_0,
+			D3D_FEATURE_LEVEL_11_0,
 			IID_PPV_ARGS(&g_pDevice)
 			));
 	}

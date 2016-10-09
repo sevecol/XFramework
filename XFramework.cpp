@@ -1,6 +1,9 @@
 #include <Windows.h>
-#include "XFramework.h"
+//#include "XFramework.h"
 #include "XDirectX12.h"
+#include "XCamera.h"
+
+extern XCamera			g_Camera;
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -118,6 +121,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	g_Camera.ProcessMessage(message, wParam, lParam);
+
 	switch (message)
 	{
 	case WM_COMMAND:

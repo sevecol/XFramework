@@ -101,12 +101,12 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->OMSetRenderTargets(3, rtvHandle, FALSE, &dsvHandle);
 
 	// Record commands.
-	const float clearColor[] = { 0.0f, 1.2f, 0.4f, 1.0f };
-	//pCommandList->ClearRenderTargetView(rtvHandle[0], clearColor, 0, nullptr);
-	//pCommandList->ClearRenderTargetView(rtvHandle[1], clearColor, 0, nullptr);
-	//pCommandList->ClearRenderTargetView(rtvHandle[2], clearColor, 0, nullptr);
+	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	pCommandList->ClearRenderTargetView(rtvHandle[0], clearColor, 0, nullptr);
+	pCommandList->ClearRenderTargetView(rtvHandle[1], clearColor, 0, nullptr);
+	pCommandList->ClearRenderTargetView(rtvHandle[2], clearColor, 0, nullptr);
 	pCommandList->ClearDepthStencilView(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
+/*
 	//
 	pCommandList->SetPipelineState(g_pDeferredShadingShader->GetPipelineState());
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -119,6 +119,7 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 		pCommandList->IASetIndexBuffer(pGeometry->GetIndexBufferView());
 		pCommandList->DrawIndexedInstanced(pGeometry->GetNumIndices(), 1, 0, 0, 0);
 	}
+*/
 }
 
 void EndDeferredShading(ID3D12GraphicsCommandList* pCommandList)

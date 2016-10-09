@@ -14,11 +14,11 @@
 XCamera				g_Camera;
 
 XCamera::XCamera():
-	m_initialPosition(0, 0, -500),
+	m_initialPosition(0, 0, 0),
 	m_position(m_initialPosition),
 	m_yaw(XM_PI),
 	m_pitch(0.0f),
-	m_lookDirection(0, 0, 1),
+	m_lookDirection(0, 0, -1),
 	m_upDirection(0, 1, 0),
 	m_moveSpeed(20.0f),
 	m_turnSpeed(XM_PIDIV2),
