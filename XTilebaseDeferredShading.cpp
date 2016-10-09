@@ -34,9 +34,9 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		textureDesc[i].SampleDesc.Quality = 0;
 		textureDesc[i].Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	}
-	textureDesc[0].Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc[0].Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	textureDesc[1].Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc[2].Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc[2].Format = DXGI_FORMAT_R16G16_FLOAT;
 
 	for (unsigned int i = 0;i < 3;++i)
 	{
@@ -65,7 +65,11 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	g_pDeferredShadingShader = CreateShaderFromFileForDeferredShading(L"shaders_deferredshading.hlsl", "VSMain", "vs_5_0", "PSMainForDeferredShading", "ps_5_0", inputElementDescs, 3);
+	DXGI_FORMAT RenderTargetFormat[8];
+	RenderTargetFormat[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	RenderTargetFormat[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	RenderTargetFormat[2] = DXGI_FORMAT_R16G16_FLOAT;
+	g_pDeferredShadingShader = CreateShaderFromFile(L"shaders_deferredshading.hlsl", "VSMain", "vs_5_0", "PSMainForDeferredShading", "ps_5_0", inputElementDescs, 3,3, RenderTargetFormat);
 
 	return true;
 }
