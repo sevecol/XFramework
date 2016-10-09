@@ -181,7 +181,9 @@ void UIManager::Init(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	m_pShader = CreateShaderFromFileForShow(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMainForShow", "ps_5_0", inputElementDescs, 3);
+	DXGI_FORMAT RenderTargetFormat[8];
+	RenderTargetFormat[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	m_pShader = CreateShaderFromFile(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMainForShow", "ps_5_0", inputElementDescs, 3,1, RenderTargetFormat);
 
 	BinResource *pbinresource = new BinResource();
 	pbinresource->pUIManager = this;
