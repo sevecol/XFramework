@@ -31,6 +31,9 @@
     <Filter Include="源文件\Thread">
       <UniqueIdentifier>{22457a33-bef7-46cc-968b-2b1a4ca73f40}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Loader">
+      <UniqueIdentifier>{3a42d479-34f6-47f6-95cf-efb42a5af0c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">
@@ -69,6 +72,18 @@
     <ClInclude Include="XTilebaseDeferredShading.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="XEntity.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Loader\XBinLoader.h">
+      <Filter>头文件\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="XCamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StepTimer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -105,6 +120,12 @@
       <Filter>源文件\Resource</Filter>
     </ClCompile>
     <ClCompile Include="XTilebaseDeferredShading.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XEntity.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XCamera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

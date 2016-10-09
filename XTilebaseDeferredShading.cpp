@@ -4,11 +4,14 @@
 #include "Resource\XShader.h"
 #include "UI\UIManager.h"
 
-extern ComPtr<ID3D12DescriptorHeap>		g_pRtvHeap;
-extern ComPtr<ID3D12DescriptorHeap>		g_pDsvHeap;
-extern UINT								g_uRtvDescriptorSize;
+#define XDEFERREDSHADING_RENDERTARGET_RBASE		3
+#define XDEFERREDSHADING_CONSTANT_CSUBASE		3
 
-extern ComPtr<ID3D12DescriptorHeap>		g_pCbvSrvUavHeap;
+extern ComPtr<ID3D12DescriptorHeap>		g_pRDescriptorHeap;
+extern ComPtr<ID3D12DescriptorHeap>		g_pDDescriptorHeap;
+extern UINT								g_uRDescriptorSize;
+
+extern ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;
 extern UINT								g_uCSUDescriptorSize;
 
 extern UIManager						g_UIManager;
@@ -47,7 +50,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			nullptr,
 			IID_PPV_ARGS(&g_pDRRenderTargets[i])));
-		pDevice->CreateRenderTargetView(g_pDRRenderTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRtvHeap->GetCPUDescriptorHandleForHeapStart(), 3+i, g_uRtvDescriptorSize));
+		pDevice->CreateRenderTargetView(g_pDRRenderTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), XDEFERREDSHADING_RENDERTARGET_RBASE +i, g_uRDescriptorSize));
 		
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -55,7 +58,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		pDevice->CreateShaderResourceView(g_pDRRenderTargets[i], &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), i, g_uCSUDescriptorSize));
+		pDevice->CreateShaderResourceView(g_pDRRenderTargets[i], &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), XDEFERREDSHADING_CONSTANT_CSUBASE +i, g_uCSUDescriptorSize));
 	}
 
 	//
@@ -66,9 +69,9 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	DXGI_FORMAT RenderTargetFormat[8];
-	RenderTargetFormat[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	RenderTargetFormat[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RenderTargetFormat[2] = DXGI_FORMAT_R16G16_FLOAT;
+	RenderTargetFormat[0] = textureDesc[0].Format;
+	RenderTargetFormat[1] = textureDesc[1].Format;
+	RenderTargetFormat[2] = textureDesc[2].Format;
 	g_pDeferredShadingShader = CreateShaderFromFile(L"shaders_deferredshading.hlsl", "VSMain", "vs_5_0", "PSMainForDeferredShading", "ps_5_0", inputElementDescs, 3,3, RenderTargetFormat);
 
 	return true;
@@ -76,16 +79,10 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 
 void CleanDeferredShading()
 {
-	if (g_pDeferredShadingShader)
-	{
-		delete g_pDeferredShadingShader;
-	}
+	SAFE_DELETE(g_pDeferredShadingShader);
 	for (unsigned int i = 0;i < 3;++i)
 	{
-		if (g_pDRRenderTargets[i])
-		{
-			g_pDRRenderTargets[i]->Release();
-		}
+		SAFE_RELEASE(g_pDRRenderTargets[i]);
 	}
 }
 
@@ -97,10 +94,10 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pDRRenderTargets[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle[3];
-	rtvHandle[0] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRtvHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_uRtvDescriptorSize);
-	rtvHandle[1] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRtvHeap->GetCPUDescriptorHandleForHeapStart(), 4, g_uRtvDescriptorSize);
-	rtvHandle[2] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRtvHeap->GetCPUDescriptorHandleForHeapStart(), 5, g_uRtvDescriptorSize);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(g_pDsvHeap->GetCPUDescriptorHandleForHeapStart());
+	rtvHandle[0] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_uRDescriptorSize);
+	rtvHandle[1] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 4, g_uRDescriptorSize);
+	rtvHandle[2] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 5, g_uRDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 	pCommandList->OMSetRenderTargets(3, rtvHandle, FALSE, &dsvHandle);
 
 	// Record commands.
@@ -108,15 +105,11 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	//pCommandList->ClearRenderTargetView(rtvHandle[0], clearColor, 0, nullptr);
 	//pCommandList->ClearRenderTargetView(rtvHandle[1], clearColor, 0, nullptr);
 	//pCommandList->ClearRenderTargetView(rtvHandle[2], clearColor, 0, nullptr);
-	pCommandList->ClearDepthStencilView(g_pDsvHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	pCommandList->ClearDepthStencilView(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	//
 	pCommandList->SetPipelineState(g_pDeferredShadingShader->GetPipelineState());
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	ID3D12DescriptorHeap *ppHeaps[] = { g_pCbvSrvUavHeap.Get() };
-	pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	pCommandList->SetGraphicsRootDescriptorTable(2, g_pCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart());
 
 	//
 	XGeometry* pGeometry = g_UIManager.GetGeometry();
@@ -133,4 +126,8 @@ void EndDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pDRRenderTargets[0], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pDRRenderTargets[1], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pDRRenderTargets[2], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	ID3D12DescriptorHeap *ppHeaps[] = { g_pCSUDescriptorHeap.Get() };
+	pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	pCommandList->SetGraphicsRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 3, g_uCSUDescriptorSize));
 }

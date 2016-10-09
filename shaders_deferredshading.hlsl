@@ -38,8 +38,8 @@ PsOutput PSMainForDeferredShading(PSInput input)
 {
 	PsOutput result;
 	result.color0 = input.color;
-	result.color1 = float4(1,1,0,1);
-	result.color2 = float4(1,0,1,1);
+	result.color1 = float4(1,1,1,1);
+	result.color2 = float4(0,0,0,1);
 
 	return result;
 	//return g_texture.Sample(g_sampler, input.uv);

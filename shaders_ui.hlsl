@@ -16,12 +16,18 @@ struct PSInput
 	float2 uv : TEXCOORD;
 };
 
+cbuffer cb0 : register(b0)
+{
+	float4x4 g_mWorldViewProj;
+};
+
 PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, float4 color : COLOR, float2 uv : TEXCOORD)
 {
 	PSInput result;
 
 	result.position = position;
 	result.color = color;
+	result.color = float4(g_mWorldViewProj._11,g_mWorldViewProj._22,g_mWorldViewProj._33,g_mWorldViewProj._44);
 	result.uv = uv;
 
 	return result;

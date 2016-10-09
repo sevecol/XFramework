@@ -6,6 +6,10 @@
 #include "Resource\XFrameResource.h"
 #include "Resource\XBufferManager.h"
 #include "UI\UIManager.h"
+#include "XEntity.h"
+#include "XCamera.h"
+#include "StepTimer.h"
+#include "Loader\XBinLoader.h"
 
 #include <d2d1_3.h>
 #include <dwrite.h>
@@ -28,23 +32,26 @@ ComPtr<ID3D12Fence>					g_pFence;
 XFrameResource						g_FrameResource[3];
 
 //
-ComPtr<ID3D12DescriptorHeap>		g_pRtvHeap;
-UINT								g_uRtvDescriptorSize;
+ComPtr<ID3D12DescriptorHeap>		g_pRDescriptorHeap;
+UINT								g_uRDescriptorSize;
 
-ComPtr<ID3D12DescriptorHeap>		g_pDsvHeap;
+ComPtr<ID3D12DescriptorHeap>		g_pDDescriptorHeap;
 ComPtr<ID3D12Resource>				g_pDepthStencil;
 
-ComPtr<ID3D12DescriptorHeap>		g_pCbvSrvUavHeap;
+ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;
 UINT								g_uCSUDescriptorSize;
 
 extern XResourceThread				g_ResourceThread;
 extern XBufferManager				g_BufferManager;
 extern UIManager					g_UIManager;
+extern XCamera						g_Camera;
+StepTimer							g_Timer;
 
 //
 D3D12_VIEWPORT						g_Viewport;
 D3D12_RECT							g_ScissorRect;
 
+XEntity								*g_pEntity = nullptr;
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 {
 	g_hWnd = hWnd;
@@ -84,7 +91,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	{
 		ThrowIfFailed(D3D12CreateDevice(
 			nullptr,
-			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_12_0,
 			IID_PPV_ARGS(&g_pDevice)
 			));
 	}
@@ -130,20 +137,21 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	// Create descriptor heaps.
 	// Describe and create a render target view (RTV) descriptor heap.
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = 3+3;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&g_pRtvHeap)));
+	D3D12_DESCRIPTOR_HEAP_DESC RHeapDesc = {};
+	// 3 for FrameSource RenderTarget,3 for DeferredShading RenderTarget
+	RHeapDesc.NumDescriptors = 3+3;
+	RHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	RHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&RHeapDesc, IID_PPV_ARGS(&g_pRDescriptorHeap)));
 
-	g_uRtvDescriptorSize = g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	g_uRDescriptorSize = g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	// Describe and create a depth stencil view (DSV) descriptor heap.
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&g_pDsvHeap)));
+	D3D12_DESCRIPTOR_HEAP_DESC DHeapDesc = {};
+	DHeapDesc.NumDescriptors = 1;
+	DHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	DHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&DHeapDesc, IID_PPV_ARGS(&g_pDDescriptorHeap)));
 
 	// Create the depth stencil.
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
@@ -165,16 +173,17 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		IID_PPV_ARGS(&g_pDepthStencil)
 		));
 
-	g_pDevice->CreateDepthStencilView(g_pDepthStencil.Get(), &depthStencilDesc, g_pDsvHeap->GetCPUDescriptorHandleForHeapStart());
+	g_pDevice->CreateDepthStencilView(g_pDepthStencil.Get(), &depthStencilDesc, g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	//
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
-	D3D12_DESCRIPTOR_HEAP_DESC cbvSrvUavHeapDesc = {};
-	cbvSrvUavHeapDesc.NumDescriptors = 4;
-	cbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(&g_pCbvSrvUavHeap)));
+	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView
+	CSUHeapDesc.NumDescriptors = 3 + 3;
+	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pCSUDescriptorHeap)));
 
 	//
 	g_uCSUDescriptorSize = g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -232,6 +241,25 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
+
+	//
+	g_pEntity = new XEntity();
+
+	D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+	g_pEntity->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+
+	XBinResource *pbinresource = new XBinResource();
+	pbinresource->pEntity = g_pEntity;
+	g_ResourceThread.InsertResourceLoadTask(pbinresource);
+
+	//
+	g_Camera.Init(0.8f, 1.0f);
 
 	/*
 		// Create an 11 device wrapped around the 12 device and share
@@ -306,6 +334,10 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 bool Update()
 {
+	g_Timer.Tick(NULL);
+	g_Camera.Update(static_cast<float>(g_Timer.GetElapsedSeconds()));
+
+	g_FrameResource[g_uFrameIndex].UpdateConstantBuffers(g_Camera.GetViewMatrix(), g_Camera.GetProjectionMatrix());
 	return true;
 }
 
@@ -316,10 +348,13 @@ bool Render()
 
 	// FrameResource
 	sFrameResource.PreRender();
-	pCommandList->SetGraphicsRootSignature(g_pRootSignature.Get());
 
 	// DeferredShading
 	BeginDeferredShading(pCommandList);
+	if (g_pEntity)
+	{
+		g_pEntity->Render(pCommandList, sFrameResource.m_uFenceValue);
+	}
 	EndDeferredShading(pCommandList);
 
 	// FrameResource
@@ -373,5 +408,8 @@ void WaitForGpu()
 void Clean()
 {
 	WaitForGpu();
+
+	//
+	SAFE_DELETE(g_pEntity);
 	CleanDeferredShading();
 }

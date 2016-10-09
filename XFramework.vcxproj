@@ -145,16 +145,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Loader\XBinLoader.h" />
     <ClInclude Include="Resource\XBuffer.h" />
     <ClInclude Include="Resource\XBufferManager.h" />
     <ClInclude Include="Resource\XFrameResource.h" />
     <ClInclude Include="Resource\XGeometry.h" />
     <ClInclude Include="Resource\XShader.h" />
+    <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Thread\XResourceThread.h" />
     <ClInclude Include="UI\UIImgWindow.h" />
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\UIWindow.h" />
+    <ClInclude Include="XCamera.h" />
     <ClInclude Include="XDirectX12.h" />
+    <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XTilebaseDeferredShading.h" />
   </ItemGroup>
@@ -168,7 +172,9 @@
     <ClCompile Include="UI\UIImgWindow.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\UIWindow.cpp" />
+    <ClCompile Include="XCamera.cpp" />
     <ClCompile Include="XDirectX12.cpp" />
+    <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XTilebaseDeferredShading.cpp" />
   </ItemGroup>
