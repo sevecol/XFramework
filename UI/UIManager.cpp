@@ -16,14 +16,8 @@ UIManager::UIManager(): m_pShader(nullptr), m_pGeometry(nullptr)//
 }
 UIManager::~UIManager()
 {
-	if (m_pShader)
-	{
-		delete m_pShader;
-	}
-	if (m_pGeometry)
-	{
-		delete m_pGeometry;
-	}
+	SAFE_DELETE(m_pShader);
+	SAFE_DELETE(m_pGeometry);
 
 	if (m_pConstantBufferUploadHeap)
 	{
@@ -33,7 +27,7 @@ UIManager::~UIManager()
 	{
 		m_pConstantBuffers[i] = nullptr;
 	}
-	delete m_pRootUIWindow;
+	SAFE_DELETE(m_pRootUIWindow);
 }
 /*
 IUIWindow* UIManager::GetRootUIWindow()

@@ -18,7 +18,7 @@ namespace Math
 		};
 		~OptFrustum()
 		{
-			SAFE_DELGRP( _planes );
+			SAFE_DELGRP1( _planes );
 		}
 
 		void InitData( const Plane* pPlane, bool bNeedNormalize = false )

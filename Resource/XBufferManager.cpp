@@ -7,13 +7,8 @@
 
 #include "..\Thread\XResourceThread.h"
 
-#define BLOCKBUFFER_SIZE			1*1024
+#define BLOCKBUFFER_SIZE			1024*1024
 #define BLOCKBUFFER_NUM				20
-
-#define SAFE_DELETE(p)              { if(p) { delete (p);       (p)=NULL; } }
-#define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
-#define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
-#define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
 
 extern ComPtr<ID3D12Device>			g_pDevice;
 extern ComPtr<ID3D12Fence>			g_pFence;
@@ -25,9 +20,8 @@ extern XResourceThread				g_ResourceThread;
 XBufferManager						g_BufferManager;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-XBufferManager::XBufferManager()
+XBufferManager::XBufferManager():m_pBlockBuffer(nullptr)
 {
-	m_pBlockBuffer = nullptr;
 }
 XBufferManager::~XBufferManager()
 {

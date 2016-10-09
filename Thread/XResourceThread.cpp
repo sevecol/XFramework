@@ -110,19 +110,34 @@ void XResourceThread::Load()
 		{
 			WaitForResource();
 		}
-	}
 
-	//
-	delete pResource;
+		//
+		delete pResource;
+	}
 */
 }
 
 bool XResourceThread::InsertResourceLoadTask(IResourceLoad *pResourceLoad)
 {
+/*
 	EnterCriticalSection(&g_cs);
 	m_lTask.push_back(pResourceLoad);
 	LeaveCriticalSection(&g_cs);
 	ResumeThread(m_hThread);
+*/
+	if (pResourceLoad)
+	{
+		pResourceLoad->LoadFromFile();
+		pResourceLoad->PostLoad();
+
+		//
+		if (pResourceLoad->IsNeedWaitForResource())
+		{
+			WaitForResource();
+		}
+
+		delete pResourceLoad;
+	}
 
 	return true;
 }

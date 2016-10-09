@@ -1,9 +1,11 @@
 
 #include "UIImgWindow.h"
 #include "UIManager.h"
+#include "..\d3dx12.h"
 
 extern UIManager						g_UIManager;
-extern ComPtr<ID3D12DescriptorHeap>		g_pCbvSrvUavHeap;
+//extern ComPtr<ID3D12DescriptorHeap>	g_pCbvSrvUavHeap;
+//extern UINT							g_uCSUDescriptorSize;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 UIImgWindow::UIImgWindow(){}
@@ -36,9 +38,13 @@ void UIImgWindow::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceV
 	if (pCommandList)
 	{
 		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		ID3D12DescriptorHeap *ppHeaps[] = { g_pCbvSrvUavHeap.Get() };
-		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-		pCommandList->SetGraphicsRootDescriptorTable(2, g_pCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart());
+		//ID3D12DescriptorHeap *ppHeaps[] = { g_pCbvSrvUavHeap.Get() };
+		//pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		//pCommandList->SetGraphicsRootDescriptorTable(2, g_pCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart());
+
+		//ID3D12DescriptorHeap *ppHeaps[] = { g_pCbvSrvUavHeap.Get() };
+		//pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		//pCommandList->SetGraphicsRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart(), 3, g_uCSUDescriptorSize));
 
 		//
 		XGeometry* pGeometry = g_UIManager.GetGeometry();

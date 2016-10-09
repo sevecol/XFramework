@@ -3,6 +3,10 @@
 #include "Plane.h"
 #include "Matrix4.h"
 
+#define SAFE_DELETE1(p)              { if(p) { delete (p);       (p)=NULL; } }
+#define SAFE_FREE1(p)                { if(p) { free(p);          (p)=NULL; } }
+#define SAFE_DELGRP1(p)              { if(p) { delete[] (p);     (p)=NULL; } }
+#define SAFE_RELEASE1(p)             { if(p) { (p)->Release();   (p)=NULL; } }
 
 namespace Math
 {
@@ -26,8 +30,8 @@ namespace Math
 		virtual void InitData( const Matrix4& comboMatrix, bool bNeedNormalize = false )
 		{
 			for( int i = 0; i < 6; i++ )
-				SAFE_DELETE(_planes[i]);
-			SAFE_DELGRP( _planes );
+				SAFE_DELETE1(_planes[i]);
+			SAFE_DELGRP1( _planes );
 			_planes = new Plane* [Plane_Count];
 			for( int i = 0; i < 6; i++ )
 				_planes[i] = new Plane;
@@ -40,7 +44,7 @@ namespace Math
 		Frustum() : _planes( 0 ) {};
 		virtual ~Frustum() 
 		{
-			SAFE_DELGRP( _planes );
+			SAFE_DELGRP1( _planes );
 		}
 
 		//Frustum()
