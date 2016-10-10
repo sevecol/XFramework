@@ -84,6 +84,12 @@
     <ClInclude Include="StepTimer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Resource\XTexture.h">
+      <Filter>头文件\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\XTextureManager.h">
+      <Filter>头文件\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -127,6 +133,12 @@
     </ClCompile>
     <ClCompile Include="XCamera.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\XTexture.cpp">
+      <Filter>源文件\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\XTextureManager.cpp">
+      <Filter>源文件\Resource</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

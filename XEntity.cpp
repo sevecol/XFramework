@@ -4,8 +4,13 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
+#define ENTITY_TEXTURE_CSUBASE			6
+
 extern ComPtr<ID3D12Device>				g_pDevice;
-//extern ComPtr<ID3D12DescriptorHeap>	g_pCbvSrvUavHeap;
+extern ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;
+extern UINT								g_uCSUDescriptorSize;
+
+extern XResourceThread					g_ResourceThread;
 
 struct sVertex
 {
@@ -17,14 +22,16 @@ struct sVertex
 sVertex *pData = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-XEntity::XEntity():m_pShader(nullptr),m_pGeometry(nullptr){}
+XEntity::XEntity():m_pTextureSet(nullptr),m_pShader(nullptr),m_pGeometry(nullptr){}
 XEntity::~XEntity()
 {
+	SAFE_DELETE(m_pTextureSet);
 	SAFE_DELETE(m_pShader);
 	SAFE_DELETE(m_pGeometry);
 }
 
 //
+/*
 void XEntity::SetResourceCheck(UINT uResourceCheck)
 {
 }
@@ -37,7 +44,7 @@ void XEntity::Update(UINT32 deltatime)
 	//Instance::Update(deltatime);
 	//m_SkeletonAnimateControl.Update(deltatime, m_pGeometry);
 }
-/*
+
 IntersectionResult XEntity::Update(const OptFrustum* const frustum, UINT32 deltatime)
 {
 	return IR_Inside;
@@ -81,6 +88,10 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 		pCommandList->SetGraphicsRootDescriptorTable(2, pTextureManager->GetGpuHangle(m_pTexture->GetSrvIndex()));
 */
+		ID3D12DescriptorHeap *ppHeaps[] = { g_pCSUDescriptorHeap.Get() };
+		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		pCommandList->SetGraphicsRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), ENTITY_TEXTURE_CSUBASE, g_uCSUDescriptorSize));
+
 		//
 		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
 		pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -101,11 +112,7 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 }
 bool XEntity::InitShader(LPCWSTR pFileName,LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount)
 {
-	DXGI_FORMAT RenderTargetFormat[8];
-	RenderTargetFormat[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
-	RenderTargetFormat[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	RenderTargetFormat[2] = DXGI_FORMAT_R16G16_FLOAT;
-	m_pShader = CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, 3, RenderTargetFormat);
+	m_pShader = CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, ESHADINGPATH_DEFERRED);
 	return true;
 }
 /*
@@ -119,19 +126,34 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 	m_pTexture = GetXEngine()->GetTextureManager()->CreateTexture(pName, uWidth, uHeight, uPixelSize, pFun, uParameter,this);
 	return true;
 }
-bool Entity::InitMaterial(LPCWSTR pFileName, UINT uCount, LPCWSTR pDetailName[])
+*/
+bool XEntity::InitTexture(UINT uCount, LPCWSTR pDetailName[])
 {
-	if (!GetXEngine())
+	m_pTextureSet = new XTextureSet(ENTITY_TEXTURE_CSUBASE);
+	//GetXEngine()->GetTextureManager()->CreateTextureFromFile(pFileName, uCount, pDetailName, this);
+
+	//
+	TextureSetLoad *pTextureSetLoad = new TextureSetLoad();
+	pTextureSetLoad->m_pTextureSet = m_pTextureSet;
+	pTextureSetLoad->m_pFun = nullptr;
+	pTextureSetLoad->m_uParameter = 0;
+	//pTextureSetLoad->m_pResourceSet = nullptr;//pResourceSet;
+
+	for (UINT i = 0;i < uCount;++i)
 	{
-		return false;
+		STextureLayer sTextureLayer;
+		sTextureLayer.m_sFileName = pDetailName[i];
+		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
 	}
 
-	m_pTexture = GetXEngine()->GetTextureManager()->CreateTextureFromFile(pFileName, uCount, pDetailName,this);
+	g_ResourceThread.InsertResourceLoadTask(pTextureSetLoad);
+
 	return true;
 }
-*/
+
 bool XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData, UINT uBoneCount, UINT8* pBoneIndex)
 {
+/*
 	// Create an upload heap for the constant buffers.
 	ThrowIfFailed(g_pDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -151,8 +173,8 @@ bool XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride,
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = m_pConstantBufferUploadHeap->GetGPUVirtualAddress();
 	cbvDesc.SizeInBytes = sizeof(ConstantBuffer);
-	//g_pDevice->CreateConstantBufferView(&cbvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
-
+	g_pDevice->CreateConstantBufferView(&cbvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
+*/
 	//
 	m_pGeometry = CreateGeometry(uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData); 
 	if (m_pGeometry)

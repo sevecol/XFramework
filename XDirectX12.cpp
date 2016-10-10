@@ -5,6 +5,7 @@
 #include "Thread\XResourceThread.h"
 #include "Resource\XFrameResource.h"
 #include "Resource\XBufferManager.h"
+#include "Resource\XTextureManager.h"
 #include "UI\UIManager.h"
 #include "XEntity.h"
 #include "XCamera.h"
@@ -19,6 +20,14 @@
 #include <DirectXMath.h>
 #include <d3d11on12.h>
 #include "DXSampleHelper.h"
+
+UINT g_uRenderTargetCount[ESHADINGPATH_COUNT] = { 1,3 };
+DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
+{
+	{ DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM },
+	{ DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM },
+	//{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R16G16_FLOAT }
+};
 
 HWND								g_hWnd;
 ComPtr<ID3D12Device>				g_pDevice;
@@ -43,6 +52,7 @@ UINT								g_uCSUDescriptorSize;
 
 extern XResourceThread				g_ResourceThread;
 extern XBufferManager				g_BufferManager;
+extern XTextureManager				*g_pTextureManager;
 extern UIManager					g_UIManager;
 extern XCamera						g_Camera;
 StepTimer							g_Timer;
@@ -91,7 +101,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	{
 		ThrowIfFailed(D3D12CreateDevice(
 			nullptr,
-			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_12_0,
 			IID_PPV_ARGS(&g_pDevice)
 			));
 	}
@@ -179,8 +189,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView
-	CSUHeapDesc.NumDescriptors = 3 + 3;
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,2 For Entity's Texture
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pCSUDescriptorHeap)));
@@ -237,6 +247,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	InitDeferredShading(g_pDevice.Get(),uWidth,uHeight);
 	g_ResourceThread.Init(g_pDevice.Get());
 	g_BufferManager.Init(g_pDevice.Get());
+	g_pTextureManager = new XTextureManager;
+	g_pTextureManager->Init(g_pDevice.Get());
 	g_UIManager.Init(g_pDevice.Get(),  uWidth, uHeight);
 
 	//
@@ -253,6 +265,9 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 	g_pEntity->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+
+	LPCWSTR pTextureFileName[2] = {L"terrain.png",L"wings.bmp"};
+	g_pEntity->InitTexture(2, pTextureFileName);
 
 	XBinResource *pbinresource = new XBinResource();
 	pbinresource->pEntity = g_pEntity;
@@ -410,6 +425,7 @@ void Clean()
 	WaitForGpu();
 
 	//
+	SAFE_DELETE(g_pTextureManager);
 	SAFE_DELETE(g_pEntity);
 	CleanDeferredShading();
 }

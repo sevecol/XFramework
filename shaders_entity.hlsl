@@ -61,7 +61,7 @@ struct PsOutput
 PsOutput PSMain(PSInput input)
 {
 	PsOutput result;
-	result.color0 = float4(1,1,0,1);
+	result.color0 = g_txDiffuse.Sample(g_sampler, input.uv);
 	result.color1 = float4(1,1,1,1);
 	result.color2 = float4(0,0,0,1);
 

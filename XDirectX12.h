@@ -23,3 +23,13 @@ void Clean();
 #define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
 #define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
+
+enum ESHADINGPATH
+{
+	ESHADINGPATH_FORWORD	= 0,
+	ESHADINGPATH_DEFERRED,
+
+	ESHADINGPATH_COUNT
+};
+
+#define RENDERTARGET_MAXNUM		3

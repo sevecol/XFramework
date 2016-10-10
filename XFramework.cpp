@@ -19,6 +19,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	// 执行应用程序初始化: 
+	CoInitialize(NULL);
 	if (!InitInstance(hInstance, nCmdShow))
 	{
 		return FALSE;
@@ -47,6 +48,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//
 	//CoUninitialize();
 	Clean();
+	CoUninitialize();
 
 	return (int)msg.wParam;
 }
@@ -122,7 +124,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	g_Camera.ProcessMessage(message, wParam, lParam);
-
 	switch (message)
 	{
 	case WM_COMMAND:
