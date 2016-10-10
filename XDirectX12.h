@@ -12,6 +12,16 @@ using namespace DirectX;
 #include <wrl.h>
 using namespace Microsoft::WRL;
 
+enum ESHADINGPATH
+{
+	ESHADINGPATH_FORWORD = 0,
+	ESHADINGPATH_DEFERRED,
+
+	ESHADINGPATH_COUNT
+};
+
+#define RENDERTARGET_MAXNUM		3
+
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow);
 void MoveToNextFrame();
 void WaitForGpu();
@@ -24,12 +34,3 @@ void Clean();
 #define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
 
-enum ESHADINGPATH
-{
-	ESHADINGPATH_FORWORD	= 0,
-	ESHADINGPATH_DEFERRED,
-
-	ESHADINGPATH_COUNT
-};
-
-#define RENDERTARGET_MAXNUM		3

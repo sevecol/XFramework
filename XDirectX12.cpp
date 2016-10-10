@@ -1,6 +1,7 @@
 
 #include "XDirectX12.h"
 #include "XTilebaseDeferredShading.h"
+#include "XOrderIndependentTransparency.h"
 
 #include "Thread\XResourceThread.h"
 #include "Resource\XFrameResource.h"
@@ -189,8 +190,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,2 For Entity's Texture
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 2;
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,2 For OIT UAV,2 For Entity's Texture
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pCSUDescriptorHeap)));
@@ -199,15 +200,17 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_uCSUDescriptorSize = g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//
-	CD3DX12_DESCRIPTOR_RANGE ranges[3];
+	CD3DX12_DESCRIPTOR_RANGE ranges[4];
 	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
 	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
 	ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
+	ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
-	CD3DX12_ROOT_PARAMETER rootParameters[3];
+	CD3DX12_ROOT_PARAMETER rootParameters[4];
 	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParameters[2].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameters[3].InitAsDescriptorTable(1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_STATIC_SAMPLER_DESC sampler = {};
 	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -245,6 +248,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		g_FrameResource[n].InitInstance(n, g_pDevice.Get(), g_pSwapChain.Get());
 	}
 	InitDeferredShading(g_pDevice.Get(),uWidth,uHeight);
+	InitOrderIndependentTransparency(g_pDevice.Get(), uWidth, uHeight);
+
 	g_ResourceThread.Init(g_pDevice.Get());
 	g_BufferManager.Init(g_pDevice.Get());
 	g_pTextureManager = new XTextureManager;
@@ -374,7 +379,17 @@ bool Render()
 
 	// FrameResource
 	sFrameResource.BeginRender();
+
+	//
+
+	// Alpha Blend
+	BeginOrderIndependentTransparency(pCommandList);
 	g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
+	EndOrderIndependentTransparency(pCommandList);
+
+	// AddAll
+
+	//
 	sFrameResource.EndRender();
 
 	// Execute the command list.
@@ -428,4 +443,74 @@ void Clean()
 	SAFE_DELETE(g_pTextureManager);
 	SAFE_DELETE(g_pEntity);
 	CleanDeferredShading();
+	CleanOrderIndependentTransparency();
+}
+
+//
+XGeometry *pFullScreenGeometry = nullptr;
+class FullScreenResource : public IResourceLoad
+{
+public:
+	virtual void LoadFromFile()
+	{
+		//
+		struct Vertex
+		{
+			DirectX::XMFLOAT4 position;
+			DirectX::XMFLOAT4 color;
+			DirectX::XMFLOAT2 uv;
+		};
+		Vertex triangleVertices[] =
+		{
+			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
+			{ { -1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
+			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+
+			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
+			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+			{ { 1.00f,  1.00f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+		};
+		UINT uIndex[] = { 0,1,2,3,4,5 };
+
+		UINT8 *pData = new UINT8[6 * sizeof(Vertex) + 6 * sizeof(UINT)];
+		UINT8 *pVertexData = pData;
+		memcpy(pVertexData, &triangleVertices[0], 6 * sizeof(Vertex));
+		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
+		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
+
+		XGeometry *pGeometry = CreateGeometry(6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		if (pGeometry)
+		{
+			pFullScreenGeometry = pGeometry;
+		}
+		delete[] pData;
+	}
+	virtual void PostLoad()
+	{
+		//pUIManager->IncreaseResourceComplate();
+	}
+	virtual bool IsNeedWaitForResource()
+	{
+		return true;
+	}
+};
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XShader *pShader)
+{
+	if (!pFullScreenGeometry)
+	{
+		FullScreenResource *pResource = new FullScreenResource();
+		g_ResourceThread.InsertResourceLoadTask(pResource);
+	}
+
+	//
+	pCommandList->SetPipelineState(pShader->GetPipelineState());
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//
+	pCommandList->IASetVertexBuffers(0, 1, pFullScreenGeometry->GetVertexBufferView());
+	if (pFullScreenGeometry->GetNumIndices())
+	{
+		pCommandList->IASetIndexBuffer(pFullScreenGeometry->GetIndexBufferView());
+		pCommandList->DrawIndexedInstanced(pFullScreenGeometry->GetNumIndices(), 1, 0, 0, 0);
+	}
 }

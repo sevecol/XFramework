@@ -34,7 +34,7 @@ struct PsOutput
 	float4 color2  	: SV_TARGET2;
 };
 
-PsOutput PSMainForDeferredShading(PSInput input)
+PsOutput PSMain(PSInput input)
 {
 	PsOutput result;
 	result.color0 = input.color;

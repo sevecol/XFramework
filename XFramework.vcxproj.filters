@@ -90,6 +90,9 @@
     <ClInclude Include="Resource\XTextureManager.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="XOrderIndependentTransparency.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -139,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="Resource\XTextureManager.cpp">
       <Filter>源文件\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="XOrderIndependentTransparency.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

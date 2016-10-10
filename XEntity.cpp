@@ -4,7 +4,7 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define ENTITY_TEXTURE_CSUBASE			6
+#define ENTITY_TEXTURE_CSUBASE			9
 
 extern ComPtr<ID3D12Device>				g_pDevice;
 extern ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;

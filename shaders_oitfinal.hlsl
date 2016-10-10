@@ -42,9 +42,6 @@ SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-
-	gUAVBufferInfo[0] = float4(1,0,1,1);
-	
-	//return input.color;
+	return gUAVBufferInfo[0];
 	return g_texture0.Sample(g_sampler, input.uv);
 }

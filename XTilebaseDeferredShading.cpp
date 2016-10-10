@@ -67,7 +67,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	g_pDeferredShadingShader = CreateShaderFromFile(L"shaders_deferredshading.hlsl", "VSMain", "vs_5_0", "PSMainForDeferredShading", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_DEFERRED);
+	g_pDeferredShadingShader = CreateShaderFromFile(L"shaders_deferredshading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_DEFERRED);
 
 	return true;
 }
@@ -103,17 +103,7 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ClearDepthStencilView(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 /*
 	//
-	pCommandList->SetPipelineState(g_pDeferredShadingShader->GetPipelineState());
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//
-	XGeometry* pGeometry = g_UIManager.GetGeometry();
-	pCommandList->IASetVertexBuffers(0, 1, pGeometry->GetVertexBufferView());
-	if (pGeometry->GetNumIndices())
-	{
-		pCommandList->IASetIndexBuffer(pGeometry->GetIndexBufferView());
-		pCommandList->DrawIndexedInstanced(pGeometry->GetNumIndices(), 1, 0, 0, 0);
-	}
+	RenderFullScreen(pCommandList,g_pDeferredShadingShader);
 */
 }
 

@@ -162,6 +162,7 @@
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
+    <ClInclude Include="XOrderIndependentTransparency.h" />
     <ClInclude Include="XTilebaseDeferredShading.h" />
   </ItemGroup>
   <ItemGroup>
@@ -180,6 +181,7 @@
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
+    <ClCompile Include="XOrderIndependentTransparency.cpp" />
     <ClCompile Include="XTilebaseDeferredShading.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
