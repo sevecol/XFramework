@@ -2,8 +2,9 @@
 #include "XFrameResource.h"
 #include "..\DXSampleHelper.h"
 
-#define XFRAMERESOURCE_RENDERTARGET_RBASE	0
-#define XFRAMERESOURCE_CONSTANT_CSUBASE		0
+#define FRAMERESOURCE_RENDERTARGET_RBASE	0
+#define FRAMERESOURCE_CONSTANT_CSUBASE		0
+#define SHADING_RENDERTARGET_COUNT			1
 
 extern ComPtr<ID3D12DescriptorHeap>		g_pRDescriptorHeap;
 extern ComPtr<ID3D12DescriptorHeap>		g_pDDescriptorHeap;
@@ -27,7 +28,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 
 	//
 	ThrowIfFailed(pSwapChain->GetBuffer(m_uIndex, IID_PPV_ARGS(&m_pRenderTargets)));
-	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), XFRAMERESOURCE_RENDERTARGET_RBASE+m_uIndex, g_uRDescriptorSize));
+	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_RENDERTARGET_RBASE+m_uIndex, g_uRDescriptorSize));
 
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
@@ -56,7 +57,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 	ConstantDesc.BufferLocation = m_pConstantUploadHeap->GetGPUVirtualAddress();
 	ConstantDesc.SizeInBytes = sizeof(XFrameResource::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), XFRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_uCSUDescriptorSize));
+	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_uCSUDescriptorSize));
 }
 
 extern D3D12_VIEWPORT						g_Viewport;

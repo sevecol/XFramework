@@ -18,7 +18,7 @@ public:
 	}
 	virtual void PostLoad()
 	{
-		pEntity->IncreaseResourceComplate();
+		//pEntity->IncreaseResourceComplate();
 	}
 	virtual bool IsNeedWaitForResource()
 	{

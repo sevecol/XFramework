@@ -5,11 +5,14 @@
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
-extern ComPtr<ID3D12RootSignature>			g_pRootSignature;
-extern ComPtr<ID3D12Device>					g_pDevice;
+extern ComPtr<ID3D12RootSignature>		g_pRootSignature;
+extern ComPtr<ID3D12Device>				g_pDevice;
+
+extern UINT								g_uRenderTargetCount[ESHADINGPATH_COUNT];
+extern DXGI_FORMAT						g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
 
 //
-XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs,UINT uInputElementCount,UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFortmat[])
+XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs,UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
 	//
 	ComPtr<ID3DBlob> vertexShader;
@@ -40,10 +43,10 @@ XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pV
 	psoDesc.DepthStencilState = depthStencilDesc;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = uRenderTargetCount;
-	for (unsigned int i = 0;i < uRenderTargetCount;++i)
+	psoDesc.NumRenderTargets = g_uRenderTargetCount[eShadingPath];
+	for (unsigned int i = 0;i < psoDesc.NumRenderTargets;++i)
 	{
-		psoDesc.RTVFormats[i] = RenderTargetFortmat[i];
+		psoDesc.RTVFormats[i] = g_RenderTargetFortmat[eShadingPath][i];
 	}
 	psoDesc.SampleDesc.Count = 1;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
