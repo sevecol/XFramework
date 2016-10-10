@@ -52,8 +52,25 @@ XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pV
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	//
-	ThrowIfFailed(D3DCompileFromFile(pFileName, nullptr, nullptr, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(pFileName, nullptr, nullptr, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, nullptr));
+	{
+		ComPtr<ID3DBlob> pError;
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, &pError);
+		if (hr != S_OK)
+		{
+			OutputDebugStringA((char*)(pError->GetBufferPointer()));
+		}
+		ThrowIfFailed(hr);
+	}
+	{
+		ComPtr<ID3DBlob> pError;
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, &pError);
+		if (hr != S_OK)
+		{
+			OutputDebugStringA((char*)(pError->GetBufferPointer()));
+		}
+		ThrowIfFailed(hr);
+	}
+	
 
 	psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
 	psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };

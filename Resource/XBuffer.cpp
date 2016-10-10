@@ -1,5 +1,4 @@
 
-
 #include "XBuffer.h"
 
 D3D12_GPU_VIRTUAL_ADDRESS XStaticBuffer::GetGpuAddress()
@@ -10,4 +9,3 @@ D3D12_GPU_VIRTUAL_ADDRESS XStaticBuffer::GetGpuAddress()
 	}
 	return 0;
 }
-
