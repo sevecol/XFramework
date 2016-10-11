@@ -48,11 +48,11 @@ SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	float fCounter = gPixelLinkBuffer.IncrementCounter();//(input.uv.y * 719)*1280 + input.uv.x * 1279;//
-	float fValue = fCounter/(1280.0f*720.0f);
-
+	uint uCounter = gPixelLinkBuffer.IncrementCounter();
 	uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
-	gPixelLinkBuffer[uOffset].color = float4(fValue,fValue,fValue,1);
+
+	gStartOffsetBuffer[uOffset] = uCounter;
+	gPixelLinkBuffer[uCounter].color = input.color;
 	
 	//return input.color;
 	return g_texture0.Sample(g_sampler, input.uv);
