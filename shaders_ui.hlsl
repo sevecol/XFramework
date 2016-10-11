@@ -51,8 +51,11 @@ float4 PSMain(PSInput input) : SV_TARGET
 	uint uCounter = gPixelLinkBuffer.IncrementCounter();
 	uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
 
+	uint uOldCounter = gStartOffsetBuffer[uOffset];
 	gStartOffsetBuffer[uOffset] = uCounter;
+
 	gPixelLinkBuffer[uCounter].color = input.color;
+	gPixelLinkBuffer[uCounter].next = uOldCounter;
 	
 	//return input.color;
 	return g_texture0.Sample(g_sampler, input.uv);

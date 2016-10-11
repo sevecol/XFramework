@@ -4,6 +4,8 @@
 #include "Resource\XBuffer.h"
 #include "Resource\XShader.h"
 
+#define MAX_PIXELS	4
+
 XStructuredBuffer<UINT>					*g_pCounterBuffer;
 struct SPixelLink
 {
@@ -25,7 +27,7 @@ ComPtr<ID3D12DescriptorHeap>			g_pCpuDescriptorHeap;
 bool InitOrderIndependentTransparency(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
 	g_pCounterBuffer		= new XStructuredBuffer<UINT>(pDevice, 1, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 6, g_uCSUDescriptorSize));
-	g_pPixelLinkBuffer		= new XStructuredBuffer<SPixelLink>(pDevice,uWidth*uHeight+100, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 7, g_uCSUDescriptorSize),true, g_pCounterBuffer->GetBuffer());
+	g_pPixelLinkBuffer		= new XStructuredBuffer<SPixelLink>(pDevice,uWidth*uHeight*MAX_PIXELS, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 7, g_uCSUDescriptorSize),true, g_pCounterBuffer->GetBuffer());
 	g_pStartOffsetBuffer	= new XStructuredBuffer<UINT>(pDevice, uWidth*uHeight, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 8, g_uCSUDescriptorSize));
 	
 	//

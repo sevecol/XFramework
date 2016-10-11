@@ -46,9 +46,52 @@ Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
 SamplerState g_sampler : register(s0);
 
+#define MAX_PIXELS 	4
+
 float4 PSMain(PSInput input) : SV_TARGET
 {
 	uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
 	uint uCounter = gStartOffsetBuffer[uOffset];
-	return gPixelLinkBuffer[uCounter].color;
+
+	SPixelLink SortedPixels[MAX_PIXELS];
+
+	uint uNumPixels = 0;
+	while (uCounter!=0xFFFFFFFF)
+	{
+		SortedPixels[uNumPixels  ].color = gPixelLinkBuffer[uCounter].color;
+		SortedPixels[uNumPixels++].depth = gPixelLinkBuffer[uCounter].depth;
+
+		uCounter = (uNumPixels>=MAX_PIXELS)?0xFFFFFFFF:gPixelLinkBuffer[uCounter].next;
+	}
+
+	// SortPixel
+	if (uNumPixels>=2)
+	{
+		for (uint i=0;i<uNumPixels-1;i++)
+		{
+			for (uint j=0;j<uNumPixels-i-1;j++)
+			{
+				if (SortedPixels[j].depth>SortedPixels[j+1].depth)
+				{
+					SPixelLink temp;
+					temp.color = SortedPixels[j].color;
+					temp.depth = SortedPixels[j].depth;
+
+					SortedPixels[j].color = SortedPixels[j+1].color;
+					SortedPixels[j].depth = SortedPixels[j+1].depth;
+
+					SortedPixels[j+1].color = temp.color;
+					SortedPixels[j+1].depth = temp.depth;
+				}
+			}
+		}
+	}
+
+	float4 fFinalColor = float4(0,0,0,0);
+	for (int i=0;i<uNumPixels;i++)
+	{
+		fFinalColor = SortedPixels[i].color;
+	}
+
+	return fFinalColor;
 }
