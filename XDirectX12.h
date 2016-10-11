@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <Windows.h>
@@ -20,6 +21,7 @@ enum ESHADINGPATH
 	ESHADINGPATH_COUNT
 };
 
+#define	FRAME_NUM				3
 #define RENDERTARGET_MAXNUM		3
 
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow);

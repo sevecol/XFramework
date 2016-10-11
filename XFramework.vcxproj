@@ -166,6 +166,7 @@
     <ClInclude Include="XTilebaseDeferredShading.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Loader\XBinLoader.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />
     <ClCompile Include="Resource\XBufferManager.cpp" />
     <ClCompile Include="Resource\XFrameResource.cpp" />

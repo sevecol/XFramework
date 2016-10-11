@@ -116,7 +116,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	// Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-	swapChainDesc.BufferCount = 3;//FrameCount;
+	swapChainDesc.BufferCount = FRAME_NUM;//FrameCount;
 	swapChainDesc.BufferDesc.Width = uWidth;
 	swapChainDesc.BufferDesc.Height = uHeight;
 	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -243,7 +243,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_ScissorRect.bottom = static_cast<LONG>(uHeight);
 
 	//
-	for (UINT n = 0; n < 3; n++)
+	for (UINT n = 0; n < FRAME_NUM; n++)
 	{
 		g_FrameResource[n].InitInstance(n, g_pDevice.Get(), g_pSwapChain.Get());
 	}
@@ -255,31 +255,6 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pTextureManager = new XTextureManager;
 	g_pTextureManager->Init(g_pDevice.Get());
 	g_UIManager.Init(g_pDevice.Get(),  uWidth, uHeight);
-
-	//
-	g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
-
-	//
-	g_pEntity = new XEntity();
-
-	D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-	g_pEntity->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
-
-	LPCWSTR pTextureFileName[2] = {L"terrain.png",L"wings.bmp"};
-	g_pEntity->InitTexture(2, pTextureFileName);
-
-	XBinResource *pbinresource = new XBinResource();
-	pbinresource->pEntity = g_pEntity;
-	g_ResourceThread.InsertResourceLoadTask(pbinresource);
-
-	//
-	g_Camera.Init(0.8f, 1.0f);
 
 	/*
 		// Create an 11 device wrapped around the 12 device and share

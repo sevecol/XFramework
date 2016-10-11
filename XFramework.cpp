@@ -2,8 +2,16 @@
 //#include "XFramework.h"
 #include "XDirectX12.h"
 #include "XCamera.h"
+#include "XEntity.h"
+#include "UI\UIManager.h"
+#include "Loader\XBinLoader.h"
+#include "Thread\XResourceThread.h"
+
 
 extern XCamera			g_Camera;
+extern XEntity			*g_pEntity;
+extern UIManager		g_UIManager;
+extern XResourceThread	g_ResourceThread;
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -107,6 +115,31 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	//
 	bool bResult = CreateDevice(hWnd, 1280, 720, true);
+
+	//
+	g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
+
+	//
+	g_pEntity = new XEntity();
+
+	D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+	g_pEntity->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+
+	LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+	g_pEntity->InitTexture(2, pTextureFileName);
+
+	XBinResource *pbinresource = new XBinResource();
+	pbinresource->pEntity = g_pEntity;
+	g_ResourceThread.InsertResourceLoadTask(pbinresource);
+
+	//
+	g_Camera.Init(0.8f, 1.0f);
 
 	return TRUE;
 }

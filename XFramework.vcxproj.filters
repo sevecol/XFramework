@@ -34,6 +34,9 @@
     <Filter Include="头文件\Loader">
       <UniqueIdentifier>{3a42d479-34f6-47f6-95cf-efb42a5af0c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\Loader">
+      <UniqueIdentifier>{1dba8114-89aa-4031-bf4f-a8ad3321f3f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">
@@ -145,6 +148,9 @@
     </ClCompile>
     <ClCompile Include="XOrderIndependentTransparency.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Loader\XBinLoader.cpp">
+      <Filter>源文件\Loader</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
