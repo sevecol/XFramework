@@ -190,7 +190,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,2 For OIT UAV,2 For Entity's Texture
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,2 For Entity's Texture
 	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;

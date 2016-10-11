@@ -21,8 +21,14 @@ cbuffer cb0 : register(b0)
 	float4x4 g_mWorldViewProj;
 };
 
-RWStructuredBuffer<float4> gUAVBufferInfo : register(u1);
-RWStructuredBuffer<uint> gUAVBufferTag : register(u2);
+struct SPixelLink
+{
+	float4 color;
+	float depth;
+	uint next;
+};
+RWStructuredBuffer<SPixelLink> gPixelLinkBuffer : register(u1);
+RWStructuredBuffer<uint> gStartOffsetBuffer : register(u2);
 
 PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, float4 color : COLOR, float2 uv : TEXCOORD)
 {
@@ -42,6 +48,7 @@ SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return gUAVBufferInfo[0];
+	uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
+	return gPixelLinkBuffer[uOffset].color;
 	return g_texture0.Sample(g_sampler, input.uv);
 }
