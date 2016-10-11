@@ -61,13 +61,28 @@ class XStructuredBuffer
 	ComPtr<ID3D12Resource>			m_pBuffer;
 	UINT							m_uSIndex;
 public:
-	XStructuredBuffer(ID3D12Device* pDevicie, UINT uCounts, D3D12_CPU_DESCRIPTOR_HANDLE& Descriptor)
+	XStructuredBuffer(ID3D12Device* pDevicie, UINT uCounts)
 	{
 		// Create the buffer.
 		ThrowIfFailed(g_pDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(uCounts*sizeof(T), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_pBuffer)));
+	}
+	XStructuredBuffer(ID3D12Device* pDevice, UINT uCounts, D3D12_CPU_DESCRIPTOR_HANDLE& Descriptor, bool bCounter = false, ID3D12Resource *pCounterBuffer = nullptr)
+	{
+		//
+		UINT uSize = uCounts*sizeof(T);
+		UINT uCounterOffset = 0;
+		
+		// Create the buffer.
+		ThrowIfFailed(g_pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_pBuffer)));
@@ -79,10 +94,10 @@ public:
 		UDesc.Buffer.FirstElement = 0;
 		UDesc.Buffer.NumElements = uCounts;
 		UDesc.Buffer.StructureByteStride = sizeof(T);
-		UDesc.Buffer.CounterOffsetInBytes = 0;
+		UDesc.Buffer.CounterOffsetInBytes = uCounterOffset;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		pDevicie->CreateUnorderedAccessView(m_pBuffer.Get(), nullptr, &UDesc, Descriptor);
+		pDevice->CreateUnorderedAccessView(m_pBuffer.Get(), pCounterBuffer, &UDesc, Descriptor);
 	}
 	~XStructuredBuffer()
 	{

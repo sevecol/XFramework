@@ -1,5 +1,6 @@
 
 #pragma once
+
 #include "..\XDirectX12.h"
 #include "..\Thread\XResourceThread.h"
 
