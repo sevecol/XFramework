@@ -46,11 +46,12 @@ Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
 SamplerState g_sampler : register(s0);
 
-#define MAX_PIXELS 	4
+#define MAX_PIXELS 	32
 
-float4 PSMain(PSInput input) : SV_TARGET
+float4 PSMain(PSInput input,float4 ScreenPos:SV_POSITION) : SV_TARGET
 {
-	uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
+	uint uOffset = ScreenPos.y*1280 + ScreenPos.x;
+	//uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
 	uint uCounter = gStartOffsetBuffer[uOffset];
 
 	SPixelLink SortedPixels[MAX_PIXELS];
@@ -90,7 +91,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float4 fFinalColor = float4(0,0,0,0);
 	for (int i=0;i<uNumPixels;i++)
 	{
-		fFinalColor = SortedPixels[i].color;
+		fFinalColor.xyz = SortedPixels[i].color.xyz * SortedPixels[i].color.w + fFinalColor.xyz * (1-SortedPixels[i].color.w);
 	}
 
 	return fFinalColor;

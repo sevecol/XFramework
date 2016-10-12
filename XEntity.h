@@ -40,10 +40,10 @@ public:
 	void Render(ID3D12GraphicsCommandList* pCommandList,UINT64 uFenceValue);
 
 	//
-	virtual bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount);
+	virtual bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
 	//virtual bool InitMaterial(LPCWSTR pName, UINT uWidth, UINT uHeight, UINT uPixelSize, CreateTextureFun pFun, UINT uParameter);
 	virtual bool InitTexture(UINT uCount, LPCWSTR pDetailName[]);
-	virtual bool InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData, UINT uBoneCount = 0, UINT8* pBoneIndex = nullptr);
+	virtual bool InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
 	//virtual bool InitSkeleton(LPCWSTR pFileName);
 	//virtual bool InitAnimate(LPCWSTR pFileName);
 

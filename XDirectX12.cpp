@@ -62,7 +62,8 @@ StepTimer							g_Timer;
 D3D12_VIEWPORT						g_Viewport;
 D3D12_RECT							g_ScissorRect;
 
-XEntity								*g_pEntity = nullptr;
+XEntity								*g_pEntityNormal	= nullptr;
+XEntity								*g_pEntityAlpha		= nullptr;
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 {
 	g_hWnd = hWnd;
@@ -346,9 +347,9 @@ bool Render()
 
 	// DeferredShading
 	BeginDeferredShading(pCommandList);
-	if (g_pEntity)
+	if (g_pEntityNormal)
 	{
-		g_pEntity->Render(pCommandList, sFrameResource.m_uFenceValue);
+		//g_pEntityNormal->Render(pCommandList, sFrameResource.m_uFenceValue);
 	}
 	EndDeferredShading(pCommandList);
 
@@ -359,7 +360,11 @@ bool Render()
 
 	// Alpha Blend
 	BeginOrderIndependentTransparency(pCommandList);
-	g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
+	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
+	if (g_pEntityAlpha)
+	{
+		g_pEntityAlpha->Render(pCommandList, sFrameResource.m_uFenceValue);
+	}
 	EndOrderIndependentTransparency(pCommandList);
 
 	// AddAll
@@ -416,7 +421,8 @@ void Clean()
 
 	//
 	SAFE_DELETE(g_pTextureManager);
-	SAFE_DELETE(g_pEntity);
+	SAFE_DELETE(g_pEntityNormal);
+	SAFE_DELETE(g_pEntityAlpha);
 	CleanDeferredShading();
 	CleanOrderIndependentTransparency();
 }

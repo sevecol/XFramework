@@ -9,7 +9,8 @@
 
 
 extern XCamera			g_Camera;
-extern XEntity			*g_pEntity;
+extern XEntity			*g_pEntityNormal;
+extern XEntity			*g_pEntityAlpha;
 extern UIManager		g_UIManager;
 extern XResourceThread	g_ResourceThread;
 
@@ -120,23 +121,44 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
 
 	//
-	g_pEntity = new XEntity();
-
-	D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-	g_pEntity->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+		g_pEntityNormal = new XEntity();
 
-	LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
-	g_pEntity->InitTexture(2, pTextureFileName);
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityNormal->InitShader(L"shaders_entity.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-	XBinResource *pbinresource = new XBinResource();
-	pbinresource->pEntity = g_pEntity;
-	g_ResourceThread.InsertResourceLoadTask(pbinresource);
+		LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		g_pEntityNormal->InitTexture(2, pTextureFileName);
+
+		XBinResource *pbinresource = new XBinResource();
+		pbinresource->pEntity = g_pEntityNormal;
+		g_ResourceThread.InsertResourceLoadTask(pbinresource);
+	}
+	{
+		g_pEntityAlpha = new XEntity();
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityAlpha->InitShader(L"shaders_entity_alpha.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+
+		LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		g_pEntityAlpha->InitTexture(2, pTextureFileName);
+
+		XBinResource *pbinresource = new XBinResource();
+		pbinresource->pEntity = g_pEntityAlpha;
+		g_ResourceThread.InsertResourceLoadTask(pbinresource);
+	}
 
 	//
 	g_Camera.Init(0.8f, 1.0f);

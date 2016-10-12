@@ -4,7 +4,7 @@
 #include "Resource\XBuffer.h"
 #include "Resource\XShader.h"
 
-#define MAX_PIXELS	4
+#define MAX_PIXELS	32
 
 XStructuredBuffer<UINT>					*g_pCounterBuffer;
 struct SPixelLink
