@@ -255,7 +255,8 @@ void XResourceThread::WaitForResource()
 	m_uFenceValue++;
 
 	// Wait until the previous frame is finished.
-	if (m_pFence->GetCompletedValue() < fence)
+	UINT64 uComplate = m_pFence->GetCompletedValue();
+	if (uComplate < fence)
 	{
 		ThrowIfFailed(m_pFence->SetEventOnCompletion(fence, m_hFenceEvent));
 		WaitForSingleObject(m_hFenceEvent, INFINITE);

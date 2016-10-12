@@ -25,6 +25,7 @@ XFrameResource::~XFrameResource()
 void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapChain3 *pSwapChain)
 {
 	m_uIndex = uIndex;
+	m_uFenceValue = 1;
 
 	//
 	ThrowIfFailed(pSwapChain->GetBuffer(m_uIndex, IID_PPV_ARGS(&m_pRenderTargets)));
