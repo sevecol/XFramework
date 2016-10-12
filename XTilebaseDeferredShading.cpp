@@ -41,13 +41,20 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		textureDesc.SampleDesc.Quality = 0;
 		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
+		D3D12_CLEAR_VALUE rendertargetOptimizedClearValue = {};
+		rendertargetOptimizedClearValue.Format = textureDesc.Format;
+		rendertargetOptimizedClearValue.Color[0] = 0.0f;
+		rendertargetOptimizedClearValue.Color[1] = 0.0f;
+		rendertargetOptimizedClearValue.Color[2] = 0.0f;
+		rendertargetOptimizedClearValue.Color[3] = 0.0f;
+
 		//
 		ThrowIfFailed(pDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			nullptr,
+			&rendertargetOptimizedClearValue,
 			IID_PPV_ARGS(&g_pDRRenderTargets[i])));
 		pDevice->CreateRenderTargetView(g_pDRRenderTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DEFERREDSHADING_RENDERTARGET_RBASE +i, g_uRDescriptorSize));
 		
@@ -96,7 +103,7 @@ void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->OMSetRenderTargets(3, RHandle, FALSE, &DHandle);
 
 	// Record commands.
-	const float clearColor[] = { 0.0f, 1.2f, 0.4f, 1.0f };
+	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	pCommandList->ClearRenderTargetView(RHandle[0], clearColor, 0, nullptr);
 	//pCommandList->ClearRenderTargetView(RHandle[1], clearColor, 0, nullptr);
 	//pCommandList->ClearRenderTargetView(RHandle[2], clearColor, 0, nullptr);

@@ -39,7 +39,7 @@ ComPtr<ID3D12RootSignature>			g_pRootSignature;
 UINT								g_uFrameIndex;
 HANDLE								g_hFenceEvent;
 ComPtr<ID3D12Fence>					g_pFence;
-XFrameResource						g_FrameResource[3];
+XFrameResource						g_FrameResource[FRAME_NUM];
 
 //
 ComPtr<ID3D12DescriptorHeap>		g_pRDescriptorHeap;
@@ -388,7 +388,8 @@ void MoveToNextFrame()
 	ThrowIfFailed(g_pRenderCommandQueue->Signal(g_pFence.Get(), currentFenceValue));
 
 	// Update the frame index.
-	g_uFrameIndex = g_pSwapChain->GetCurrentBackBufferIndex();
+	g_uFrameIndex = g_uFrameIndex + 1;
+	g_uFrameIndex = Mod<UINT>(g_uFrameIndex, FRAME_NUM);
 
 	// If the next frame is not ready to be rendered yet, wait until it is ready.
 	UINT64 uCompleteValue = g_pFence->GetCompletedValue();

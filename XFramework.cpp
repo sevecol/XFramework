@@ -159,6 +159,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		pbinresource->pEntity = g_pEntityAlpha;
 		g_ResourceThread.InsertResourceLoadTask(pbinresource);
 	}
+	//g_ResourceThread.WaitForResource();
 
 	//
 	g_Camera.Init(0.8f, 1.0f);
