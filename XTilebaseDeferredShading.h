@@ -6,5 +6,7 @@
 
 bool InitDeferredShading(ID3D12Device* pDevice, UINT uWidth, UINT uHeight);
 void CleanDeferredShading();
-void BeginDeferredShading(ID3D12GraphicsCommandList* pCommandList);
-void EndDeferredShading(ID3D12GraphicsCommandList* pCommandList);
+
+void DeferredShading_GBuffer(ID3D12GraphicsCommandList* pCommandList);
+void DeferredShading_PrepareShading(ID3D12GraphicsCommandList* pCommandList);
+void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList);

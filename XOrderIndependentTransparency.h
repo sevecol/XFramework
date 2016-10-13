@@ -6,5 +6,6 @@
 
 bool InitOrderIndependentTransparency(ID3D12Device* pDevice, UINT uWidth, UINT uHeight);
 void CleanOrderIndependentTransparency();
-void BeginOrderIndependentTransparency(ID3D12GraphicsCommandList* pCommandList);
-void EndOrderIndependentTransparency(ID3D12GraphicsCommandList* pCommandList);
+
+void OrderIndependentTransparency_Begin(ID3D12GraphicsCommandList* pCommandList);
+void OrderIndependentTransparency_End(ID3D12GraphicsCommandList* pCommandList);

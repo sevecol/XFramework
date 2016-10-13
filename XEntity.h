@@ -40,10 +40,11 @@ public:
 	void Render(ID3D12GraphicsCommandList* pCommandList,UINT64 uFenceValue);
 
 	//
-	virtual bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
+	bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
+	bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
 	//virtual bool InitMaterial(LPCWSTR pName, UINT uWidth, UINT uHeight, UINT uPixelSize, CreateTextureFun pFun, UINT uParameter);
-	virtual bool InitTexture(UINT uCount, LPCWSTR pDetailName[]);
-	virtual bool InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
+	bool InitTexture(UINT uCount, LPCWSTR pDetailName[]);
+	bool InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
 	//virtual bool InitSkeleton(LPCWSTR pFileName);
 	//virtual bool InitAnimate(LPCWSTR pFileName);
 

@@ -11,8 +11,6 @@
 
 #include "XCamera.h"
 
-XCamera				g_Camera;
-
 XCamera::XCamera():
 	m_initialPosition(0, 0, 0),
 	m_position(m_initialPosition),

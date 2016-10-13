@@ -13,6 +13,10 @@ using namespace DirectX;
 #include <wrl.h>
 using namespace Microsoft::WRL;
 
+#include "Thread\XResourceThread.h"
+#include "Resource\XFrameResource.h"
+//#include "UI\UIManager.h"
+
 enum ESHADINGPATH
 {
 	ESHADINGPATH_FORWORD = 0,
@@ -35,4 +39,37 @@ void Clean();
 #define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
 #define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
+
+class XEngine
+{
+public:
+	// Windows
+	HWND								m_hWnd;
+	
+	// Device
+	ID3D12Device						*m_pDevice;
+	ComPtr<IDXGISwapChain3>				m_pSwapChain;
+	ComPtr<ID3D12CommandQueue>			m_pRenderCommandQueue;
+	ComPtr<ID3D12RootSignature>			m_pRootSignature;
+
+	HANDLE								m_hFenceEvent;
+	ComPtr<ID3D12Fence>					m_pFence;
+
+	// Heap|Resource
+	ComPtr<ID3D12DescriptorHeap>		m_pRDescriptorHeap;
+	UINT								m_uRDescriptorSize;
+
+	ComPtr<ID3D12DescriptorHeap>		m_pDDescriptorHeap;
+	ComPtr<ID3D12Resource>				m_pDepthStencil;
+
+	ComPtr<ID3D12DescriptorHeap>		m_pCSUDescriptorHeap;
+	UINT								m_uCSUDescriptorSize;
+
+	//
+	D3D12_VIEWPORT						m_Viewport;
+	D3D12_RECT							m_ScissorRect;
+
+	//
+	//UIManager							g_UIManager;
+};
 

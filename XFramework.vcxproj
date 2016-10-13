@@ -147,12 +147,10 @@
   <ItemGroup>
     <ClInclude Include="Loader\XBinLoader.h" />
     <ClInclude Include="Resource\XBuffer.h" />
-    <ClInclude Include="Resource\XBufferManager.h" />
     <ClInclude Include="Resource\XFrameResource.h" />
     <ClInclude Include="Resource\XGeometry.h" />
     <ClInclude Include="Resource\XShader.h" />
     <ClInclude Include="Resource\XTexture.h" />
-    <ClInclude Include="Resource\XTextureManager.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Thread\XResourceThread.h" />
     <ClInclude Include="UI\UIImgWindow.h" />
@@ -162,18 +160,17 @@
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
+    <ClInclude Include="XHDR.h" />
     <ClInclude Include="XOrderIndependentTransparency.h" />
     <ClInclude Include="XTilebaseDeferredShading.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Loader\XBinLoader.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />
-    <ClCompile Include="Resource\XBufferManager.cpp" />
     <ClCompile Include="Resource\XFrameResource.cpp" />
     <ClCompile Include="Resource\XGeometry.cpp" />
     <ClCompile Include="Resource\XShader.cpp" />
     <ClCompile Include="Resource\XTexture.cpp" />
-    <ClCompile Include="Resource\XTextureManager.cpp" />
     <ClCompile Include="Thread\XResourceThread.cpp" />
     <ClCompile Include="UI\UIImgWindow.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
@@ -182,6 +179,7 @@
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
+    <ClCompile Include="XHDR.cpp" />
     <ClCompile Include="XOrderIndependentTransparency.cpp" />
     <ClCompile Include="XTilebaseDeferredShading.cpp" />
   </ItemGroup>

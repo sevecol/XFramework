@@ -11,8 +11,8 @@
 extern XCamera			g_Camera;
 extern XEntity			*g_pEntityNormal;
 extern XEntity			*g_pEntityAlpha;
-extern UIManager		g_UIManager;
-extern XResourceThread	g_ResourceThread;
+//extern UIManager		g_UIManager;
+extern XResourceThread	*g_pResourceThread;
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -118,7 +118,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	bool bResult = CreateDevice(hWnd, 1280, 720, true);
 
 	//
-	g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
+	//g_UIManager.CreateUIImgWindow(nullptr, L"", 100, 100, 100, 100);
 
 	//
 	{
@@ -138,7 +138,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 		XBinResource *pbinresource = new XBinResource();
 		pbinresource->pEntity = g_pEntityNormal;
-		g_ResourceThread.InsertResourceLoadTask(pbinresource);
+		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
 	{
 		g_pEntityAlpha = new XEntity();
@@ -157,7 +157,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 		XBinResource *pbinresource = new XBinResource();
 		pbinresource->pEntity = g_pEntityAlpha;
-		g_ResourceThread.InsertResourceLoadTask(pbinresource);
+		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
 	//g_ResourceThread.WaitForResource();
 

@@ -57,9 +57,6 @@
     <ClInclude Include="Resource\XBuffer.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\XBufferManager.h">
-      <Filter>头文件\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="Resource\XFrameResource.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
@@ -90,10 +87,10 @@
     <ClInclude Include="Resource\XTexture.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\XTextureManager.h">
-      <Filter>头文件\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="XOrderIndependentTransparency.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XHDR.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -114,9 +111,6 @@
       <Filter>源文件\UI</Filter>
     </ClCompile>
     <ClCompile Include="Resource\XBuffer.cpp">
-      <Filter>源文件\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Resource\XBufferManager.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource\XGeometry.cpp">
@@ -143,14 +137,14 @@
     <ClCompile Include="Resource\XTexture.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\XTextureManager.cpp">
-      <Filter>源文件\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="XOrderIndependentTransparency.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Loader\XBinLoader.cpp">
       <Filter>源文件\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="XHDR.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

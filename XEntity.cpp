@@ -4,13 +4,9 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define ENTITY_TEXTURE_CSUBASE			9
+#define ENTITY_TEXTURE_CSUBASE			10
 
-extern ComPtr<ID3D12Device>				g_pDevice;
-extern ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;
-extern UINT								g_uCSUDescriptorSize;
-
-extern XResourceThread					g_ResourceThread;
+extern XResourceThread					*g_pResourceThread;
 
 struct sVertex
 {
@@ -54,43 +50,7 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 {
 	if ((pCommandList)&&(m_pShader->GetPipelineState()))
 	{
-/*
-		TextureManager *pTextureManager = g_pXEngine->GetTextureManager();
-
-		//
-		//ID3D12DescriptorHeap* ppHeaps[] = { pTextureManager->GetSrvHeap() };
-		//pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-		pCommandList->SetGraphicsRootDescriptorTable(0, pTextureManager->GetGpuHangle(m_pTexture->GetSrvIndex()));
-		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
-
-		pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		pCommandList->IASetVertexBuffers(0, 1, m_pGeometry->GetVertexBufferView());
-		if (m_pGeometry->GetNumIndices())
-		{
-			pCommandList->IASetIndexBuffer(m_pGeometry->GetIndexBufferView());
-			pCommandList->DrawIndexedInstanced(m_pGeometry->GetNumIndices(), 1, 0, 0, 0);
-		}
-		else
-		{
-			pCommandList->DrawInstanced(3, 1, 0, 0);
-		}
-*/
-		//
-/*
-		ID3D12DescriptorHeap* ppHeaps[] = { GetXEngine()->GetSceneGraph()->GetDescriptorHeap() };
-		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-		pCommandList->SetGraphicsRootDescriptorTable(1, GetXEngine()->GetSceneGraph()->GetGpuHangle(m_uIndex));
-
-		//
-		TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		ppHeaps[0] = pTextureManager->GetDescriptorHeap();
-		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-		pCommandList->SetGraphicsRootDescriptorTable(2, pTextureManager->GetGpuHangle(m_pTexture->GetSrvIndex()));
-*/
-		ID3D12DescriptorHeap *ppHeaps[] = { g_pCSUDescriptorHeap.Get() };
-		pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-		pCommandList->SetGraphicsRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), ENTITY_TEXTURE_CSUBASE, g_uCSUDescriptorSize));
+		pCommandList->SetGraphicsRootDescriptorTable(2, m_pTextureSet->GetSRVGpuHandle());
 
 		//
 		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
@@ -112,7 +72,12 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 }
 bool XEntity::InitShader(LPCWSTR pFileName,LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
-	m_pShader = CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
+	m_pShader = XShader::CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
+	return true;
+}
+bool XEntity::InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
+{
+	m_pShader = XShader::CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
 	return true;
 }
 /*
@@ -146,7 +111,7 @@ bool XEntity::InitTexture(UINT uCount, LPCWSTR pDetailName[])
 		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
 	}
 
-	g_ResourceThread.InsertResourceLoadTask(pTextureSetLoad);
+	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
 
 	return true;
 }
@@ -176,7 +141,7 @@ bool XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride,
 	g_pDevice->CreateConstantBufferView(&cbvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
 */
 	//
-	m_pGeometry = CreateGeometry(uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData); 
+	m_pGeometry = XGeometry::CreateGeometry(uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData);
 	if (m_pGeometry)
 	{
 		//m_AxisAlignedBoundingBox.Add(m_pGeometry->m_vMin);

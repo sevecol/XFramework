@@ -16,11 +16,6 @@ struct PSInput
 	float2 uv : TEXCOORD;
 };
 
-cbuffer cb0 : register(b0)
-{
-	float4x4 g_mWorldViewProj;
-};
-
 struct SPixelLink
 {
 	float4 color;
@@ -42,14 +37,14 @@ PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, flo
 }
 
 Texture2D g_texture0 : register(t0);
-Texture2D g_texture1 : register(t1);
-Texture2D g_texture2 : register(t2);
 SamplerState g_sampler : register(s0);
 
-#define MAX_PIXELS 	32
+#define MAX_PIXELS 	4
 
 float4 PSMain(PSInput input,float4 ScreenPos:SV_POSITION) : SV_TARGET
 {
+	//return float4(0,0,1,1);
+
 	uint uOffset = ScreenPos.y*1280 + ScreenPos.x;
 	//uint uOffset = (input.uv.y * 719)*1280 + input.uv.x * 1279;
 	uint uCounter = gStartOffsetBuffer[uOffset];
@@ -64,6 +59,9 @@ float4 PSMain(PSInput input,float4 ScreenPos:SV_POSITION) : SV_TARGET
 
 		uCounter = (uNumPixels>=MAX_PIXELS)?0xFFFFFFFF:gPixelLinkBuffer[uCounter].next;
 	}
+
+	if (uNumPixels==0)
+		discard;
 
 	// SortPixel
 	if (uNumPixels>=2)

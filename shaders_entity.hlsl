@@ -49,22 +49,12 @@ struct PsOutput
 	float4 color2  	: SV_TARGET2;
 };
 
-//float4 PSMain(PSInput input) : SV_TARGET
-//{
-//	return float4(1,1,1,1);
-//
-//	float3 diffuse = g_txDiffuse.Sample(g_sampler, input.uv).rgb;
-//	float3 normal = g_txNormal.Sample(g_sampler, input.uv).rgb;
-//	return float4(diffuse*normal,1.0f);
-//}
-
 PsOutput PSMain(PSInput input)
 {
 	PsOutput result;
 	result.color0 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color1 = float4(1,1,1,1);
-	result.color2 = float4(0,0,0,1);
+	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
+	result.color2 = g_txDiffuse.Sample(g_sampler, input.uv);
 
 	return result;
-	//return g_texture.Sample(g_sampler, input.uv);
 }
