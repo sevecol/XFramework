@@ -1,6 +1,7 @@
 
 
 #include "XTexture.h"
+#include "DDSTextureLoader.h"
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
@@ -212,6 +213,56 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 
 	return pRenderTarget;
 }
+
+extern DXGI_FORMAT ddsFormat;
+void DDSTextureSetLoad::LoadFromFile()
+{
+	for (UINT i = 0;i < m_vTextureLayer.size();++i)
+	{
+		std::unique_ptr<uint8_t[]> ddsData;
+		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+
+		ID3D12Resource *pTexture = nullptr;
+		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[0].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
+
+		//
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, 1);
+
+		// Create the GPU upload buffer.
+		ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_vTextureLayer[i].m_pTextureUpload)));
+
+		//
+		UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_vTextureLayer[i].m_pTextureUpload.Get(), 0, 0, 1, &subresources[0]);
+		g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+		// Describe and create a SRV for the texture.
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = ddsFormat;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		//
+		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize));
+
+		//
+		m_pTextureSet->m_vpTexture.push_back(pTexture);
+	}
+	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+}
+
+void DDSTextureSetLoad::PostLoad()
+{
+}
+
 ///////////////////////////////////////////////////////
 struct WICConvert
 {

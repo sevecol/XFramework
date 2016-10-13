@@ -46,6 +46,8 @@ struct STextureLayer
 	UINT8									*m_pData;
 
 	ComPtr<ID3D12Resource>					m_pTextureUpload;
+
+	STextureLayer() :m_pData(nullptr) {}
 };
 typedef UINT8* (*CreateTextureFun)(UINT uWidth, UINT uHeight, UINT uPixelSize, UINT uParameter);
 struct TextureSetLoad : public IResourceLoad
@@ -63,6 +65,12 @@ struct TextureSetLoad : public IResourceLoad
 	virtual void LoadFromFile();
 	virtual void PostLoad();
 	virtual bool IsNeedWaitForResource() { return true; };
+};
+
+struct DDSTextureSetLoad : public TextureSetLoad
+{
+	virtual void LoadFromFile();
+	virtual void PostLoad();
 };
 
 class XRenderTarget
