@@ -25,6 +25,7 @@ public:
 	virtual D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() { return &m_IndexBufferView; }
 	virtual UINT GetNumIndices() { return m_uNumIndices; }
 	virtual UINT GetNumVertexs() { return m_uNumVertexs; }
+
+	static XGeometry* CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
 };
 
-XGeometry* CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);

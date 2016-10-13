@@ -40,6 +40,7 @@ public:
 	virtual void DelUIWindows();
 
 	void Init(ID3D12Device* pDevice, UINT uWidth, UINT uHeight);
+	void Clean();
 	void Update();
 	void Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue);
 	bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);

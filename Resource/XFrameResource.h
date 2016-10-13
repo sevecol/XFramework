@@ -12,7 +12,7 @@ public:
 
 	struct ConstantBuffer
 	{
-		XMFLOAT4X4 mvp;		// Model-view-projection (MVP) matrix.
+		XMFLOAT4X4 mvp;						// Model-view-projection (MVP) matrix.
 		FLOAT padding[48];
 	};
 	ConstantBuffer*							m_pConstantBuffers;

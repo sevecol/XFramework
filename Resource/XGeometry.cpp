@@ -1,18 +1,16 @@
 
 #include "XGeometry.h"
-#include "XBufferManager.h"
+#include "XBuffer.h"
 
 #include "..\DXSampleHelper.h"
-
-extern XBufferManager		g_BufferManager;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XGeometry::~XGeometry()
 {
-	g_BufferManager.DeleteBuffer(m_pBuffer);
+	XBuffer::DeleteBuffer(m_pBuffer);
 }
 
-XGeometry* CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
+XGeometry* XGeometry::CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
 {
 	if (!uVertexCount)
 	{
@@ -36,7 +34,7 @@ XGeometry* CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCoun
 
 	//
 	UINT uBufferSize = uVertexCount * uVertexStride + uIndexCount * uIndexSize;
-	pGeometry->m_pBuffer = g_BufferManager.CreateBuffer(EBUFFERTYPE_BLOCK, uBufferSize, pGeometryData);
+	pGeometry->m_pBuffer = XBuffer::CreateBuffer(EBUFFERTYPE_BLOCK, uBufferSize, pGeometryData);
 	if (!pGeometry->m_pBuffer)
 	{
 		delete pGeometry;

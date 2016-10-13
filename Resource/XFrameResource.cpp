@@ -6,14 +6,7 @@
 #define FRAMERESOURCE_CONSTANT_CSUBASE		0
 #define SHADING_RENDERTARGET_COUNT			1
 
-extern ComPtr<ID3D12DescriptorHeap>		g_pRDescriptorHeap;
-extern ComPtr<ID3D12DescriptorHeap>		g_pDDescriptorHeap;
-extern UINT								g_uRDescriptorSize;
-
-extern ComPtr<ID3D12DescriptorHeap>		g_pCSUDescriptorHeap;
-extern UINT								g_uCSUDescriptorSize;
-
-extern ComPtr<ID3D12RootSignature>		g_pRootSignature;
+extern XEngine				*g_pEngine;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XFrameResource::~XFrameResource()
@@ -29,7 +22,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 
 	//
 	ThrowIfFailed(pSwapChain->GetBuffer(m_uIndex, IID_PPV_ARGS(&m_pRenderTargets)));
-	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_RENDERTARGET_RBASE+m_uIndex, g_uRDescriptorSize));
+	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_RENDERTARGET_RBASE+m_uIndex, g_pEngine->m_uRDescriptorSize));
 
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
@@ -58,7 +51,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 	ConstantDesc.BufferLocation = m_pConstantUploadHeap->GetGPUVirtualAddress();
 	ConstantDesc.SizeInBytes = sizeof(XFrameResource::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_uCSUDescriptorSize));
+	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_pEngine->m_uCSUDescriptorSize));
 }
 
 extern D3D12_VIEWPORT						g_Viewport;
@@ -77,14 +70,14 @@ void XFrameResource::PreRender()
 	// re-recording.
 	ThrowIfFailed(m_pCommandList->Reset(m_pRenderCommandAllocator.Get(), nullptr));//m_pPipelineState.Get()));// ));
 
-	m_pCommandList->SetGraphicsRootSignature(g_pRootSignature.Get());
+	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pRootSignature.Get());
 
-	ID3D12DescriptorHeap* ppHeaps[] = { g_pCSUDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* ppHeaps[] = { g_pEngine->m_pCSUDescriptorHeap.Get() };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_uCSUDescriptorSize));
+	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
 
-	m_pCommandList->RSSetViewports(1, &g_Viewport);
-	m_pCommandList->RSSetScissorRects(1, &g_ScissorRect);
+	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
+	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);
 }
 
 void XFrameResource::BeginRender()
@@ -92,14 +85,14 @@ void XFrameResource::BeginRender()
 	// Indicate that the back buffer will be used as a render target.
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE RHandle(g_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uIndex, g_uRDescriptorSize);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE RHandle(g_pEngine->m_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uRDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 	m_pCommandList->OMSetRenderTargets(1, &RHandle, FALSE, &DHandle);
 
 	// Record commands.
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(RHandle, clearColor, 0, nullptr);
-	m_pCommandList->ClearDepthStencilView(g_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void XFrameResource::EndRender()

@@ -8,7 +8,7 @@
 #include "..\Thread\XResourceThread.h"
 
 UIManager					g_UIManager;
-extern XResourceThread		g_ResourceThread;
+extern XResourceThread		*g_pResourceThread;
 
 UIManager::UIManager(): m_pShader(nullptr), m_pGeometry(nullptr)//
 {
@@ -16,18 +16,6 @@ UIManager::UIManager(): m_pShader(nullptr), m_pGeometry(nullptr)//
 }
 UIManager::~UIManager()
 {
-	SAFE_DELETE(m_pShader);
-	SAFE_DELETE(m_pGeometry);
-
-	if (m_pConstantBufferUploadHeap)
-	{
-		m_pConstantBufferUploadHeap->Unmap(0, nullptr);
-	}
-	for (UINT32 i = 0;i < UIWINDOWBUFF_NUM;++i)
-	{
-		m_pConstantBuffers[i] = nullptr;
-	}
-	SAFE_DELETE(m_pRootUIWindow);
 }
 /*
 IUIWindow* UIManager::GetRootUIWindow()
@@ -66,7 +54,7 @@ public:
 		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
 		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
 
-		XGeometry *pGeometry = CreateGeometry(6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		XGeometry *pGeometry = XGeometry::CreateGeometry(6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
 		if (pGeometry)
 		{
 /*
@@ -175,11 +163,28 @@ void UIManager::Init(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	m_pShader = CreateShaderFromFile(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
+	m_pShader = XShader::CreateShaderFromFile(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
 
 	BinResource *pbinresource = new BinResource();
 	pbinresource->pUIManager = this;
-	g_ResourceThread.InsertResourceLoadTask(pbinresource);
+	g_pResourceThread->InsertResourceLoadTask(pbinresource);
+}
+
+void UIManager::Clean()
+{
+	SAFE_DELETE(m_pShader);
+	SAFE_DELETE(m_pGeometry);
+
+	if (m_pConstantBufferUploadHeap)
+	{
+		m_pConstantBufferUploadHeap->Unmap(0, nullptr);
+	}
+	for (UINT32 i = 0;i < UIWINDOWBUFF_NUM;++i)
+	{
+		m_pConstantBuffers[i] = nullptr;
+	}
+	SAFE_DELETE(m_pRootUIWindow);
 }
 
 void UIManager::Update()

@@ -6,7 +6,7 @@
 #include "..\DXSampleHelper.h"
 
 CRITICAL_SECTION	g_cs;
-XResourceThread		g_ResourceThread;
+extern XResourceThread				*g_pResourceThread;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XResourceThread::XResourceThread():m_uFenceValue(0)
@@ -46,7 +46,7 @@ void XResourceThread::Init(ID3D12Device* pDevice)
 	{
 		static unsigned int WINAPI thunk(LPVOID lpParameter)
 		{
-			g_ResourceThread.Work();
+			g_pResourceThread->Work();
 			return 0;
 		}
 	};

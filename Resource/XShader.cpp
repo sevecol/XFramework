@@ -5,14 +5,19 @@
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
-extern ComPtr<ID3D12RootSignature>		g_pRootSignature;
-extern ComPtr<ID3D12Device>				g_pDevice;
+extern XEngine							*g_pEngine;
 
 extern UINT								g_uRenderTargetCount[ESHADINGPATH_COUNT];
 extern DXGI_FORMAT						g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
 
 //
-XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs,UINT uInputElementCount, ESHADINGPATH eShadingPath)
+XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
+{
+	return CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, pInputElementDescs, uInputElementCount, g_uRenderTargetCount[eShadingPath], g_RenderTargetFortmat[eShadingPath]);
+}
+
+//
+XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[])
 {
 	//
 	ComPtr<ID3DBlob> vertexShader;
@@ -37,16 +42,16 @@ XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pV
 	// Describe and create the graphics pipeline state object (PSO).
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { pInputElementDescs, uInputElementCount };
-	psoDesc.pRootSignature = g_pRootSignature.Get();
+	psoDesc.pRootSignature = g_pEngine->m_pRootSignature.Get();
 	psoDesc.RasterizerState = rasterizerStateDesc;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState = depthStencilDesc;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = g_uRenderTargetCount[eShadingPath];
+	psoDesc.NumRenderTargets = uRenderTargetCount;
 	for (unsigned int i = 0;i < psoDesc.NumRenderTargets;++i)
 	{
-		psoDesc.RTVFormats[i] = g_RenderTargetFortmat[eShadingPath][i];
+		psoDesc.RTVFormats[i] = RenderTargetFormat[i];
 	}
 	psoDesc.SampleDesc.Count = 1;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
@@ -76,7 +81,7 @@ XShader* CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pV
 	psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
 	XShader* pShader = new XShader;
-	ThrowIfFailed(g_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
 	
 	return pShader;
 }
