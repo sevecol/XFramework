@@ -3,6 +3,7 @@
 
 #include "Resource\XBuffer.h"
 #include "Resource\XShader.h"
+#include "Resource\XTexture.h"
 
 #define MAX_PIXELS	32
 
@@ -105,7 +106,7 @@ void OrderIndependentTransparency_Begin(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetGraphicsRootDescriptorTable(3, p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle());
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
 void OrderIndependentTransparency_End(ID3D12GraphicsCommandList* pCommandList)
 {
 	RenderFullScreen(pCommandList, g_pOrderIndependentTransparencyShader);

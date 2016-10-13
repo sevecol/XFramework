@@ -24,7 +24,7 @@
 UINT g_uRenderTargetCount[ESHADINGPATH_COUNT] = { 1,3 };
 DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
 {
-	{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT },
+	{ DXGI_FORMAT_R32G32B32A32_FLOAT ,DXGI_FORMAT_R32G32B32A32_FLOAT ,DXGI_FORMAT_R32G32B32A32_FLOAT },
 	{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT },
 	//{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R16G16_FLOAT }
 };
@@ -43,6 +43,10 @@ StepTimer							g_Timer;
 //
 XEntity								*g_pEntityNormal	= nullptr;
 XEntity								*g_pEntityAlpha		= nullptr;
+
+//
+extern XShader						*g_pHDRShaderScreen;
+extern XTextureSet					*g_pHDRTextureScreen;
 
 //
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
@@ -172,8 +176,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,1 for HDR,2 for Entity's Texture
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 1 + 2;
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,2 for HDR,2 for Entity's Texture
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 2 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pCSUDescriptorHeap)));
@@ -229,6 +233,13 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_ScissorRect.bottom = static_cast<LONG>(uHeight);
 
 	//
+	g_pResourceThread = new XResourceThread();
+	g_pResourceThread->Init(g_pEngine->m_pDevice);
+
+	XBuffer::Init(g_pEngine->m_pDevice);
+	XTextureSet::Init(g_pEngine->m_pDevice);
+
+	//
 	for (UINT n = 0; n < FRAME_NUM; n++)
 	{
 		g_pFrameResource[n] = new XFrameResource();
@@ -238,11 +249,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	InitOrderIndependentTransparency(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
 
-	g_pResourceThread = new XResourceThread();
-	g_pResourceThread->Init(g_pEngine->m_pDevice);
-
-	XBuffer::Init(g_pEngine->m_pDevice);
-	XTextureSet::Init(g_pEngine->m_pDevice);
+	//
 	//g_UIManager.Init(g_pEngine->m_pDevice.Get(),  uWidth, uHeight);
 
 	return true;
@@ -258,6 +265,7 @@ bool Update()
 	return true;
 }
 
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture);
 bool Render()
 {
 	XFrameResource* pFrameResource = g_pFrameResource[g_uFrameIndex];
@@ -294,6 +302,7 @@ bool Render()
 	// AddAll
 
 	//
+	RenderFullScreen(pCommandList, g_pHDRShaderScreen, g_pHDRTextureScreen);
 	pFrameResource->BeginRender();
 	HDR_ToneMaping(pCommandList);
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
@@ -429,12 +438,17 @@ public:
 		return true;
 	}
 };
-void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XShader *pShader)
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XShader *pShader,XTextureSet *pTexture = nullptr)
 {
 	if (!pFullScreenGeometry)
 	{
 		FullScreenResource *pResource = new FullScreenResource();
 		g_pResourceThread->InsertResourceLoadTask(pResource);
+	}
+
+	if (pTexture)
+	{
+		pCommandList->SetGraphicsRootDescriptorTable(2, pTexture->GetSRVGpuHandle());
 	}
 
 	//

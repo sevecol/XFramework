@@ -28,26 +28,10 @@ PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, flo
 }
 
 Texture2D g_texture0 : register(t0);
+Texture2D g_texture1 : register(t1);
 SamplerState g_sampler : register(s0);
-
-static const float4 c_luminance			= float4(.299, .587, .114, 0);
-static const float	c_middleGray		= 0.72f;
-static const float	c_luminanceWhite	= 1.5f;
-static const float	c_brightThreshold	= 0.5f;
-static const float	luminance		= 0.45f;
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	float4 color = g_texture0.Sample(g_sampler, input.uv);
-	return color;
-
-	// Tone mapping
-	color.rgb *= c_middleGray / (luminance + 0.001f);
-	color.rgb *= (1.f + color.rgb / c_luminanceWhite);
-	color.rgb /= (1.f + color.rgb);
-
-	//color.rgb += 0.6f * bloom.rgb;
-	color.a    = 1.f;
-
-	return color;
+	return g_texture0.Sample(g_sampler, input.uv);
 }

@@ -5,14 +5,18 @@
 #include "Resource\XTexture.h"
 
 extern XEngine							*g_pEngine;
+extern XResourceThread					*g_pResourceThread;
 
-XShader*								g_pHDRShader		= nullptr;
+XShader									*g_pHDRShader		= nullptr;
 XRenderTarget							*g_pHDRRenderTarget = nullptr;
+
+XShader									*g_pHDRShaderScreen = nullptr;
+XTextureSet								*g_pHDRTextureScreen= nullptr;
 
 //
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
-	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, uWidth, uHeight, 6, 9);
+	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, 6, 9);
 
 	//
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -25,6 +29,27 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
 	g_pHDRShader = XShader::CreateShaderFromFile(L"shaders_hdr_tonemapping.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
 
+	Format[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	g_pHDRShaderScreen = XShader::CreateShaderFromFile(L"shaders_hdr_screen.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, 1, Format);
+
+	//
+	g_pHDRTextureScreen = new XTextureSet(10);
+	//
+	DDSTextureSetLoad *pTextureSetLoad = new DDSTextureSetLoad();
+	pTextureSetLoad->m_pTextureSet = g_pHDRTextureScreen;
+	pTextureSetLoad->m_pFun = nullptr;
+	pTextureSetLoad->m_uParameter = 0;
+	//pTextureSetLoad->m_pResourceSet = nullptr;//pResourceSet;
+
+	for (UINT i = 0;i < 1;++i)
+	{
+		STextureLayer sTextureLayer;
+		sTextureLayer.m_sFileName = L"hdr.dds";
+		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
+	}
+
+	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
+
 	return true;
 }
 
@@ -32,6 +57,8 @@ void CleanHDR()
 {
 	SAFE_DELETE(g_pHDRRenderTarget);
 	SAFE_DELETE(g_pHDRShader);
+	SAFE_DELETE(g_pHDRShaderScreen);
+	SAFE_DELETE(g_pHDRTextureScreen);
 }
 
 void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
@@ -47,7 +74,7 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 	pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
 void HDR_ToneMaping(ID3D12GraphicsCommandList* pCommandList)
 {
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));

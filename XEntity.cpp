@@ -4,7 +4,7 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define ENTITY_TEXTURE_CSUBASE			10
+#define ENTITY_TEXTURE_CSUBASE			11
 
 extern XResourceThread					*g_pResourceThread;
 

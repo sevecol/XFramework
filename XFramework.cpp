@@ -11,6 +11,7 @@
 extern XCamera			g_Camera;
 extern XEntity			*g_pEntityNormal;
 extern XEntity			*g_pEntityAlpha;
+
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
 

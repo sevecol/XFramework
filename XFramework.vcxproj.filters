@@ -37,6 +37,12 @@
     <Filter Include="源文件\Loader">
       <UniqueIdentifier>{1dba8114-89aa-4031-bf4f-a8ad3321f3f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Resource\Helper">
+      <UniqueIdentifier>{7d573a9a-83ca-4690-b8b3-1220b3dfbac0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Resource\Helper">
+      <UniqueIdentifier>{bf31d37b-fc8c-4df4-a883-790ae03c3418}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">
@@ -93,6 +99,27 @@
     <ClInclude Include="XHDR.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Resource\dds.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\DDSTextureLoader.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\DirectXHelpers.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\LoaderHelpers.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\pch.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\PlatformHelpers.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ResourceUploadBatch.h">
+      <Filter>头文件\Resource\Helper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -145,6 +172,12 @@
     </ClCompile>
     <ClCompile Include="XHDR.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\ResourceUploadBatch.cpp">
+      <Filter>源文件\Resource\Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\DDSTextureLoader.cpp">
+      <Filter>源文件\Resource\Helper</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

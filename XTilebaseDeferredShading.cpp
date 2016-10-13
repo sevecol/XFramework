@@ -77,7 +77,7 @@ void DeferredShading_PrepareShading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetGraphicsRootDescriptorTable(2, g_pDRRenderTargets[0]->GetSRVGpuHandle());
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
 void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 {
 	//

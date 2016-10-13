@@ -146,6 +146,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Loader\XBinLoader.h" />
+    <ClInclude Include="Resource\dds.h" />
+    <ClInclude Include="Resource\DDSTextureLoader.h" />
+    <ClInclude Include="Resource\DirectXHelpers.h" />
+    <ClInclude Include="Resource\LoaderHelpers.h" />
+    <ClInclude Include="Resource\pch.h" />
+    <ClInclude Include="Resource\PlatformHelpers.h" />
+    <ClInclude Include="Resource\ResourceUploadBatch.h" />
     <ClInclude Include="Resource\XBuffer.h" />
     <ClInclude Include="Resource\XFrameResource.h" />
     <ClInclude Include="Resource\XGeometry.h" />
@@ -166,6 +173,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Loader\XBinLoader.cpp" />
+    <ClCompile Include="Resource\DDSTextureLoader.cpp" />
+    <ClCompile Include="Resource\ResourceUploadBatch.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />
     <ClCompile Include="Resource\XFrameResource.cpp" />
     <ClCompile Include="Resource\XGeometry.cpp" />
