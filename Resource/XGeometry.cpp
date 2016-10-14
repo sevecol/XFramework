@@ -5,13 +5,27 @@
 #include "..\DXSampleHelper.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::map<std::wstring, XGeometry*> XGeometry::m_mGeometry;
 XGeometry::~XGeometry()
 {
 	XBuffer::DeleteBuffer(m_pBuffer);
 }
 
-XGeometry* XGeometry::CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
+XGeometry* XGeometry::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
 {
+	//
+	XGeometry *pGeometry = nullptr;
+	std::map<std::wstring, XGeometry*>::iterator it = XGeometry::m_mGeometry.find(pName);
+	if (it != XGeometry::m_mGeometry.end())
+	{
+		pGeometry = it->second;
+		if (pGeometry)
+		{
+			pGeometry->AddRef();
+		}
+		return pGeometry;
+	}
+
 	if (!uVertexCount)
 	{
 		return nullptr;
@@ -30,7 +44,8 @@ XGeometry* XGeometry::CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT
 		return nullptr;
 	}
 
-	XGeometry *pGeometry = new XGeometry;
+	pGeometry = new XGeometry(pName);
+	XGeometry::m_mGeometry[pName] = pGeometry;
 
 	//
 	UINT uBufferSize = uVertexCount * uVertexStride + uIndexCount * uIndexSize;
@@ -92,4 +107,22 @@ XGeometry* XGeometry::CreateGeometry(UINT uVertexCount, UINT uVertexStride, UINT
 	}
 
 	return pGeometry;
+}
+
+void XGeometry::DeleteGeometry(XGeometry** ppGeometry)
+{
+	if (*ppGeometry)
+	{
+		int iRef = (*ppGeometry)->DecRef();
+		if (iRef <= 0)
+		{
+			std::map<std::wstring, XGeometry*>::iterator it = XGeometry::m_mGeometry.find((*ppGeometry)->GetName());
+			if (it != XGeometry::m_mGeometry.end())
+			{
+				XGeometry::m_mGeometry.erase(it);
+			}
+			SAFE_DELETE(*ppGeometry);
+		}
+		*ppGeometry = nullptr;
+	}
 }

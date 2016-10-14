@@ -54,7 +54,7 @@ public:
 		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
 		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
 
-		XGeometry *pGeometry = XGeometry::CreateGeometry(6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		XGeometry *pGeometry = XGeometry::CreateGeometry(L"UIGeometry",6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
 		if (pGeometry)
 		{
 /*
@@ -137,7 +137,8 @@ void UIManager::Init(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	// does not need to be unmapped for use by the GPU. In this sample, 
 	// the resource stays 'permenantly' mapped to avoid overhead with 
 	// mapping/unmapping each frame.
-	ThrowIfFailed(m_pConstantBufferUploadHeap->Map(0, nullptr, reinterpret_cast<void**>(&m_pConstantBuffers[0])));
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_pConstantBufferUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&m_pConstantBuffers[0])));
 
 	//
 /*

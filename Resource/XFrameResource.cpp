@@ -1,5 +1,6 @@
 
 #include "XFrameResource.h"
+#include "XBuffer.h"
 #include "..\DXSampleHelper.h"
 
 #define FRAMERESOURCE_RENDERTARGET_RBASE	0
@@ -45,7 +46,8 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	// does not need to be unmapped for use by the GPU. In this sample, 
 	// the resource stays 'permenantly' mapped to avoid overhead with 
 	// mapping/unmapping each frame.
-	ThrowIfFailed(m_pConstantUploadHeap->Map(0, nullptr, reinterpret_cast<void**>(&m_pConstantBuffers)));
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_pConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&m_pConstantBuffers)));
 
 	//
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
@@ -70,11 +72,12 @@ void XFrameResource::PreRender()
 	// re-recording.
 	ThrowIfFailed(m_pCommandList->Reset(m_pRenderCommandAllocator.Get(), nullptr));//m_pPipelineState.Get()));// ));
 
-	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pRootSignature.Get());
+	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pGraphicRootSignature.Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { g_pEngine->m_pCSUDescriptorHeap.Get() };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);

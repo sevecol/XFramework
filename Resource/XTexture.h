@@ -1,20 +1,29 @@
 
 #pragma once
 
+#include "XResource.h"
+
 #include "..\XDirectX12.h"
 #include "..\Thread\XResourceThread.h"
 
 #include <Wincodec.h>
+#include <map>
 
 //
-struct XTextureSet
+struct XTextureSet : public XResource
 {
+	enum eTextureType
+	{
+		ETEXTURETYPE_DDS = 0,
+		ETEXTURETYPE_OTHER
+	};
+
 	std::vector<ID3D12Resource*>			m_vpTexture;
 	UINT									m_uSBaseIndex;
 	D3D12_CPU_DESCRIPTOR_HANDLE				m_hSRVCpuHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE				m_hSRVGpuHandle;
 public:
-	XTextureSet(UINT uSBaseIndedx) :m_uSBaseIndex(uSBaseIndedx){}
+	XTextureSet(LPCWSTR pName,UINT uSBaseIndedx) :XResource(pName),m_uSBaseIndex(uSBaseIndedx){}
 	~XTextureSet();
 
 	void Release();
@@ -31,11 +40,15 @@ public:
 	}
 
 private:
-	static IWICImagingFactory		*m_pWIC;
+	static IWICImagingFactory						*m_pWIC;
+	static std::map<std::wstring, XTextureSet*>		m_mTextureSet;
 public:
 	static void Init(ID3D12Device* pDevice);
 	static void Clean();
 	static IWICImagingFactory *GetImagingFactory() { return m_pWIC; }
+
+	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureType eType = ETEXTURETYPE_DDS);
+	static void DeleteTextureSet(XTextureSet** ppTextureSet);
 };
 
 struct STextureLayer
@@ -60,6 +73,7 @@ struct TextureSetLoad : public IResourceLoad
 	UINT									m_uParameter;
 
 	//
+	TextureSetLoad() :m_pFun(nullptr), m_uParameter(0) {}
 	~TextureSetLoad();
 
 	virtual void LoadFromFile();

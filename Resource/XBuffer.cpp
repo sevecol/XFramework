@@ -56,7 +56,8 @@ void XBuffer::Init(ID3D12Device* pDevice)
 	// does not need to be unmapped for use by the GPU. In this sample, 
 	// the resource stays 'permenantly' mapped to avoid overhead with 
 	// mapping/unmapping each frame.
-	ThrowIfFailed(m_pBlockBufferDevice->Map(0, nullptr, reinterpret_cast<void**>(&uCpuAddress)));
+	CD3DX12_RANGE readRange(0, 0);
+	ThrowIfFailed(m_pBlockBufferDevice->Map(0, &readRange, reinterpret_cast<void**>(&uCpuAddress)));
 
 	//
 	m_pBlockBuffer = new XBlockBuffer[BLOCKBUFFER_NUM];

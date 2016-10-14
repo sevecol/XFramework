@@ -11,18 +11,10 @@ extern XResourceThread					*g_pResourceThread;
 //
 XTextureSet::~XTextureSet()
 {
-	for (UINT i = 0;i < m_vpTexture.size();++i)
-	{
-		if (m_vpTexture[i])
-		{
-			m_vpTexture[i]->Release();
-		}
-	}
-	m_vpTexture.clear();
+	Release();
 }
 void XTextureSet::Release()
 {
-	//UINT8 uLayerIndex = m_vpTexture.size();
 	for (UINT i = 0;i < m_vpTexture.size();++i)
 	{
 		if (m_vpTexture[i])
@@ -31,22 +23,10 @@ void XTextureSet::Release()
 		}
 	}
 	m_vpTexture.clear();
-	//GetXEngine()->GetTextureManager()->AddFreeIndex(m_uSrvIndex, uLayerIndex);
-}
-
-TextureSetLoad::~TextureSetLoad()
-{
-	for (UINT i = 0;i < m_vTextureLayer.size();++i)
-	{
-		if (m_vTextureLayer[i].m_pData)
-		{
-			delete[] m_vTextureLayer[i].m_pData;
-		}
-	}
-	m_vTextureLayer.clear();
 }
 
 IWICImagingFactory* XTextureSet::m_pWIC;
+std::map<std::wstring, XTextureSet*> XTextureSet::m_mTextureSet;
 IWICImagingFactory* _GetWIC()
 {
 	return XTextureSet::GetImagingFactory();
@@ -73,7 +53,79 @@ void XTextureSet::Clean()
 	}
 }
 
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureType eType)
+{
+	XTextureSet *pTextureSet = nullptr;
+	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
+	if (it != XTextureSet::m_mTextureSet.end())
+	{
+		pTextureSet = it->second;
+		if (pTextureSet)
+		{
+			pTextureSet->AddRef();
+		}
+		return pTextureSet;
+	}
+
+	//
+	pTextureSet = new XTextureSet(pName,uSRVIndex);
+	XTextureSet::m_mTextureSet[pName] = pTextureSet;
+
+	//
+	TextureSetLoad *pTextureSetLoad = nullptr;
+	switch (eType)
+	{
+	case ETEXTURETYPE_DDS:
+		pTextureSetLoad = new DDSTextureSetLoad();
+		break;
+	case ETEXTURETYPE_OTHER:
+		pTextureSetLoad = new TextureSetLoad();
+		break;
+	}
+	pTextureSetLoad->m_pTextureSet = pTextureSet;
+
+	for (UINT i = 0;i < uCount;++i)
+	{
+		STextureLayer sTextureLayer;
+		sTextureLayer.m_sFileName = pFileName[i];
+		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
+	}
+
+	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
+	return pTextureSet;
+}
+
+void XTextureSet::DeleteTextureSet(XTextureSet** ppTextureSet)
+{
+	if (*ppTextureSet)
+	{
+		int iRef = (*ppTextureSet)->DecRef();
+		if (iRef <= 0)
+		{
+			std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find((*ppTextureSet)->GetName());
+			if (it != XTextureSet::m_mTextureSet.end())
+			{
+				XTextureSet::m_mTextureSet.erase(it);
+			}
+			SAFE_DELETE(*ppTextureSet);
+		}
+		*ppTextureSet = nullptr;
+	}
+}
+
 //
+TextureSetLoad::~TextureSetLoad()
+{
+	for (UINT i = 0;i < m_vTextureLayer.size();++i)
+	{
+		if (m_vTextureLayer[i].m_pData)
+		{
+			delete[] m_vTextureLayer[i].m_pData;
+		}
+	}
+	m_vTextureLayer.clear();
+}
+
 extern UINT8* CreateTextureFromWIC(LPCWSTR pFileName, DXGI_FORMAT& Format, UINT& PixelSize, UINT& Width, UINT& Height);
 void TextureSetLoad::LoadFromFile()
 {

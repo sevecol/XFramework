@@ -40,21 +40,21 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 	rasterizerStateDesc.CullMode = D3D12_CULL_MODE_NONE;
 
 	// Describe and create the graphics pipeline state object (PSO).
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { pInputElementDescs, uInputElementCount };
-	psoDesc.pRootSignature = g_pEngine->m_pRootSignature.Get();
-	psoDesc.RasterizerState = rasterizerStateDesc;
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = depthStencilDesc;
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = uRenderTargetCount;
-	for (unsigned int i = 0;i < psoDesc.NumRenderTargets;++i)
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpsoDesc = {};
+	gpsoDesc.InputLayout = { pInputElementDescs, uInputElementCount };
+	gpsoDesc.pRootSignature = g_pEngine->m_pGraphicRootSignature.Get();
+	gpsoDesc.RasterizerState = rasterizerStateDesc;
+	gpsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	gpsoDesc.DepthStencilState = depthStencilDesc;
+	gpsoDesc.SampleMask = UINT_MAX;
+	gpsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	gpsoDesc.NumRenderTargets = uRenderTargetCount;
+	for (unsigned int i = 0;i < gpsoDesc.NumRenderTargets;++i)
 	{
-		psoDesc.RTVFormats[i] = RenderTargetFormat[i];
+		gpsoDesc.RTVFormats[i] = RenderTargetFormat[i];
 	}
-	psoDesc.SampleDesc.Count = 1;
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	gpsoDesc.SampleDesc.Count = 1;
+	gpsoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	//
 	{
@@ -76,12 +76,46 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 		ThrowIfFailed(hr);
 	}
 	
-
-	psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
-	psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
+	gpsoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
+	gpsoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
 	XShader* pShader = new XShader;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
 	
+	return pShader;
+}
+
+XComputeShader* XComputeShader::CreateComputeShaderFromFile(LPCWSTR pFileName, LPCSTR pCSEntryPoint, LPCSTR pCSTarget)
+{
+	//
+	ComPtr<ID3DBlob> computeShader;
+
+#ifdef _DEBUG
+	// Enable better shader debugging with the graphics debugging tools.
+	UINT compileFlags = 0;//D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+	UINT compileFlags = 0;
+#endif
+
+	//
+	{
+		ComPtr<ID3DBlob> pError;
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pCSEntryPoint, pCSTarget, compileFlags, 0, &computeShader, &pError);
+		if (hr != S_OK)
+		{
+			OutputDebugStringA((char*)(pError->GetBufferPointer()));
+		}
+		ThrowIfFailed(hr);
+	}
+
+	// Describe and create the compute pipeline state object (PSO).
+	D3D12_COMPUTE_PIPELINE_STATE_DESC cpsoDesc = {};
+	cpsoDesc.pRootSignature = g_pEngine->m_pComputeRootSignature.Get();
+	cpsoDesc.CS = { reinterpret_cast<UINT8*>(computeShader->GetBufferPointer()), computeShader->GetBufferSize() };
+	cpsoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+	XComputeShader* pShader = new XComputeShader;
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateComputePipelineState(&cpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+
 	return pShader;
 }
