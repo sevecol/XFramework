@@ -164,13 +164,13 @@
     <ClInclude Include="UI\UIImgWindow.h" />
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\UIWindow.h" />
+    <ClInclude Include="XAlphaRender.h" />
     <ClInclude Include="XCamera.h" />
+    <ClInclude Include="XDeferredShading.h" />
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
-    <ClInclude Include="XOrderIndependentTransparency.h" />
-    <ClInclude Include="XTilebaseDeferredShading.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Loader\XBinLoader.cpp" />
@@ -185,13 +185,13 @@
     <ClCompile Include="UI\UIImgWindow.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\UIWindow.cpp" />
+    <ClCompile Include="XAlphaRender.cpp" />
     <ClCompile Include="XCamera.cpp" />
+    <ClCompile Include="XDeferredShading.cpp" />
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
-    <ClCompile Include="XOrderIndependentTransparency.cpp" />
-    <ClCompile Include="XTilebaseDeferredShading.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

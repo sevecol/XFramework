@@ -64,6 +64,7 @@ public:
 	ComPtr<ID3D12Resource>				m_pDepthStencil;
 
 	ComPtr<ID3D12DescriptorHeap>		m_pCSUDescriptorHeap;
+	ComPtr<ID3D12DescriptorHeap>		m_pUDescriptorHeap;
 	UINT								m_uCSUDescriptorSize;
 
 	//

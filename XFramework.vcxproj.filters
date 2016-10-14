@@ -75,9 +75,6 @@
     <ClInclude Include="Thread\XResourceThread.h">
       <Filter>头文件\Thread</Filter>
     </ClInclude>
-    <ClInclude Include="XTilebaseDeferredShading.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="XEntity.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -92,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="Resource\XTexture.h">
       <Filter>头文件\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="XOrderIndependentTransparency.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="XHDR.h">
       <Filter>头文件</Filter>
@@ -122,6 +116,12 @@
     </ClInclude>
     <ClInclude Include="Resource\XResource.h">
       <Filter>头文件\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="XAlphaRender.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XDeferredShading.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -155,9 +155,6 @@
     <ClCompile Include="Resource\XFrameResource.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="XTilebaseDeferredShading.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="XEntity.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -166,9 +163,6 @@
     </ClCompile>
     <ClCompile Include="Resource\XTexture.cpp">
       <Filter>源文件\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="XOrderIndependentTransparency.cpp">
-      <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Loader\XBinLoader.cpp">
       <Filter>源文件\Loader</Filter>
@@ -181,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="Resource\DDSTextureLoader.cpp">
       <Filter>源文件\Resource\Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="XAlphaRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XDeferredShading.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

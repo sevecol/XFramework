@@ -1,7 +1,7 @@
 
 #include "XDirectX12.h"
-#include "XTilebaseDeferredShading.h"
-#include "XOrderIndependentTransparency.h"
+#include "XDeferredShading.h"
+#include "XAlphaRender.h"
 #include "XHDR.h"
 
 #include "Resource\XBuffer.h"
@@ -182,6 +182,11 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pCSUDescriptorHeap)));
 
+	CSUHeapDesc.NumDescriptors = 5;
+	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pUDescriptorHeap)));
+
 	//
 	g_pEngine->m_uCSUDescriptorSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -284,7 +289,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		g_pFrameResource[n]->InitInstance(n, g_pEngine->m_pDevice, g_pEngine->m_pSwapChain.Get());
 	}
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
-	InitOrderIndependentTransparency(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	//
@@ -312,7 +317,7 @@ bool Render()
 	///////////////////////////////////////////////////////////////////////
 	// FrameResource
 	pFrameResource->PreRender();
-	OrderIndependentTransparency_PreRender(pCommandList);
+	AlphaRender_PreRender(pCommandList);
 
 	///////////////////////////////////////////////////////////////////////
 	// DeferredShading
@@ -331,12 +336,12 @@ bool Render()
 	///////////////////////////////////////////////////////////////////////
 	// ForwordShading
 	// Alpha Blend
-	OrderIndependentTransparency_Begin(pCommandList);
+	AlphaRender_Begin(pCommandList);
 	if (g_pEntityAlpha)
 	{
 		g_pEntityAlpha->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
-	OrderIndependentTransparency_End(pCommandList);
+	AlphaRender_End(pCommandList);
 
 	// AddAll
 
@@ -416,7 +421,7 @@ void Clean()
 	XTextureSet::Clean();
 
 	CleanDeferredShading();
-	CleanOrderIndependentTransparency();
+	CleanAlphaRender();
 	CleanHDR();
 
 	//

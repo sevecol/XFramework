@@ -16,6 +16,8 @@ XComputeShader							*g_pHDRShaderLuminance		= nullptr;
 XTextureSet								*g_pHDRTextureScreen		= nullptr;
 XShader									*g_pHDRShaderScreen			= nullptr;
 
+CD3DX12_CPU_DESCRIPTOR_HANDLE			g_hHDRUAVCpuHandle[2];
+
 //
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
@@ -25,6 +27,22 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	g_pHDRStructuredBuffer[1] = new XStructuredBuffer<float>(pDevice, 10000, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 12, g_pEngine->m_uCSUDescriptorSize));
 	g_pHDRStructuredBuffer[1]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, g_pEngine->m_uCSUDescriptorSize));
 
+	for (UINT i = 0;i < 2;++i)
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UDesc = {};
+		UDesc.Format = DXGI_FORMAT_UNKNOWN;
+		UDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+		UDesc.Buffer.FirstElement = 0;
+		UDesc.Buffer.NumElements = 10000;
+		UDesc.Buffer.StructureByteStride = sizeof(float);
+		UDesc.Buffer.CounterOffsetInBytes = 0;
+		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+		g_hHDRUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 3+i, g_pEngine->m_uCSUDescriptorSize);
+		pDevice->CreateUnorderedAccessView(g_pHDRStructuredBuffer[i]->GetResource(), nullptr, &UDesc, g_hHDRUAVCpuHandle[i]);
+	}
+
+	//
 	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, 6, 9);
 
 	//
@@ -90,6 +108,11 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetGraphicsRootDescriptorTable(2, g_pHDRRenderTarget->GetSRVGpuHandle());//CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 9, g_uCSUDescriptorSize));
 
 	// ComputeShader
+	FLOAT fClearValue[] = { 0.0f,0.0f, };
+	pCommandList->ClearUnorderedAccessViewFloat(g_pHDRStructuredBuffer[0]->GetUAVGpuHandle(), g_hHDRUAVCpuHandle[0], g_pHDRStructuredBuffer[0]->GetResource(), &fClearValue[0], 0, nullptr);
+	pCommandList->ClearUnorderedAccessViewFloat(g_pHDRStructuredBuffer[1]->GetUAVGpuHandle(), g_hHDRUAVCpuHandle[1], g_pHDRStructuredBuffer[1]->GetResource(), &fClearValue[1], 0, nullptr);
+
+	//
 	pCommandList->SetPipelineState(g_pHDRShaderLuminance->GetPipelineState());
 	pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
 
