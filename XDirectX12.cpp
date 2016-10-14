@@ -176,8 +176,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,2 for HDR,2 for Entity's Texture
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 2 + 2;
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,4 for HDR (RenderTraget,UAV),2 for Entity's Texture
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 4 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pCSUDescriptorHeap)));
@@ -186,40 +186,78 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_uCSUDescriptorSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//
-	CD3DX12_DESCRIPTOR_RANGE ranges[4];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
-	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
-	ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
-	ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
+	{
+		CD3DX12_DESCRIPTOR_RANGE granges[4];
+		granges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
+		granges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
+		granges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
+		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
-	CD3DX12_ROOT_PARAMETER rootParameters[4];
-	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParameters[2].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameters[3].InitAsDescriptorTable(1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
+		CD3DX12_ROOT_PARAMETER grootParameters[4];
+		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_VERTEX);
+		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_PIXEL);
+		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_PIXEL);
 
-	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.MipLODBias = 0;
-	sampler.MaxAnisotropy = 0;
-	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler.MinLOD = 0.0f;
-	sampler.MaxLOD = D3D12_FLOAT32_MAX;
-	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 0;
-	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		D3D12_STATIC_SAMPLER_DESC sampler = {};
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.MipLODBias = 0;
+		sampler.MaxAnisotropy = 0;
+		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		sampler.MinLOD = 0.0f;
+		sampler.MaxLOD = D3D12_FLOAT32_MAX;
+		sampler.ShaderRegister = 0;
+		sampler.RegisterSpace = 0;
+		sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		CD3DX12_ROOT_SIGNATURE_DESC grootSignatureDesc;
+		grootSignatureDesc.Init(_countof(grootParameters), grootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&g_pEngine->m_pRootSignature)));
+		ComPtr<ID3DBlob> signature;
+		ComPtr<ID3DBlob> error;
+		ThrowIfFailed(D3D12SerializeRootSignature(&grootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+		ThrowIfFailed(g_pEngine->m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&g_pEngine->m_pGraphicRootSignature)));
+	}
+
+	//
+	{
+		CD3DX12_DESCRIPTOR_RANGE cranges[3];
+		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
+		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);			// Texture
+		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0);			// UAV
+
+		CD3DX12_ROOT_PARAMETER crootParameters[3];
+		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
+
+		//D3D12_STATIC_SAMPLER_DESC sampler = {};
+		//sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		//sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		//sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		//sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		//sampler.MipLODBias = 0;
+		//sampler.MaxAnisotropy = 0;
+		//sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		//sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		//sampler.MinLOD = 0.0f;
+		//sampler.MaxLOD = D3D12_FLOAT32_MAX;
+		//sampler.ShaderRegister = 0;
+		//sampler.RegisterSpace = 0;
+		//sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		CD3DX12_ROOT_SIGNATURE_DESC crootSignatureDesc;
+		crootSignatureDesc.Init(_countof(crootParameters), crootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
+	
+		ComPtr<ID3DBlob> signature;
+		ComPtr<ID3DBlob> error;
+		ThrowIfFailed(D3D12SerializeRootSignature(&crootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+		ThrowIfFailed(g_pEngine->m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&g_pEngine->m_pComputeRootSignature)));
+	}
 
 	//
 	g_pEngine->m_Viewport.TopLeftX = 0;
@@ -274,6 +312,7 @@ bool Render()
 	///////////////////////////////////////////////////////////////////////
 	// FrameResource
 	pFrameResource->PreRender();
+	OrderIndependentTransparency_PreRender(pCommandList);
 
 	///////////////////////////////////////////////////////////////////////
 	// DeferredShading
@@ -304,7 +343,7 @@ bool Render()
 	//
 	RenderFullScreen(pCommandList, g_pHDRShaderScreen, g_pHDRTextureScreen);
 	pFrameResource->BeginRender();
-	HDR_ToneMaping(pCommandList);
+	HDR_ToneMapping(pCommandList);
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
 	pFrameResource->EndRender();
 
@@ -353,6 +392,7 @@ void WaitForGpu()
 	//m_FrameResource[m_uFrameIndex].m_uFenceValue++;
 }
 
+XGeometry *pFullScreenGeometry = nullptr;
 void Clean()
 {
 	WaitForGpu();
@@ -360,6 +400,10 @@ void Clean()
 	//
 	SAFE_DELETE(g_pEntityNormal);
 	SAFE_DELETE(g_pEntityAlpha);
+	if (pFullScreenGeometry)
+	{
+		XGeometry::DeleteGeometry(&pFullScreenGeometry);
+	}
 	//g_UIManager.Clean();
 
 	for (UINT i = 0;i < FRAME_NUM;++i)
@@ -391,7 +435,6 @@ void Clean()
 }
 
 //
-XGeometry *pFullScreenGeometry = nullptr;
 class FullScreenResource : public IResourceLoad
 {
 public:
@@ -422,7 +465,7 @@ public:
 		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
 		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
 
-		XGeometry *pGeometry = XGeometry::CreateGeometry(6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		XGeometry *pGeometry = XGeometry::CreateGeometry(L"FullScreenGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
 		if (pGeometry)
 		{
 			pFullScreenGeometry = pGeometry;

@@ -156,6 +156,7 @@
     <ClInclude Include="Resource\XBuffer.h" />
     <ClInclude Include="Resource\XFrameResource.h" />
     <ClInclude Include="Resource\XGeometry.h" />
+    <ClInclude Include="Resource\XResource.h" />
     <ClInclude Include="Resource\XShader.h" />
     <ClInclude Include="Resource\XTexture.h" />
     <ClInclude Include="StepTimer.h" />

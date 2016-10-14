@@ -3,19 +3,28 @@
 
 #include "Resource\XShader.h"
 #include "Resource\XTexture.h"
+#include "Resource\XBuffer.h"
 
 extern XEngine							*g_pEngine;
 extern XResourceThread					*g_pResourceThread;
 
-XShader									*g_pHDRShader		= nullptr;
-XRenderTarget							*g_pHDRRenderTarget = nullptr;
+IStructuredBuffer						*g_pHDRStructuredBuffer[2];
+XRenderTarget							*g_pHDRRenderTarget			= nullptr;
+XShader									*g_pHDRShaderToneMapping	= nullptr;
+XComputeShader							*g_pHDRShaderLuminance		= nullptr;
 
-XShader									*g_pHDRShaderScreen = nullptr;
-XTextureSet								*g_pHDRTextureScreen= nullptr;
+XTextureSet								*g_pHDRTextureScreen		= nullptr;
+XShader									*g_pHDRShaderScreen			= nullptr;
 
 //
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
+	//
+	g_pHDRStructuredBuffer[0] = new XStructuredBuffer<float>(pDevice, 10000, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 11, g_pEngine->m_uCSUDescriptorSize));
+	g_pHDRStructuredBuffer[0]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, g_pEngine->m_uCSUDescriptorSize));
+	g_pHDRStructuredBuffer[1] = new XStructuredBuffer<float>(pDevice, 10000, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 12, g_pEngine->m_uCSUDescriptorSize));
+	g_pHDRStructuredBuffer[1]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, g_pEngine->m_uCSUDescriptorSize));
+
 	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, 6, 9);
 
 	//
@@ -27,38 +36,38 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	};
 
 	DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
-	g_pHDRShader = XShader::CreateShaderFromFile(L"shaders_hdr_tonemapping.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
+	g_pHDRShaderToneMapping = XShader::CreateShaderFromFile(L"shaders_hdr_tonemapping.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
+	g_pHDRShaderLuminance = XComputeShader::CreateComputeShaderFromFile(L"shaders_hdr_luminance.hlsl", "CSMain", "cs_5_0");
 
+	//
 	Format[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	g_pHDRShaderScreen = XShader::CreateShaderFromFile(L"shaders_hdr_screen.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, 1, Format);
 
 	//
-	g_pHDRTextureScreen = new XTextureSet(10);
-	//
-	DDSTextureSetLoad *pTextureSetLoad = new DDSTextureSetLoad();
-	pTextureSetLoad->m_pTextureSet = g_pHDRTextureScreen;
-	pTextureSetLoad->m_pFun = nullptr;
-	pTextureSetLoad->m_uParameter = 0;
-	//pTextureSetLoad->m_pResourceSet = nullptr;//pResourceSet;
-
-	for (UINT i = 0;i < 1;++i)
-	{
-		STextureLayer sTextureLayer;
-		sTextureLayer.m_sFileName = L"hdr.dds";
-		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
-	}
-
-	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
+	LPCWSTR lpTextureFileName[] = {L"hdr.dds"};
+	g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, 10);
 
 	return true;
 }
 
 void CleanHDR()
 {
+	// StructuredBuffer
+	for (UINT i = 0;i < 2;++i)
+	{
+		SAFE_DELETE(g_pHDRStructuredBuffer[i]);
+	}
+
+	// RenderTarget
 	SAFE_DELETE(g_pHDRRenderTarget);
-	SAFE_DELETE(g_pHDRShader);
+
+	// Shader
+	SAFE_DELETE(g_pHDRShaderToneMapping);
+	SAFE_DELETE(g_pHDRShaderLuminance);
 	SAFE_DELETE(g_pHDRShaderScreen);
-	SAFE_DELETE(g_pHDRTextureScreen);
+
+	// Texture
+	XTextureSet::DeleteTextureSet(&g_pHDRTextureScreen);
 }
 
 void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
@@ -75,12 +84,23 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
-void HDR_ToneMaping(ID3D12GraphicsCommandList* pCommandList)
+void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 {
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-	
 	pCommandList->SetGraphicsRootDescriptorTable(2, g_pHDRRenderTarget->GetSRVGpuHandle());//CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 9, g_uCSUDescriptorSize));
 
+	// ComputeShader
+	pCommandList->SetPipelineState(g_pHDRShaderLuminance->GetPipelineState());
+	pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
+
+	pCommandList->SetComputeRootDescriptorTable(0, g_pHDRTextureScreen->GetSRVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(1, g_pHDRStructuredBuffer[0]->GetUAVGpuHandle());
+
 	//
-	RenderFullScreen(pCommandList, g_pHDRShader);
+	pCommandList->Dispatch(1280/16, 720/16, 1);
+
+	// GetResult?
+
+	// ToneMapping
+	RenderFullScreen(pCommandList, g_pHDRShaderToneMapping);
 }

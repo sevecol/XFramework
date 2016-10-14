@@ -43,7 +43,7 @@ public:
 	bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
 	bool InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
 	//virtual bool InitMaterial(LPCWSTR pName, UINT uWidth, UINT uHeight, UINT uPixelSize, CreateTextureFun pFun, UINT uParameter);
-	bool InitTexture(UINT uCount, LPCWSTR pDetailName[]);
+	bool InitTexture(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[],XTextureSet::eTextureType eType = XTextureSet::ETEXTURETYPE_DDS);
 	bool InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
 	//virtual bool InitSkeleton(LPCWSTR pFileName);
 	//virtual bool InitAnimate(LPCWSTR pFileName);

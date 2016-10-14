@@ -50,7 +50,8 @@ public:
 	ID3D12Device						*m_pDevice;
 	ComPtr<IDXGISwapChain3>				m_pSwapChain;
 	ComPtr<ID3D12CommandQueue>			m_pRenderCommandQueue;
-	ComPtr<ID3D12RootSignature>			m_pRootSignature;
+	ComPtr<ID3D12RootSignature>			m_pGraphicRootSignature;
+	ComPtr<ID3D12RootSignature>			m_pComputeRootSignature;
 
 	HANDLE								m_hFenceEvent;
 	ComPtr<ID3D12Fence>					m_pFence;

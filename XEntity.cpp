@@ -4,7 +4,7 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define ENTITY_TEXTURE_CSUBASE			11
+#define ENTITY_TEXTURE_CSUBASE			13
 
 extern XResourceThread					*g_pResourceThread;
 
@@ -21,9 +21,9 @@ sVertex *pData = nullptr;
 XEntity::XEntity():m_pTextureSet(nullptr),m_pShader(nullptr),m_pGeometry(nullptr){}
 XEntity::~XEntity()
 {
-	SAFE_DELETE(m_pTextureSet);
+	XTextureSet::DeleteTextureSet(&m_pTextureSet);
 	SAFE_DELETE(m_pShader);
-	SAFE_DELETE(m_pGeometry);
+	XGeometry::DeleteGeometry(&m_pGeometry);
 }
 
 //
@@ -92,27 +92,9 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 	return true;
 }
 */
-bool XEntity::InitTexture(UINT uCount, LPCWSTR pDetailName[])
+bool XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType)
 {
-	m_pTextureSet = new XTextureSet(ENTITY_TEXTURE_CSUBASE);
-	//GetXEngine()->GetTextureManager()->CreateTextureFromFile(pFileName, uCount, pDetailName, this);
-
-	//
-	TextureSetLoad *pTextureSetLoad = new TextureSetLoad();
-	pTextureSetLoad->m_pTextureSet = m_pTextureSet;
-	pTextureSetLoad->m_pFun = nullptr;
-	pTextureSetLoad->m_uParameter = 0;
-	//pTextureSetLoad->m_pResourceSet = nullptr;//pResourceSet;
-
-	for (UINT i = 0;i < uCount;++i)
-	{
-		STextureLayer sTextureLayer;
-		sTextureLayer.m_sFileName = pDetailName[i];
-		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
-	}
-
-	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
-
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, 11, eType);
 	return true;
 }
 
@@ -141,7 +123,7 @@ bool XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride,
 	g_pDevice->CreateConstantBufferView(&cbvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
 */
 	//
-	m_pGeometry = XGeometry::CreateGeometry(uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData);
+	m_pGeometry = XGeometry::CreateGeometry(pName,uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData);
 	if (m_pGeometry)
 	{
 		//m_AxisAlignedBoundingBox.Add(m_pGeometry->m_vMin);

@@ -120,6 +120,9 @@
     <ClInclude Include="Resource\ResourceUploadBatch.h">
       <Filter>头文件\Resource\Helper</Filter>
     </ClInclude>
+    <ClInclude Include="Resource\XResource.h">
+      <Filter>头文件\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">

@@ -8,4 +8,4 @@ bool InitHDR(ID3D12Device* pDevice, UINT uWidth, UINT uHeight);
 void CleanHDR();
 
 void HDR_Bind(ID3D12GraphicsCommandList* pCommandList);
-void HDR_ToneMaping(ID3D12GraphicsCommandList* pCommandList);
+void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList);

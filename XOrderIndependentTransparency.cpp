@@ -15,7 +15,7 @@ enum eOrderIndependentTransparencyBuffer
 
 	EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNT
 };
-IStructuredBuffer						*p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNT];
+IStructuredBuffer						*g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNT];
 CD3DX12_CPU_DESCRIPTOR_HANDLE			g_hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNT];
 
 struct SPixelLink
@@ -41,14 +41,14 @@ bool InitOrderIndependentTransparency(ID3D12Device* pDevice,UINT uWidth, UINT uH
 		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 6 + i, g_pEngine->m_uCSUDescriptorSize);
 	}
 
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER] = new XStructuredBuffer<UINT>(pDevice, 1, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]);
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]);
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER] = new XStructuredBuffer<UINT>(pDevice, 1, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]);
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]);
 
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK] = new XStructuredBuffer<SPixelLink>(pDevice, uWidth*uHeight*MAX_PIXELS, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK], true, p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetResource());
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK]);
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK] = new XStructuredBuffer<SPixelLink>(pDevice, uWidth*uHeight*MAX_PIXELS, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK], true, g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetResource());
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_PIXELLINK]);
 
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET] = new XStructuredBuffer<UINT>(pDevice, uWidth*uHeight, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]);
-	p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]);
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET] = new XStructuredBuffer<UINT>(pDevice, uWidth*uHeight, hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]);
+	g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->SetUAVGpuHandle(hUAVGpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]);
 
 	//
 	// Describe and create a constant buffer view (CBV), Shader resource
@@ -73,7 +73,7 @@ bool InitOrderIndependentTransparency(ID3D12Device* pDevice,UINT uWidth, UINT uH
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
 		g_hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCpuDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, g_pEngine->m_uCSUDescriptorSize);
-		pDevice->CreateUnorderedAccessView(p_pStructuredBuffer[i]->GetResource(), nullptr, &UDesc, g_hUAVCpuHandle[i]);
+		pDevice->CreateUnorderedAccessView(g_pOITStructuredBuffer[i]->GetResource(), nullptr, &UDesc, g_hUAVCpuHandle[i]);
 	}
 
 	//
@@ -92,18 +92,23 @@ void CleanOrderIndependentTransparency()
 {
 	for (UINT i = 0;i < EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNT;++i)
 	{
-		SAFE_DELETE(p_pStructuredBuffer[i]);
+		SAFE_DELETE(g_pOITStructuredBuffer[i]);
 	}
 	SAFE_DELETE(g_pOrderIndependentTransparencyShader);
+}
+
+void OrderIndependentTransparency_PreRender(ID3D12GraphicsCommandList* pCommandList)
+{
+	pCommandList->SetGraphicsRootDescriptorTable(3, g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle());
 }
 
 void OrderIndependentTransparency_Begin(ID3D12GraphicsCommandList* pCommandList)
 {
 	UINT uClearValue[] = { 0,0xFFFFFFFF, };
-	pCommandList->ClearUnorderedAccessViewUint(p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle(), g_hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER], p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetResource(), &uClearValue[0], 0, nullptr);
-	pCommandList->ClearUnorderedAccessViewUint(p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->GetUAVGpuHandle(), g_hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET], p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->GetResource(), &uClearValue[1], 0, nullptr);
+	pCommandList->ClearUnorderedAccessViewUint(g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle(), g_hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER], g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetResource(), &uClearValue[0], 0, nullptr);
+	pCommandList->ClearUnorderedAccessViewUint(g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->GetUAVGpuHandle(), g_hUAVCpuHandle[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET], g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_STARTOFFSET]->GetResource(), &uClearValue[1], 0, nullptr);
 
-	pCommandList->SetGraphicsRootDescriptorTable(3, p_pStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(3, g_pOITStructuredBuffer[EORDERINDEPENDENTTRANSPARENCYBUFFER_COUNTER]->GetUAVGpuHandle());
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
