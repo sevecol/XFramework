@@ -37,8 +37,8 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 
 	for (UINT i = 0;i < EALPHARENDERBUFFER_COUNT;++i)
 	{
-		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 6 + i, g_pEngine->m_uCSUDescriptorSize);
-		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 6 + i, g_pEngine->m_uCSUDescriptorSize);
+		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 6 + i, g_pEngine->m_uCSUDescriptorSize);
+		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), 6 + i, g_pEngine->m_uCSUDescriptorSize);
 	}
 
 	g_pOITStructuredBuffer[EALPHARENDERBUFFER_COUNTER] = new XStructuredBuffer<UINT>(pDevice, 1, hUAVCpuHandle[EALPHARENDERBUFFER_COUNTER]);
@@ -64,7 +64,7 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		g_hOITUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, g_pEngine->m_uCSUDescriptorSize);
+		g_hOITUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), i, g_pEngine->m_uCSUDescriptorSize);
 		pDevice->CreateUnorderedAccessView(g_pOITStructuredBuffer[i]->GetResource(), nullptr, &UDesc, g_hOITUAVCpuHandle[i]);
 	}
 

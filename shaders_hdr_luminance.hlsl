@@ -6,7 +6,8 @@
 groupshared float			g_Total[BLOCK_THREADS];
 
 Texture2D				g_Texture : register(t0);
-RWStructuredBuffer<float>		g_Result  : register(u1);
+RWStructuredBuffer<float>		g_Result0 : register(u0);
+//RWStructuredBuffer<float>		g_Result1 : register(u1);
 
 uint					g_DispatchX = 80;//1280/16
 uint					g_DispatchY = 45;//720/16
@@ -14,7 +15,14 @@ static const float4 			c_luminance			= float4(.299, .587, .114, 0);
 
 [numthreads(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1)]
 void CSMain( uint3 groupId : SV_GroupID, uint3 dispatchId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint groupIndex : SV_GroupIndex )
-{	
+{
+	if (groupIndex == 0)
+	{
+		g_Result0[0] = 2.0f;
+		//g_Result1[0] = 4.0f;
+	}
+
+/*
 	// Read texel data without any filtering or sampling.
 	uint3  location1	= uint3(dispatchId.xy, 0);
 	uint3  location2	= uint3(dispatchId.xy + uint2(BLOCK_SIZE_X * g_DispatchX, 0), 0);
@@ -75,4 +83,5 @@ void CSMain( uint3 groupId : SV_GroupID, uint3 dispatchId : SV_DispatchThreadID,
 	{
 		g_Result[groupId.y * g_DispatchX + groupId.x] = g_Total[0];
 	}
+*/
 }

@@ -94,7 +94,7 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 */
 bool XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, 11, eType);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, ENTITY_TEXTURE_CSUBASE, eType);
 	return true;
 }
 
