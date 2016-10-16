@@ -206,13 +206,13 @@ void TextureSetLoad::PostLoad()
 
 		//
 		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex() + i, g_pEngine->m_uCSUDescriptorSize));
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex() + i, g_pEngine->m_uCSUDescriptorSize));
 
 		//
 		m_pTextureSet->m_vpTexture.push_back(pTexture);
 	}
-	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
-	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
 
 	//m_pResourceSet->IncreaseResourceComplate();
 }
@@ -259,9 +259,9 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 
-	g_pEngine->m_pDevice->CreateShaderResourceView(pRenderTarget->m_pRenderTarget.Get(), &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize));
-	pRenderTarget->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
-	pRenderTarget->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
+	g_pEngine->m_pDevice->CreateShaderResourceView(pRenderTarget->m_pRenderTarget.Get(), &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize));
+	pRenderTarget->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
+	pRenderTarget->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
 
 	return pRenderTarget;
 }
@@ -302,13 +302,13 @@ void DDSTextureSetLoad::LoadFromFile()
 
 		//
 		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize));
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize));
 
 		//
 		m_pTextureSet->m_vpTexture.push_back(pTexture);
 	}
-	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
-	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
 }
 
 void DDSTextureSetLoad::PostLoad()

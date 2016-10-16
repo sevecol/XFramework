@@ -53,7 +53,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 	ConstantDesc.BufferLocation = m_pConstantUploadHeap->GetGPUVirtualAddress();
 	ConstantDesc.SizeInBytes = sizeof(XFrameResource::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_pEngine->m_uCSUDescriptorSize));
 }
 
 extern D3D12_VIEWPORT						g_Viewport;
@@ -74,10 +74,10 @@ void XFrameResource::PreRender()
 
 	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pGraphicRootSignature.Get());
 
-	ID3D12DescriptorHeap* ppHeaps[] = { g_pEngine->m_pCSUDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* ppHeaps[] = { g_pEngine->m_pGpuCSUDescriptorHeap.Get() };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
-	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);
