@@ -31,6 +31,18 @@ DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
 
 //
 XEngine								*g_pEngine;
+ID3D12DescriptorHeap				*GetCpuCSUDHeap()
+{
+	return g_pEngine->m_pCpuCSUDescriptorHeap.Get();
+}
+ID3D12DescriptorHeap				*GetGpuCSUDHeap()
+{
+	return g_pEngine->m_pGpuCSUDescriptorHeap.Get();
+}
+UINT								GetCSUDHeapSize()
+{
+	return g_pEngine->m_uCSUDescriptorSize;
+}
 
 // FrameResource
 UINT								g_uFrameIndex;
