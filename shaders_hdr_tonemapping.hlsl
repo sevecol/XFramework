@@ -27,9 +27,11 @@ PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, flo
 	return result;
 }
 
-cbuffer bbbb : register(b1)
+cbuffer FrameBuffer : register(b1)
 {
-	float gfValue;
+	uint2 uDispatch;					// x and y dimensions of the Dispatch call
+	uint2 uScreen;						// Size of the input Texture2D
+	float fValue;
 };
 
 Texture2D g_texture0 : register(t0);
@@ -44,11 +46,12 @@ static const float	luminance		= 0.45f;
 float4 PSMain(PSInput input) : SV_TARGET
 {
 	float4 color = g_texture0.Sample(g_sampler, input.uv);
-	//return color;
+	if (input.uv.x>0.5f)
+		return color;
 
 	// Tone mapping
 	//color.rgb *= c_middleGray / (luminance + 0.001f);
-	color.rgb *= c_middleGray / (gfValue + 0.001f);
+	color.rgb *= c_middleGray / (fValue + 0.001f);
 	color.rgb *= (1.f + color.rgb / c_luminanceWhite);
 	color.rgb /= (1.f + color.rgb);
 

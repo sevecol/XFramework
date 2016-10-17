@@ -78,6 +78,8 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		// mapping/unmapping each frame.
 		CD3DX12_RANGE readRange(0, 0);
 		ThrowIfFailed(g_pHDRConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&g_pHDRConstantBuffers)));
+		g_pHDRConstantBuffers->uDispatchX = g_uDispatchX;
+		g_pHDRConstantBuffers->uDispatchY = g_uDispatchY;
 
 		//
 		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};

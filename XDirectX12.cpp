@@ -212,7 +212,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
 		CD3DX12_ROOT_PARAMETER grootParameters[4];
-		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
@@ -252,21 +252,6 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
-
-		//D3D12_STATIC_SAMPLER_DESC sampler = {};
-		//sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-		//sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		//sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		//sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		//sampler.MipLODBias = 0;
-		//sampler.MaxAnisotropy = 0;
-		//sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-		//sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		//sampler.MinLOD = 0.0f;
-		//sampler.MaxLOD = D3D12_FLOAT32_MAX;
-		//sampler.ShaderRegister = 0;
-		//sampler.RegisterSpace = 0;
-		//sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 		CD3DX12_ROOT_SIGNATURE_DESC crootSignatureDesc = CD3DX12_ROOT_SIGNATURE_DESC(_countof(crootParameters), crootParameters, 0, nullptr);
 

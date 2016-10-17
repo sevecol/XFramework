@@ -12,6 +12,8 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList);
 
 struct HDRConstantBuffer
 {
+	UINT			uDispatchX, uDispatchY;
+	UINT			uScreenX, uScreenY;
 	FLOAT			fValue;
-	FLOAT			fPadding[63];
+	FLOAT			fPadding[59];
 };
