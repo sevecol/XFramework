@@ -169,8 +169,10 @@ void CleanHDR()
 
 	// Shader
 	SAFE_DELETE(g_pHDRShaderToneMapping);
-	SAFE_DELETE(g_pHDRShaderLuminance[0]);
-	SAFE_DELETE(g_pHDRShaderLuminance[1]);
+	for (UINT i = 0;i < EHDRLUMINANCEPHASE_COUNT;++i)
+	{
+		SAFE_DELETE(g_pHDRShaderLuminance[i]);
+	}
 	SAFE_DELETE(g_pHDRShaderScreen);
 
 	// Texture
