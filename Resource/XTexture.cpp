@@ -297,7 +297,8 @@ void DDSTextureSetLoad::LoadFromFile()
 		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[0].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
 
 		//
-		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, 1);
+		UINT uCount = subresources.size();
+		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, uCount);
 
 		// Create the GPU upload buffer.
 		ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
@@ -309,7 +310,7 @@ void DDSTextureSetLoad::LoadFromFile()
 			IID_PPV_ARGS(&m_vTextureLayer[i].m_pTextureUpload)));
 
 		//
-		UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_vTextureLayer[i].m_pTextureUpload.Get(), 0, 0, 1, &subresources[0]);
+		UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_vTextureLayer[i].m_pTextureUpload.Get(), 0, 0, uCount, &subresources[0]);
 		g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 		// Describe and create a SRV for the texture.
