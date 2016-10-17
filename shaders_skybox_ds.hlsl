@@ -11,16 +11,15 @@
 
 struct VSInput
 {
-	float3 position	: POSITION;
-	float3 normal	: NORMAL;
-	float2 uv		: TEXCOORD0;
-	float3 tangent	: TANGENT;
+	float4 position	: POSITION;
+	float4 color	: COLOR;
+	float2 uv	: TEXCOORD0;
 };
 
 struct PSInput
 {
 	float4 position	: SV_POSITION;
-	float2 uv		: TEXCOORD0;
+	float3 uv	: TEXCOORD0;
 };
 
 cbuffer FrameBuffer : register(b0)
@@ -33,15 +32,14 @@ PSInput VSMain(VSInput input)
 {
 	PSInput result;
 	
-	result.position = mul(float4(input.position, 1.0f), g_mWorldViewProj);
-	result.uv = input.uv;
+	result.position = input.position;
+	result.uv = (float3)normalize( mul( input.position, g_mWorldViewProjInv ) );
 	
 	return result;
 }
 
-Texture2D	g_txDiffuse	: register(t0);
-Texture2D	g_txNormal	: register(t1);
-SamplerState	g_sampler	: register(s0);
+TextureCube	g_Environment	: register( t0 );
+SamplerState 	g_sampler	: register( s0 );
 
 struct PsOutput
 {
@@ -53,9 +51,10 @@ struct PsOutput
 PsOutput PSMain(PSInput input)
 {
 	PsOutput result;
-	result.color0 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color2 = g_txDiffuse.Sample(g_sampler, input.uv);
+	result.color0 = float4(input.uv,1.0f);//float4(1,1,1,1);//g_Environment.Sample( g_sampler, input.uv );
+	result.color0 = g_Environment.Sample( g_sampler, input.uv );
+	result.color1 = g_Environment.Sample( g_sampler, input.uv );
+	result.color2 = g_Environment.Sample( g_sampler, input.uv );
 
 	return result;
 }

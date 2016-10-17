@@ -171,6 +171,7 @@
     <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
+    <ClInclude Include="XSkyBox.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Loader\XBinLoader.cpp" />
@@ -192,6 +193,7 @@
     <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
+    <ClCompile Include="XSkyBox.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

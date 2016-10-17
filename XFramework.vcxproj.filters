@@ -123,6 +123,9 @@
     <ClInclude Include="XDeferredShading.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="XSkyBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -180,6 +183,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="XDeferredShading.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XSkyBox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

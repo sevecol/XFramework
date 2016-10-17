@@ -60,16 +60,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	g_uDispatchX = min(uWidth / 16, DISPATCHX_MAX);
 	g_uDispatchY = min(uHeight / 16, DISPATCHY_MAX);
 	g_uPixelCount = uWidth * uHeight;
-/*
-	// ResultBuffer
-	ThrowIfFailed(pDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(DISPATCHNUM_MAX * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		nullptr,
-		IID_PPV_ARGS(&pResultBuffer)));
-*/
+
 	// ConstantBuffer
 	{
 		// Create an upload heap for the constant buffers.
@@ -143,6 +134,17 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	// Texture
 	LPCWSTR lpTextureFileName[] = {L"hdr.dds"};
 	g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, GCSUBASE_HDR+1);
+
+	/*
+	// ResultBuffer
+	ThrowIfFailed(pDevice->CreateCommittedResource(
+	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
+	D3D12_HEAP_FLAG_NONE,
+	&CD3DX12_RESOURCE_DESC::Buffer(DISPATCHNUM_MAX * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
+	D3D12_RESOURCE_STATE_COPY_DEST,
+	nullptr,
+	IID_PPV_ARGS(&pResultBuffer)));
+	*/
 
 	return true;
 }
@@ -277,7 +279,7 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	{
 		fValue += pAddress[0];
 	}
-	//fValue = fValue / g_uPixelCount;
+	fValue = fValue / g_uPixelCount;
 	pResultBuffer->Unmap(0, nullptr);
 	g_pHDRConstantBuffers->fValue = fValue;
 */

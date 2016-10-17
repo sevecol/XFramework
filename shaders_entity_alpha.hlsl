@@ -23,9 +23,10 @@ struct PSInput
 	float2 uv		: TEXCOORD0;
 };
 
-cbuffer cb0 : register(b0)
+cbuffer FrameBuffer : register(b0)
 {
 	float4x4 g_mWorldViewProj;
+	float4x4 g_mWorldViewProjInv;
 };
 
 PSInput VSMain(VSInput input)
