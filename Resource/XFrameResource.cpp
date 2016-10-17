@@ -117,12 +117,19 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	//model = XMLoadFloat4x4(&m_modelMatrices[i * m_cityColumnCount + j]);
 
 	// Compute the model-view-projection matrix.
-	XMStoreFloat4x4(&mvp, XMMatrixTranspose(model * view * projection));
+	XMMATRIX temp = XMMatrixTranspose(model * view * projection);
+	XMStoreFloat4x4(&mvp, temp);
 
 	// Copy this matrix into the appropriate location in the upload heap subresource.
 	//m_pConstantBuffers[0].mvp._11 = 1.5f;
 	//ZeroMemory(&m_pConstantBuffers[0], sizeof(ConstantBuffer));
-	memcpy(&m_pConstantBuffers[0], &mvp, sizeof(mvp));
+	m_pConstantBuffers->Mvp = mvp;
+
+	XMVECTOR det;
+	XMMATRIX mvpinv = XMMatrixInverse(&det, temp);
+	XMStoreFloat4x4(&mvp, mvpinv);
+	m_pConstantBuffers->MvpInv = mvp;
+	//memcpy(&m_pConstantBuffers[0], &mvp, sizeof(mvp));
 	//m_pConstantBuffers[0].mvp._11 = 0.5f;
 	//m_pConstantBuffers[0].mvp._22 = 0.5f;
 	//m_pConstantBuffers[0].mvp._33 = 0.5f;

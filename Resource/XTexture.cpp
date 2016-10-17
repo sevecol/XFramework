@@ -53,7 +53,7 @@ void XTextureSet::Clean()
 	}
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureType eType)
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[],UINT uSRVIndex, eTextureFileType eFileType)
 {
 	XTextureSet *pTextureSet = nullptr;
 	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
@@ -73,12 +73,12 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR p
 
 	//
 	TextureSetLoad *pTextureSetLoad = nullptr;
-	switch (eType)
+	switch (eFileType)
 	{
-	case ETEXTURETYPE_DDS:
+	case ETEXTUREFILETYPE_DDS:
 		pTextureSetLoad = new DDSTextureSetLoad();
 		break;
-	case ETEXTURETYPE_OTHER:
+	case ETEXTUREFILETYPE_OTHER:
 		pTextureSetLoad = new TextureSetLoad();
 		break;
 	}
@@ -88,11 +88,24 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR p
 	{
 		STextureLayer sTextureLayer;
 		sTextureLayer.m_sFileName = pFileName[i];
+		sTextureLayer.m_eType = eType[i];
 		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
 	}
 
 	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
 	return pTextureSet;
+}
+
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureFileType eFileType)
+{
+	eTextureType eType[8] = { ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D };
+	return XTextureSet::CreateTextureSet(pName, uCount, pFileName, eType, uSRVIndex, eFileType);
+}
+
+XTextureSet* XTextureSet::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex, eTextureFileType eFileType)
+{
+	eTextureType eType[8] = { ETEXTURETYPE_CUBE };
+	return XTextureSet::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex, eFileType);
 }
 
 void XTextureSet::DeleteTextureSet(XTextureSet** ppTextureSet)
@@ -203,9 +216,15 @@ void TextureSetLoad::PostLoad()
 		srvDesc.Format = textureDesc.Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
-
+		switch (m_vTextureLayer[i].m_eType)
+		{
+		case XTextureSet::ETEXTURETYPE_CUBE:
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			srvDesc.TextureCube.MipLevels = 1;
+			break;
+		}
+		
 		//
-		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
 		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex() + i, g_pEngine->m_uCSUDescriptorSize));
 
 		//
@@ -299,6 +318,13 @@ void DDSTextureSetLoad::LoadFromFile()
 		srvDesc.Format = ddsFormat;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
+		switch (m_vTextureLayer[i].m_eType)
+		{
+		case XTextureSet::ETEXTURETYPE_CUBE:
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			srvDesc.TextureCube.MipLevels = 1;
+			break;
+		}
 
 		//
 		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
