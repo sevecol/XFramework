@@ -28,14 +28,14 @@ IStructuredBuffer						*g_pHDRSBuffer[EHDRBUFFER_COUNT] = { nullptr,nullptr };
 XRenderTarget							*g_pHDRRenderTarget			= nullptr;
 XShader									*g_pHDRShaderToneMapping	= nullptr;
 
-enum eHDRLuminacePhase
+enum eHDRLuminancePhase
 {
-	EHDRLUMINACEPHASE_2DTO1D			= 0,
-	EHDRLUMINACEPHASE_1DTO0D,
+	EHDRLUMINANCEPHASE_2DTO1D			= 0,
+	EHDRLUMINANCEPHASE_1DTO0D,
 
-	EHDRLUMINACEPHASE_COUNT
+	EHDRLUMINANCEPHASE_COUNT
 };
-XComputeShader							*g_pHDRShaderLuminance[EHDRLUMINACEPHASE_COUNT]	= { nullptr,nullptr };
+XComputeShader							*g_pHDRShaderLuminance[EHDRLUMINANCEPHASE_COUNT]	= { nullptr,nullptr };
 
 XTextureSet								*g_pHDRTextureScreen		= nullptr;
 XShader									*g_pHDRShaderScreen			= nullptr;
@@ -133,8 +133,8 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 
 	DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
 	g_pHDRShaderToneMapping = XShader::CreateShaderFromFile(L"shaders_hdr_tonemapping.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
-	g_pHDRShaderLuminance[EHDRLUMINACEPHASE_2DTO1D] = XComputeShader::CreateComputeShaderFromFile(L"shaders_hdr_luminance1.hlsl", "CSMain", "cs_5_0");
-	g_pHDRShaderLuminance[EHDRLUMINACEPHASE_1DTO0D] = XComputeShader::CreateComputeShaderFromFile(L"shaders_hdr_luminance2.hlsl", "CSMain", "cs_5_0");
+	g_pHDRShaderLuminance[EHDRLUMINANCEPHASE_2DTO1D] = XComputeShader::CreateComputeShaderFromFile(L"shaders_hdr_luminance1.hlsl", "CSMain", "cs_5_0");
+	g_pHDRShaderLuminance[EHDRLUMINANCEPHASE_1DTO0D] = XComputeShader::CreateComputeShaderFromFile(L"shaders_hdr_luminance2.hlsl", "CSMain", "cs_5_0");
 
 	//
 	Format[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -219,7 +219,7 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 
 	//
 	pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
-	pCommandList->SetPipelineState(g_pHDRShaderLuminance[EHDRLUMINACEPHASE_2DTO1D]->GetPipelineState());
+	pCommandList->SetPipelineState(g_pHDRShaderLuminance[EHDRLUMINANCEPHASE_2DTO1D]->GetPipelineState());
 
 	pCommandList->SetComputeRootDescriptorTable(0, g_pHDRRenderTarget->GetSRVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(1, g_pHDRSBuffer[0]->GetUAVGpuHandle());
@@ -230,7 +230,7 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->Dispatch(g_uDispatchX, g_uDispatchY, 1);
 
 	// 1D to Float
-	pCommandList->SetPipelineState(g_pHDRShaderLuminance[EHDRLUMINACEPHASE_1DTO0D]->GetPipelineState());
+	pCommandList->SetPipelineState(g_pHDRShaderLuminance[EHDRLUMINANCEPHASE_1DTO0D]->GetPipelineState());
 
 	UINT uPixeclCompute = g_uDispatchX * g_uDispatchY;
 	UINT uDispatchX2Pass = static_cast<int>(ceil(uPixeclCompute / 128.f));
