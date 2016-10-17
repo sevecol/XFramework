@@ -7,10 +7,13 @@
 #include "Resource\XTexture.h"
 
 #define MAX_PIXELS	32
+// 6,7,8 SBuffer
+#define GCSUBASE_ALPHARENDER			6
+#define CCSUBASE_ALPHARENDER			0
 
 enum eAlphaRenderBuffer
 {
-	EALPHARENDERBUFFER_COUNTER		= 0,
+	EALPHARENDERBUFFER_COUNTER			= 0,
 	EALPHARENDERBUFFER_PIXELLINK,
 	EALPHARENDERBUFFER_STARTOFFSET,
 
@@ -41,8 +44,8 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 
 	for (UINT i = 0;i < EALPHARENDERBUFFER_COUNT;++i)
 	{
-		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), 6 + i, GetCSUDHeapSize());
-		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), 6 + i, GetCSUDHeapSize());
+		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_ALPHARENDER + i, GetCSUDHeapSize());
+		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_ALPHARENDER + i, GetCSUDHeapSize());
 	}
 
 	g_pOITSBuffer[EALPHARENDERBUFFER_COUNTER] = new XStructuredBuffer<UINT>(pDevice, 1, hUAVCpuHandle[EALPHARENDERBUFFER_COUNTER]);
@@ -68,7 +71,7 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		g_hOITUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), i, GetCSUDHeapSize());
+		g_hOITUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), CCSUBASE_ALPHARENDER+i, GetCSUDHeapSize());
 		pDevice->CreateUnorderedAccessView(g_pOITSBuffer[i]->GetResource(), nullptr, &UDesc, g_hOITUAVCpuHandle[i]);
 	}
 

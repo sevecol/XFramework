@@ -9,3 +9,9 @@ void CleanHDR();
 
 void HDR_Bind(ID3D12GraphicsCommandList* pCommandList);
 void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList);
+
+struct HDRConstantBuffer
+{
+	FLOAT			fValue;
+	FLOAT			fPadding[63];
+};

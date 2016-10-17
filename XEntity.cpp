@@ -4,7 +4,7 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define ENTITY_TEXTURE_CSUBASE			13
+#define GCSUBASE_ENTITY					14
 
 extern XResourceThread					*g_pResourceThread;
 
@@ -94,7 +94,7 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 */
 bool XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, ENTITY_TEXTURE_CSUBASE, eType);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, GCSUBASE_ENTITY, eType);
 	return true;
 }
 

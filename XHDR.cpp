@@ -6,14 +6,19 @@
 #include "Resource\XTexture.h"
 #include "Resource\XBuffer.h"
 
-enum eHdrBuffer
-{
-	EHDR_1 = 0,
-	EHDR_2,
+// 9 RenderTarget,10 Texture,11,12 SBuffer,13 ConstantBuffer
+#define GCSUBASE_HDR					9
+#define CCSUBASE_HDR					3
+#define RBASE_HDR						6
 
-	EHDR_COUNT
+enum eHDRBuffer
+{
+	EHDRBUFFER_1 = 0,
+	EHDRBUFFER_2,
+
+	EHDRBUFFER_COUNT
 };
-IStructuredBuffer						*g_pHDRSBuffer[EHDR_COUNT];
+IStructuredBuffer						*g_pHDRSBuffer[EHDRBUFFER_COUNT] = { nullptr,nullptr };
 XRenderTarget							*g_pHDRRenderTarget			= nullptr;
 XShader									*g_pHDRShaderToneMapping	= nullptr;
 XComputeShader							*g_pHDRShaderLuminance		= nullptr;
@@ -21,7 +26,10 @@ XComputeShader							*g_pHDRShaderLuminance		= nullptr;
 XTextureSet								*g_pHDRTextureScreen		= nullptr;
 XShader									*g_pHDRShaderScreen			= nullptr;
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE			g_hHDRUAVCpuHandle[EHDR_COUNT];
+HDRConstantBuffer						*g_pHDRConstantBuffers		= nullptr;
+ID3D12Resource							*g_pHDRConstantUploadHeap	= nullptr;
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE			g_hHDRUAVCpuHandle[EHDRBUFFER_COUNT];
 
 extern XEngine							*g_pEngine;
 extern ID3D12DescriptorHeap				*GetCpuCSUDHeap();
@@ -33,38 +41,64 @@ extern XResourceThread					*g_pResourceThread;
 ID3D12Resource *pResultBuffer = nullptr;
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
-	//
-	//ThrowIfFailed(pDevice->CreateCommittedResource(
-	//	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&CD3DX12_RESOURCE_DESC::Buffer(1 * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
-	//	D3D12_RESOURCE_STATE_COPY_DEST,
-	//	nullptr,
-	//	IID_PPV_ARGS(&pResultBuffer)));
+	// ResultBuffer
+	ThrowIfFailed(pDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(100 * 100 * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&pResultBuffer)));
 
-	//
-	for (UINT i = 0;i < EHDR_COUNT;++i)
+	// ConstantBuffer
 	{
-		g_pHDRSBuffer[i] = new XStructuredBuffer<float>(pDevice, 1, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), 11+i, GetCSUDHeapSize()));
-		g_pHDRSBuffer[i]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), 11+i, GetCSUDHeapSize()));
+		// Create an upload heap for the constant buffers.
+		// HDRConstant
+		ThrowIfFailed(pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(sizeof(HDRConstantBuffer)),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&g_pHDRConstantUploadHeap)));
+
+		// Map the constant buffers. Note that unlike D3D11, the resource 
+		// does not need to be unmapped for use by the GPU. In this sample, 
+		// the resource stays 'permenantly' mapped to avoid overhead with 
+		// mapping/unmapping each frame.
+		CD3DX12_RANGE readRange(0, 0);
+		ThrowIfFailed(g_pHDRConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&g_pHDRConstantBuffers)));
+
+		//
+		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
+		ConstantDesc.BufferLocation = g_pHDRConstantUploadHeap->GetGPUVirtualAddress();
+		ConstantDesc.SizeInBytes = sizeof(HDRConstantBuffer);
+		pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
+	}
+
+	// StructuredBuffer
+	for (UINT i = 0;i < EHDRBUFFER_COUNT;++i)
+	{
+		g_pHDRSBuffer[i] = new XStructuredBuffer<float>(pDevice, 100*100, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_HDR+2 +i, GetCSUDHeapSize()));
+		g_pHDRSBuffer[i]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR+2 +i, GetCSUDHeapSize()));
 		
 		D3D12_UNORDERED_ACCESS_VIEW_DESC UDesc = {};
 		UDesc.Format = DXGI_FORMAT_UNKNOWN;
 		UDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 		UDesc.Buffer.FirstElement = 0;
-		UDesc.Buffer.NumElements = 1;
+		UDesc.Buffer.NumElements = 100*100;
 		UDesc.Buffer.StructureByteStride = sizeof(float);
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		g_hHDRUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), 3 + i, GetCSUDHeapSize());
+		g_hHDRUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), CCSUBASE_HDR + i, GetCSUDHeapSize());
 		pDevice->CreateUnorderedAccessView(g_pHDRSBuffer[i]->GetResource(), nullptr, &UDesc, g_hHDRUAVCpuHandle[i]);
 	}
 
-	//
-	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, 6, 9);
+	// RenderTarget
+	g_pHDRRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, RBASE_HDR, GCSUBASE_HDR);
 
-	//
+	// Shader
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
 		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -80,18 +114,26 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	Format[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	g_pHDRShaderScreen = XShader::CreateShaderFromFile(L"shaders_hdr_screen.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, 1, Format);
 
-	//
+	// Texture
 	LPCWSTR lpTextureFileName[] = {L"hdr.dds"};
-	g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, 10);
+	g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, GCSUBASE_HDR+1);
 
 	return true;
 }
 
 void CleanHDR()
 {
+	// ConstantBuffer
+	if (g_pHDRConstantUploadHeap)
+	{
+		g_pHDRConstantUploadHeap->Unmap(0, nullptr);
+		SAFE_RELEASE(g_pHDRConstantUploadHeap);
+	}
+	g_pHDRConstantBuffers = nullptr;
+
 	// StructuredBuffer
 	SAFE_RELEASE(pResultBuffer);
-	for (UINT i = 0;i < EHDR_COUNT;++i)
+	for (UINT i = 0;i < EHDRBUFFER_COUNT;++i)
 	{
 		SAFE_DELETE(g_pHDRSBuffer[i]);
 	}
@@ -131,6 +173,9 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 	//
 	HDR_Luminance(pCommandList);
 
+	//
+	pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
+
 	// ToneMapping
 	RenderFullScreen(pCommandList, g_pHDRShaderToneMapping);
 }
@@ -138,7 +183,7 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 {
 	// ComputeShader
-	FLOAT fClearValue[] = { 1.0f,1.0f, };
+	FLOAT fClearValue[] = { 0.0f,0.0f, };
 	pCommandList->ClearUnorderedAccessViewFloat(g_pHDRSBuffer[0]->GetUAVGpuHandle(), g_hHDRUAVCpuHandle[0], g_pHDRSBuffer[0]->GetResource(), &fClearValue[0], 0, nullptr);
 	pCommandList->ClearUnorderedAccessViewFloat(g_pHDRSBuffer[1]->GetUAVGpuHandle(), g_hHDRUAVCpuHandle[1], g_pHDRSBuffer[1]->GetResource(), &fClearValue[1], 0, nullptr);
 
@@ -148,22 +193,31 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 
 	pCommandList->SetComputeRootDescriptorTable(0, g_pHDRRenderTarget->GetSRVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(1, g_pHDRSBuffer[0]->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
 
 	//
-	pCommandList->Dispatch(1, 1, 1);
-	//pCommandList->Dispatch(1280/16, 720/16, 1);
+	//pCommandList->Dispatch(1, 1, 1);
+	UINT uDispatchX = 1280 / 16;
+	UINT uDispatchY = 720 / 16;
+	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
 
 	// GetResult
-/*
 	int iIndex = 0;
-	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRStructuredBuffer[iIndex]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
-	pCommandList->CopyResource(pResultBuffer, g_pHDRStructuredBuffer[iIndex]->GetResource());
-	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRStructuredBuffer[iIndex]->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRSBuffer[iIndex]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
+	pCommandList->CopyResource(pResultBuffer, g_pHDRSBuffer[iIndex]->GetResource());
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRSBuffer[iIndex]->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
 	float *pAddress = nullptr;
-	CD3DX12_RANGE readRange(0, 1 * sizeof(float));
+	CD3DX12_RANGE readRange(0, 100*100 * sizeof(float));
 	pResultBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pAddress));
-	float fValue = *pAddress;
+	//float fValue = *pAddress;
+
+	float fValue = 0.0f;
+	for (UINT i = 0;i < 100 * 100;++i)
+	{
+		fValue += pAddress[i];
+	}
+	fValue = fValue / (1280.0f*720.0f);
 	pResultBuffer->Unmap(0, nullptr);
-*/
+	g_pHDRConstantBuffers->fValue = 0.45f;
 }

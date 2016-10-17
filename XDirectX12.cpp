@@ -100,7 +100,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	{
 		ThrowIfFailed(D3D12CreateDevice(
 			nullptr,
-			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_12_0,
 			IID_PPV_ARGS(&g_pEngine->m_pDevice)
 			));
 	}
@@ -188,8 +188,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For OIT UAV,4 for HDR (RenderTraget,UAV),2 for Entity's Texture
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 4 + 2;
+	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For AlphaRender UAV,4 for HDR (RenderTraget,Texture,UAV),2 for Entity's Texture
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 5 + 2;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pGpuCSUDescriptorHeap)));
@@ -212,10 +212,10 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
 		CD3DX12_ROOT_PARAMETER grootParameters[4];
-		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_VERTEX);
-		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_VERTEX);
-		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_PIXEL);
+		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -243,15 +243,15 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE cranges[2];
+		CD3DX12_DESCRIPTOR_RANGE cranges[3];
 		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);			// Texture
-		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV
-		//cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
+		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0);			// UAV
+		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
 
-		CD3DX12_ROOT_PARAMETER crootParameters[2];
+		CD3DX12_ROOT_PARAMETER crootParameters[3];
 		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
-		//crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
 
 		//D3D12_STATIC_SAMPLER_DESC sampler = {};
 		//sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;

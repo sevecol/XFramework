@@ -5,7 +5,7 @@
 #include "Resource\XTexture.h"
 
 #define DEFERREDSHADING_RENDERTARGET_RBASE		3
-#define DEFERREDSHADING_CONSTANT_CSUBASE		3
+#define CSUBASE_DEFERREDSHADING_TEXTURE			3
 #define DEFERREDSHADING_RENDERTARGET_COUNT		RENDERTARGET_MAXNUM
 
 extern UINT										g_uRenderTargetCount[ESHADINGPATH_COUNT];
@@ -22,7 +22,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	//
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
-		g_pDRRenderTargets[i] = XRenderTarget::CreateRenderTarget(g_RenderTargetFortmat[ESHADINGPATH_DEFERRED][i], uWidth, uHeight, DEFERREDSHADING_RENDERTARGET_RBASE + i, DEFERREDSHADING_CONSTANT_CSUBASE + i);
+		g_pDRRenderTargets[i] = XRenderTarget::CreateRenderTarget(g_RenderTargetFortmat[ESHADINGPATH_DEFERRED][i], uWidth, uHeight, DEFERREDSHADING_RENDERTARGET_RBASE + i, CSUBASE_DEFERREDSHADING_TEXTURE + i);
 	}
 
 	//

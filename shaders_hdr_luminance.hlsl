@@ -5,8 +5,15 @@
 
 groupshared float			g_Total[BLOCK_THREADS];
 
+/*
+cbuffer FrameBuffer : register(b0)
+{
+	uint2 g_Dispatch;					// x and y dimensions of the Dispatch call
+	uint2 g_Size;						// Size of the input Texture2D
+};
+*/
 Texture2D				g_Texture : register(t0);
-RWStructuredBuffer<float>		g_Result0 : register(u0);
+RWStructuredBuffer<float>		g_Result  : register(u0);
 //RWStructuredBuffer<float>		g_Result1 : register(u1);
 
 uint					g_DispatchX = 80;//1280/16
@@ -16,12 +23,11 @@ static const float4 			c_luminance			= float4(.299, .587, .114, 0);
 [numthreads(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1)]
 void CSMain( uint3 groupId : SV_GroupID, uint3 dispatchId : SV_DispatchThreadID, uint3 threadId : SV_GroupThreadID, uint groupIndex : SV_GroupIndex )
 {
+
 	if (groupIndex == 0)
 	{
-		g_Result0[0] = 2.0f;
-		//g_Result1[0] = 4.0f;
+		g_Result[groupId.y * g_DispatchX + groupId.x] = 2.0f;
 	}
-
 /*
 	// Read texel data without any filtering or sampling.
 	uint3  location1	= uint3(dispatchId.xy, 0);
@@ -29,11 +35,12 @@ void CSMain( uint3 groupId : SV_GroupID, uint3 dispatchId : SV_DispatchThreadID,
 	uint3  location3	= uint3(dispatchId.xy + uint2(0, BLOCK_SIZE_Y * g_DispatchY), 0);
 	uint3  location4	= uint3(dispatchId.xy + uint2(BLOCK_SIZE_X * g_DispatchX, BLOCK_SIZE_Y * g_DispatchY), 0);
 
-	float4 sum			= g_Texture.Load(location1)
-						+ g_Texture.Load(location2)
-						+ g_Texture.Load(location3)
-						+ g_Texture.Load(location4);
+	float4 sum		= g_Texture.Load(location1)
+				+ g_Texture.Load(location2)
+				+ g_Texture.Load(location3)
+				+ g_Texture.Load(location4);
 
+	//float4 sum = float4(1,1,1,1);
 	g_Total[groupIndex]	= dot(sum, c_luminance);
 
 	// Reduction
