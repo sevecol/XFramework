@@ -11,6 +11,11 @@
 #define CCSUBASE_HDR					3
 #define RBASE_HDR						6
 
+#define DISPATCHX_MAX					100
+#define DISPATCHY_MAX					100
+#define DISPATCHNUM_MAX					(DISPATCHX_MAX*DISPATCHY_MAX)
+UINT									g_uDispatchX, g_uDispatchY, g_uPixelCount;
+
 enum eHDRBuffer
 {
 	EHDRBUFFER_1 = 0,
@@ -41,11 +46,16 @@ extern XResourceThread					*g_pResourceThread;
 ID3D12Resource *pResultBuffer = nullptr;
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
+	//
+	g_uDispatchX = min(uWidth / 16, DISPATCHX_MAX);
+	g_uDispatchY = min(uHeight / 16, DISPATCHY_MAX);
+	g_uPixelCount = uWidth * uHeight;
+
 	// ResultBuffer
 	ThrowIfFailed(pDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(100 * 100 * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
+		&CD3DX12_RESOURCE_DESC::Buffer(DISPATCHNUM_MAX * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&pResultBuffer)));
@@ -86,7 +96,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Format = DXGI_FORMAT_UNKNOWN;
 		UDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 		UDesc.Buffer.FirstElement = 0;
-		UDesc.Buffer.NumElements = 100*100;
+		UDesc.Buffer.NumElements = DISPATCHNUM_MAX;
 		UDesc.Buffer.StructureByteStride = sizeof(float);
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
@@ -196,10 +206,7 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetComputeRootDescriptorTable(2, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
 
 	//
-	//pCommandList->Dispatch(1, 1, 1);
-	UINT uDispatchX = 1280 / 16;
-	UINT uDispatchY = 720 / 16;
-	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
+	pCommandList->Dispatch(g_uDispatchX, g_uDispatchY, 1);
 
 	// GetResult
 	int iIndex = 0;
@@ -208,16 +215,16 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRSBuffer[iIndex]->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
 	float *pAddress = nullptr;
-	CD3DX12_RANGE readRange(0, 100*100 * sizeof(float));
+	CD3DX12_RANGE readRange(0, g_uDispatchX * g_uDispatchY * sizeof(float));
 	pResultBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pAddress));
 	//float fValue = *pAddress;
 
 	float fValue = 0.0f;
-	for (UINT i = 0;i < 100 * 100;++i)
+	for (UINT i = 0;i < g_uDispatchX * g_uDispatchY;++i)
 	{
 		fValue += pAddress[i];
 	}
-	fValue = fValue / (1280.0f*720.0f);
+	fValue = fValue / g_uPixelCount;
 	pResultBuffer->Unmap(0, nullptr);
-	g_pHDRConstantBuffers->fValue = 0.45f;
+	g_pHDRConstantBuffers->fValue = fValue;
 }
