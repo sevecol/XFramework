@@ -243,15 +243,17 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE cranges[3];
+		CD3DX12_DESCRIPTOR_RANGE cranges[4];
 		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);			// Texture
-		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0);			// UAV
-		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
+		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV S
+		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);			// UAV D
+		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
 
-		CD3DX12_ROOT_PARAMETER crootParameters[3];
+		CD3DX12_ROOT_PARAMETER crootParameters[4];
 		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[3].InitAsDescriptorTable(1, &cranges[3], D3D12_SHADER_VISIBILITY_ALL);
 
 		CD3DX12_ROOT_SIGNATURE_DESC crootSignatureDesc = CD3DX12_ROOT_SIGNATURE_DESC(_countof(crootParameters), crootParameters, 0, nullptr);
 
