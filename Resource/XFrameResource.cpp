@@ -4,10 +4,13 @@
 #include "..\DXSampleHelper.h"
 
 #define FRAMERESOURCE_RENDERTARGET_RBASE	0
-#define FRAMERESOURCE_CONSTANT_CSUBASE		0
+#define GCSUBASE_FRAMERESOURCE				0
 #define SHADING_RENDERTARGET_COUNT			1
 
-extern XEngine				*g_pEngine;
+extern XEngine								*g_pEngine;
+extern ID3D12DescriptorHeap					*GetCpuCSUDHeap();
+extern ID3D12DescriptorHeap					*GetGpuCSUDHeap();
+extern UINT									GetCSUDHeapSize();
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XFrameResource::~XFrameResource()
@@ -53,7 +56,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 	ConstantDesc.BufferLocation = m_pConstantUploadHeap->GetGPUVirtualAddress();
 	ConstantDesc.SizeInBytes = sizeof(XFrameResource::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_CONSTANT_CSUBASE+m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_FRAMERESOURCE +m_uIndex, GetCSUDHeapSize()));
 }
 
 extern D3D12_VIEWPORT						g_Viewport;
@@ -74,10 +77,10 @@ void XFrameResource::PreRender()
 
 	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pGraphicRootSignature.Get());
 
-	ID3D12DescriptorHeap* ppHeaps[] = { g_pEngine->m_pGpuCSUDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* ppHeaps[] = { GetGpuCSUDHeap() };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
-	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uCSUDescriptorSize));
+	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), m_uIndex, GetCSUDHeapSize()));
+	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), m_uIndex, GetCSUDHeapSize()));
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);
