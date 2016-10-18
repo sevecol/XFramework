@@ -25,10 +25,10 @@ struct PSInput
 
 cbuffer FrameBuffer : register(b0)
 {
+	float4x4 g_mWorldView;
 	float4x4 g_mWorldViewProj;
 	float4x4 g_mWorldViewProjInv;
 };
-
 PSInput VSMain(VSInput input)
 {
 	PSInput result;

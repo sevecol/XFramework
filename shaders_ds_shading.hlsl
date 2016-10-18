@@ -28,9 +28,11 @@ PSInput VSMain(uint uInstanceID : SV_InstanceID, float4 position : POSITION, flo
 }
 
 Texture2D g_texture0 : register(t0);
+Texture2D g_texture1 : register(t1);
+Texture2D g_texture2 : register(t2);
 SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return g_texture0.Sample(g_sampler, input.uv);
+	return g_texture1.Sample(g_sampler, input.uv);
 }
