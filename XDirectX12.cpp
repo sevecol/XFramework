@@ -324,17 +324,20 @@ bool Render()
 	// DeferredShading
 	// DeferredShading_GBuffer
 	DeferredShading_GBuffer(pCommandList);
-	SkyBox_Render(pCommandList);
 	if (g_pEntityNormal)
 	{
 		g_pEntityNormal->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
 	
-	// DeferredShading_Shading
-	DeferredShading_PrepareShading(pCommandList);
+	// HDR_Bind
 	HDR_Bind(pCommandList);
-	DeferredShading_Shading(pCommandList);
 
+	//
+	SkyBox_Render(pCommandList);
+
+	// DeferredShading_Shading
+	DeferredShading_Shading(pCommandList);
+	
 	///////////////////////////////////////////////////////////////////////
 	// ForwordShading
 	// Alpha Blend
