@@ -85,6 +85,7 @@ SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
     surface.normal = input.normal;
     
     surface.albedo = g_txDiffuse.Sample(g_sampler, input.uv);
+    surface.albedo.a = 1.0f;
     //surface.albedo.rgb = mUI.lightingOnly ? float3(1.0f, 1.0f, 1.0f) : surface.albedo.rgb;
 
     // Map NULL diffuse textures to white
@@ -131,6 +132,7 @@ PsOutput PSMain(PSInput input)
                                            surface.specularAmount,
                                            surface.specularPower);
     	result.color1 = surface.albedo;
+	result.color1.a = 1.0f;
     	result.color2.xy = float2(ddx_coarse(surface.positionView.z),
                                          ddy_coarse(surface.positionView.z));
 

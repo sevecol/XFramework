@@ -34,6 +34,7 @@ PSInput VSMain(VSInput input)
 	PSInput result;
 	
 	result.position = input.position;
+	result.position.z = 1.0f;
 	result.uv = (float3)normalize( mul( input.position, g_mWorldViewProjInv ) );
 	
 	return result;
@@ -42,20 +43,7 @@ PSInput VSMain(VSInput input)
 TextureCube	g_Environment	: register( t0 );
 SamplerState 	g_sampler	: register( s0 );
 
-struct PsOutput
+float4 PSMain(PSInput input) : SV_TARGET
 {
-	float4 color0 	: SV_TARGET0;
-	float4 color1  	: SV_TARGET1;
-	float4 color2  	: SV_TARGET2;
-};
-
-PsOutput PSMain(PSInput input)
-{
-	PsOutput result;
-	result.color0 = float4(input.uv,1.0f);//float4(1,1,1,1);//g_Environment.Sample( g_sampler, input.uv );
-	result.color0 = g_Environment.Sample( g_sampler, input.uv );
-	result.color1 = g_Environment.Sample( g_sampler, input.uv );
-	result.color2 = g_Environment.Sample( g_sampler, input.uv );
-
-	return result;
+	return g_Environment.Sample( g_sampler, input.uv );
 }

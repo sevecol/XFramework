@@ -71,18 +71,15 @@ void DeferredShading_GBuffer(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
-void DeferredShading_PrepareShading(ID3D12GraphicsCommandList* pCommandList)
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
+void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 {
 	for (UINT i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
 		pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pDRRenderTargets[i]->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	}
 	pCommandList->SetGraphicsRootDescriptorTable(2, g_pDRRenderTargets[0]->GetSRVGpuHandle());
-}
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
-void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
-{
 	//
 	RenderFullScreen(pCommandList, g_pDeferredShadingShader);
 }

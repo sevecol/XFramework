@@ -34,5 +34,8 @@ SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return g_texture1.Sample(g_sampler, input.uv);
+	float4 color = g_texture1.Sample(g_sampler, input.uv);
+	if (color.a==0.0f)
+		discard;
+	return color;
 }

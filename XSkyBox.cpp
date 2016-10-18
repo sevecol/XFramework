@@ -23,7 +23,7 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	depthStencilDesc.StencilEnable = FALSE;
-	g_pSkyBoxShader = XShader::CreateShaderFromFile(L"shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,ESHADINGPATH_DEFERRED);
+	g_pSkyBoxShader = XShader::CreateShaderFromFile(L"shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
 
 	// Texture
 	g_pSkyBoxTexture = XTextureSet::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", GCSUBASE_SKYBOX);
