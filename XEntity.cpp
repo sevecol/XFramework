@@ -98,6 +98,12 @@ bool XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextu
 	return true;
 }
 
+bool XEntity::InitTexture(LPCWSTR pName, UINT uWidth,UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
+{
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, GCSUBASE_ENTITY, uWidth, uHeight, Format, pData, uPixelSize);
+	return true;
+}
+
 bool XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
 {
 /*

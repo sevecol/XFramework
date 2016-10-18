@@ -134,8 +134,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityNormal->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
-		g_pEntityNormal->InitTexture(L"NormalEntity", 2, pTextureFileName,XTextureSet::ETEXTUREFILETYPE_OTHER);
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityNormal->InitTexture(L"NormalEntity", 2, pTextureFileName,XTextureSet::ETEXTUREFILETYPE_OTHER);
 
 		XBinResource *pbinresource = new XBinResource();
 		pbinresource->pEntity = g_pEntityNormal;
@@ -153,8 +153,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityAlpha->InitShader(L"shaders_entity_alpha.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
 
-		LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
-		g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
 		XBinResource *pbinresource = new XBinResource();
 		pbinresource->pEntity = g_pEntityAlpha;
