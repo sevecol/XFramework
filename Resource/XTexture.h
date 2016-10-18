@@ -21,7 +21,7 @@ struct XTextureSet : public XResource
 	enum eTextureFileType
 	{
 		ETEXTUREFILETYPE_DDS = 0,
-		ETEXTUREFILETYPE_OTHER
+		ETEXTUREFILETYPE_OTHER,
 	};
 
 	std::vector<ID3D12Resource*>			m_vpTexture;
@@ -57,6 +57,7 @@ public:
 
 	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureFileType eFileType = ETEXTUREFILETYPE_DDS);
 	static XTextureSet* CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex, eTextureFileType eFileType = ETEXTUREFILETYPE_DDS);
+	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize);
 	static void DeleteTextureSet(XTextureSet** ppTextureSet);
 };
 
@@ -92,6 +93,12 @@ struct TextureSetLoad : public IResourceLoad
 };
 
 struct DDSTextureSetLoad : public TextureSetLoad
+{
+	virtual void LoadFromFile();
+	virtual void PostLoad();
+};
+
+struct MemoryTextureSetLoad : public TextureSetLoad
 {
 	virtual void LoadFromFile();
 	virtual void PostLoad();

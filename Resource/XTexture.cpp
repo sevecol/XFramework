@@ -108,6 +108,43 @@ XTextureSet* XTextureSet::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UI
 	return XTextureSet::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex, eFileType);
 }
 
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
+{
+	XTextureSet *pTextureSet = nullptr;
+	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
+	if (it != XTextureSet::m_mTextureSet.end())
+	{
+		pTextureSet = it->second;
+		if (pTextureSet)
+		{
+			pTextureSet->AddRef();
+		}
+		return pTextureSet;
+	}
+
+	//
+	pTextureSet = new XTextureSet(pName, uSRVIndex);
+	XTextureSet::m_mTextureSet[pName] = pTextureSet;
+
+	//
+	TextureSetLoad *pTextureSetLoad = new MemoryTextureSetLoad();
+	pTextureSetLoad->m_pTextureSet = pTextureSet;
+	for (UINT i = 0;i < 1;++i)
+	{
+		STextureLayer sTextureLayer;
+		sTextureLayer.m_Format = Format;
+		sTextureLayer.m_uWidth	= uWidth;
+		sTextureLayer.m_uHeight = uHeight;
+		sTextureLayer.m_uPixelSize = uPixelSize;
+		sTextureLayer.m_pData = pData;
+
+		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
+	}
+
+	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
+	return pTextureSet;
+}
+
 void XTextureSet::DeleteTextureSet(XTextureSet** ppTextureSet)
 {
 	if (*ppTextureSet)
@@ -340,6 +377,15 @@ void DDSTextureSetLoad::LoadFromFile()
 
 void DDSTextureSetLoad::PostLoad()
 {
+}
+
+void MemoryTextureSetLoad::LoadFromFile()
+{
+}
+
+void MemoryTextureSetLoad::PostLoad()
+{
+	TextureSetLoad::PostLoad();
 }
 
 ///////////////////////////////////////////////////////
