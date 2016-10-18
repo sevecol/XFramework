@@ -125,6 +125,13 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	//ZeroMemory(&m_pConstantBuffers[0], sizeof(ConstantBuffer));
 	m_pConstantBuffers->Mvp = mvp;
 
+	//
+	XMMATRIX tView = view;
+	tView.r[3].m128_f32[0] = 0.0f;
+	tView.r[3].m128_f32[1] = 0.0f;
+	tView.r[3].m128_f32[2] = 0.0f;
+	temp = XMMatrixTranspose(model * tView * projection);
+
 	XMVECTOR det;
 	XMMATRIX mvpinv = XMMatrixInverse(&det, temp);
 	XMStoreFloat4x4(&mvp, mvpinv);
