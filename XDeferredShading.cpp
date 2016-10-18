@@ -14,7 +14,8 @@ extern DXGI_FORMAT								g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET
 extern XEngine									*g_pEngine;
 
 XRenderTarget									*g_pDRRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
-XShader*										g_pDeferredShadingShader;
+XShader											*g_pDeferredShadingShader;
+XComputeShader									*g_pClusteredDeferredShadingShader;
 
 //
 bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
@@ -33,6 +34,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	g_pDeferredShadingShader = XShader::CreateShaderFromFile(L"shaders_ds_shading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	g_pClusteredDeferredShadingShader = XComputeShader::CreateComputeShaderFromFile(L"shaders_ds_clusteredshading.hlsl", "CSMain", "cs_5_0");
 
 	return true;
 }
@@ -40,6 +42,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 void CleanDeferredShading()
 {
 	SAFE_DELETE(g_pDeferredShadingShader);
+	SAFE_DELETE(g_pClusteredDeferredShadingShader);
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
 		SAFE_DELETE(g_pDRRenderTargets[i]);
