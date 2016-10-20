@@ -76,6 +76,7 @@ void XFrameResource::PreRender()
 	ThrowIfFailed(m_pCommandList->Reset(m_pRenderCommandAllocator.Get(), nullptr));//m_pPipelineState.Get()));// ));
 
 	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pGraphicRootSignature.Get());
+	m_pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { GetGpuCSUDHeap() };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
