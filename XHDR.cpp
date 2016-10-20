@@ -197,6 +197,9 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVCpuHandle(), clearColor, 0, nullptr);
 	pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	
+	//
+	pCommandList->SetComputeRootDescriptorTable(3, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
@@ -227,13 +230,11 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ClearUnorderedAccessViewFloat(pSBuffer[0]->GetUAVGpuHandle(), hUAVCpuHandle[0], pSBuffer[0]->GetResource(), &fClearValue[0], 0, nullptr);
 
 	//
-	pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
 	pCommandList->SetPipelineState(pShaderLuminance[ELUMINANCEPHASE_2DTO1D]->GetPipelineState());
 
 	pCommandList->SetComputeRootDescriptorTable(0, pRenderTarget->GetSRVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(1, pSBuffer[0]->GetUAVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(2, pSBuffer[1]->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(3, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);

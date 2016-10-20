@@ -14,6 +14,7 @@ extern XEngine									*g_pEngine;
 
 namespace DeferredShading
 {
+	UINT										uDispatchX, uDispatchY;
 	XRenderTarget								*pRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
 	XShader										*pShadingShader;
 	XComputeShader								*pClusteredShadingShader;
@@ -26,6 +27,10 @@ using namespace DeferredShading;
 //
 bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
+	//
+	uDispatchX = uWidth / 32 + 1;
+	uDispatchY = uHeight / 32 + 1;
+
 	//
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
@@ -106,14 +111,13 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 	
 	//
-	pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
 	pCommandList->SetPipelineState(pClusteredShadingShader->GetPipelineState());
 
 	pCommandList->SetComputeRootDescriptorTable(0, pRenderTargets[0]->GetSRVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(1, pHDRRenderTarget->GetUAVGpuHandle());
 
 	//
-	pCommandList->Dispatch(1280, 720, 1);
+	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
 
 	//
 /*

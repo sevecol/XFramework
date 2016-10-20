@@ -17,9 +17,12 @@
 
 #define COMPUTE_SHADER_TILE_GROUP_DIM 32
 
-//#include "GBuffer.hlsl"
-//#include "FramebufferFlat.hlsl"
-//#include "ShaderDefines.h"
+cbuffer FrameBuffer : register(b0)
+{
+	uint2 uDispatch;					// x and y dimensions of the Dispatch call
+	uint2 uScreen;						// Size of the input Texture2D
+	float fValue;
+};
 
 Texture2D g_texture0 : register(t0);
 Texture2D g_texture1 : register(t1);
@@ -33,13 +36,21 @@ groupshared uint sMaxZ;
 groupshared uint sTileLightIndices[32];
 groupshared uint sTileNumLights;
 
-//[numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
-[numthreads(1, 1, 1)]
+[numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
 void CSMain(uint3 groupId          : SV_GroupID,
-                         uint3 dispatchThreadId : SV_DispatchThreadID,
-                         uint3 groupThreadId    : SV_GroupThreadID
+            uint3 dispatchThreadId : SV_DispatchThreadID,
+            uint3 groupThreadId    : SV_GroupThreadID
                          )
 {
+    //
+    if (dispatchThreadId.x>=uScreen.x)
+    {
+	if (dispatchThreadId.y>=uScreen.y)
+	{    
+		return;
+	}
+    }
+
     float4 color = g_texture0.Load(dispatchThreadId.xyz);
     if (color.a!=0.0f)
     {
