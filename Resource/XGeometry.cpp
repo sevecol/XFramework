@@ -73,6 +73,17 @@ XGeometry* XGeometry::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UINT uVert
 	}
 
 	//
+/*
+	struct VSInput
+	{
+		float position[3];
+		float normal[3];
+		float uv[2];
+		float tangent[3];
+	};
+	VSInput *pInput = (VSInput*)pGeometryData;
+*/
+	//
 	pGeometry->m_vMin = Vector3f(10000, 10000, 10000);
 	pGeometry->m_vMax = Vector3f(-10000, -10000, -10000);
 	for (unsigned int i = 0;i < uVertexCount;++i)

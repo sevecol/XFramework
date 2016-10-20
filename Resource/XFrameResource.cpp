@@ -120,12 +120,12 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	//
 	XMMATRIX temp = XMMatrixTranspose(model * view);
 	XMStoreFloat4x4(&mv, temp);
-	m_pConstantBuffers->Mv = mv;
+	m_pConstantBuffers->mMv = mv;
 
 	// Compute the model-view-projection matrix.
 	temp = XMMatrixTranspose(model * view * projection);
 	XMStoreFloat4x4(&mvp, temp);
-	m_pConstantBuffers->Mvp = mvp;
+	m_pConstantBuffers->mMvp = mvp;
 
 	//
 	XMMATRIX tView = view;
@@ -137,7 +137,7 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	XMVECTOR det;
 	XMMATRIX mvpinv = XMMatrixInverse(&det, temp);
 	XMStoreFloat4x4(&mvp, mvpinv);
-	m_pConstantBuffers->MvpInv = mvp;
+	m_pConstantBuffers->mMvpInv = mvp;
 	//memcpy(&m_pConstantBuffers[0], &mvp, sizeof(mvp));
 	//m_pConstantBuffers[0].mvp._11 = 0.5f;
 	//m_pConstantBuffers[0].mvp._22 = 0.5f;
