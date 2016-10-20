@@ -165,6 +165,23 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	//
 	g_Camera.Init(0.8f, 1.0f);
 
+	//
+	PointLight pp;
+	pp.fPosX = 0.0f;
+	pp.fPosY = 5.0f;
+	pp.fPosZ = 0.0f;
+	pp.fAttenuationEnd = 10.0f;
+	pp.fAttenuationBegin = 0.0f;
+	pp.fR = 1.0f;
+	pp.fG = 0.0f;
+	pp.fB = 0.0f;
+	AddPointLight(pp);
+
+	pp.fPosX = 5.0f;
+	pp.fR = 0.0f;
+	pp.fG = 1.0f;
+	AddPointLight(pp);
+
 	return TRUE;
 }
 

@@ -1,16 +1,23 @@
+
 #include "XDeferredShading.h"
 #include "DXSampleHelper.h"
 
 #include "Resource\XShader.h"
 #include "Resource\XTexture.h"
 
+// 3,4,5 RenderTarget SRV
 #define DEFERREDSHADING_RENDERTARGET_RBASE		3
 #define CSUBASE_DEFERREDSHADING_TEXTURE			3
+#define GCSUBASE_LIGHT							17
 #define DEFERREDSHADING_RENDERTARGET_COUNT		RENDERTARGET_MAXNUM
 
 extern UINT										g_uRenderTargetCount[ESHADINGPATH_COUNT];
 extern DXGI_FORMAT								g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
+
 extern XEngine									*g_pEngine;
+extern ID3D12DescriptorHeap						*GetCpuCSUDHeap();
+extern ID3D12DescriptorHeap						*GetGpuCSUDHeap();
+extern UINT										GetCSUDHeapSize();
 
 namespace DeferredShading
 {
@@ -18,6 +25,9 @@ namespace DeferredShading
 	XRenderTarget								*pRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
 	XShader										*pShadingShader;
 	XComputeShader								*pClusteredShadingShader;
+
+	LightConstantBuffer							*pConstantBuffers = nullptr;
+	ID3D12Resource								*pConstantUploadHeap = nullptr;
 
 	//
 	ID3D12Resource								*pResultBuffer = nullptr;
@@ -47,6 +57,32 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	pShadingShader = XShader::CreateShaderFromFile(L"shaders_ds_shading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
 	pClusteredShadingShader = XComputeShader::CreateComputeShaderFromFile(L"shaders_ds_clusteredshading.hlsl", "CSMain", "cs_5_0");
 
+	// ConstantBuffer
+	{
+		// Create an upload heap for the constant buffers.
+		// HDRConstant
+		ThrowIfFailed(pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightConstantBuffer)),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&pConstantUploadHeap)));
+
+		// Map the constant buffers. Note that unlike D3D11, the resource 
+		// does not need to be unmapped for use by the GPU. In this sample, 
+		// the resource stays 'permenantly' mapped to avoid overhead with 
+		// mapping/unmapping each frame.
+		CD3DX12_RANGE readRange(0, 0);
+		ThrowIfFailed(pConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&pConstantBuffers)));
+
+		//
+		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
+		ConstantDesc.BufferLocation = pConstantUploadHeap->GetGPUVirtualAddress();
+		ConstantDesc.SizeInBytes = sizeof(LightConstantBuffer);
+		pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_LIGHT, GetCSUDHeapSize()));
+	}
+
 	// ResultBuffer
 /*
 	ThrowIfFailed(pDevice->CreateCommittedResource(
@@ -62,6 +98,14 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 
 void CleanDeferredShading()
 {
+	// ConstantBuffer
+	if (pConstantUploadHeap)
+	{
+		pConstantUploadHeap->Unmap(0, nullptr);
+		SAFE_RELEASE(pConstantUploadHeap);
+	}
+	pConstantBuffers = nullptr;
+
 	SAFE_DELETE(pShadingShader);
 	SAFE_DELETE(pClusteredShadingShader);
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
@@ -115,6 +159,7 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 
 	pCommandList->SetComputeRootDescriptorTable(0, pRenderTargets[0]->GetSRVGpuHandle());
 	pCommandList->SetComputeRootDescriptorTable(1, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(4, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_LIGHT, GetCSUDHeapSize()));
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
@@ -145,4 +190,43 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 
 	//
 	//RenderFullScreen(pCommandList, pShadingShader);
+}
+
+extern std::vector<PointLight> vPointLight;
+void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
+{
+	//
+	XMMATRIX model;
+	XMFLOAT4X4 mv, mvp;
+
+	model = XMMatrixIdentity();
+
+	//
+	XMMATRIX temp = XMMatrixTranspose(model * view * projection);
+	XMStoreFloat4x4(&mvp, temp);
+	pConstantBuffers->mMvp = mvp;
+	pConstantBuffers->uLightNum = vPointLight.size();
+	for (UINT i = 0;i < pConstantBuffers->uLightNum;++i)
+	{
+		pConstantBuffers->sLight[i].fPosX = vPointLight[i].fPosX;
+		pConstantBuffers->sLight[i].fPosY = vPointLight[i].fPosY;
+		pConstantBuffers->sLight[i].fPosZ = vPointLight[i].fPosZ;
+		pConstantBuffers->sLight[i].fAttenuationBegin = vPointLight[i].fAttenuationBegin;
+		pConstantBuffers->sLight[i].fAttenuationEnd = vPointLight[i].fAttenuationEnd;
+
+		pConstantBuffers->sLight[i].fR = vPointLight[i].fR;
+		pConstantBuffers->sLight[i].fG = vPointLight[i].fG;
+		pConstantBuffers->sLight[i].fB = vPointLight[i].fB;
+	}
+
+	////
+	//XMVECTOR wLightPos;
+	//wLightPos.m128_f32[0] = 0.0f;
+	//wLightPos.m128_f32[1] = 5.0f;
+	//wLightPos.m128_f32[2] = 0.0f;
+	//wLightPos.m128_f32[3] = 1.0f;
+	//XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
+	//pConstantBuffers->sLight[0].fPosX = vLightPos.m128_f32[0];
+	//pConstantBuffers->sLight[0].fPosY = vLightPos.m128_f32[1];
+	//pConstantBuffers->sLight[0].fPosZ = vLightPos.m128_f32[2];
 }

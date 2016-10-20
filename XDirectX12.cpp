@@ -194,7 +194,9 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// 3 For AlphaRender UAV
 	// 5 for HDR RenderTraget SRV and UAV,SBuffer UAV,ConstantBuffer SRV
 	// 2 for Entity's Texture SRV
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 5 + 2 + 1;
+	// 1 For SkyBox
+	// 1 For LightConstantBuffer CBV
+	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 5 + 2 + 1 + 1;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pGpuCSUDescriptorHeap)));
@@ -248,17 +250,19 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE cranges[4];
+		CD3DX12_DESCRIPTOR_RANGE cranges[5];
 		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
 		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV S
 		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);			// UAV D
-		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
+		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content 0 
+		cranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content 1
 
-		CD3DX12_ROOT_PARAMETER crootParameters[4];
+		CD3DX12_ROOT_PARAMETER crootParameters[5];
 		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
 		crootParameters[3].InitAsDescriptorTable(1, &cranges[3], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[4].InitAsDescriptorTable(1, &cranges[4], D3D12_SHADER_VISIBILITY_ALL);
 
 		CD3DX12_ROOT_SIGNATURE_DESC crootSignatureDesc = CD3DX12_ROOT_SIGNATURE_DESC(_countof(crootParameters), crootParameters, 0, nullptr);
 
@@ -310,6 +314,8 @@ bool Update()
 	XBuffer::Update();
 
 	g_pFrameResource[g_uFrameIndex]->UpdateConstantBuffers(g_Camera.GetViewMatrix(), g_Camera.GetProjectionMatrix());
+	DeferredShading_Update(g_Camera.GetViewMatrix(), g_Camera.GetProjectionMatrix());
+
 	return true;
 }
 
@@ -522,4 +528,13 @@ void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XShader *pShader,X
 		pCommandList->IASetIndexBuffer(pFullScreenGeometry->GetIndexBufferView());
 		pCommandList->DrawIndexedInstanced(pFullScreenGeometry->GetNumIndices(), 1, 0, 0, 0);
 	}
+}
+
+std::vector<PointLight> vPointLight;
+void AddPointLight(PointLight& sPointLight)
+{
+	if (vPointLight.size() >= LIGHT_MAXNUM)
+		return;
+
+	vPointLight.push_back(sPointLight);
 }

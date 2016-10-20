@@ -27,6 +27,7 @@ enum ESHADINGPATH
 
 #define	FRAME_NUM				3
 #define RENDERTARGET_MAXNUM		3
+#define LIGHT_MAXNUM			16
 
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow);
 void MoveToNextFrame();
@@ -39,6 +40,13 @@ void Clean();
 #define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
 #define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
+
+struct PointLight
+{
+	FLOAT			fPosX, fPosY, fPosZ, fAttenuationBegin;
+	FLOAT			fR, fG, fB, fAttenuationEnd;
+};
+void AddPointLight(PointLight& sPointLight);
 
 class XEngine
 {

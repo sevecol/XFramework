@@ -13,15 +13,17 @@ struct VSInput
 {
 	float3 position	: POSITION;
 	float3 normal	: NORMAL;
-	float2 uv		: TEXCOORD0;
+	float2 uv	: TEXCOORD0;
 	float3 tangent	: TANGENT;
 };
 
 struct PSInput
 {
 	float4 position		: SV_POSITION;
-    	float3 positionView 	: positionView;      // View space position
-    	float3 normal       	: normal;
+        float3 positionW	: positionW;		// World space position
+    	float3 positionV 	: positionV;      	// View space position
+    	float3 normalW      	: normalW;
+	float3 normalV     	: normalV;
 	float2 uv		: TEXCOORD0;
 };
 
@@ -37,8 +39,11 @@ PSInput VSMain(VSInput input)
 	PSInput result;
 	
 	result.position = mul(float4(input.position, 1.0f), g_mWorldViewProj);
-	result.positionView = mul(float4(input.position, 1.0f), g_mWorldView).xyz;
-	result.normal       = mul(float4(input.normal, 0.0f), g_mWorldView).xyz;
+	result.positionW 	= input.position.xyz;
+	result.positionV 	= mul(float4(input.position, 1.0f), g_mWorldView).xyz;
+	result.normalW  	= input.normal.xyz;
+	result.normalW.y	*= -1;
+	result.normalV   	= mul(float4(input.normal, 0.0f), g_mWorldView).xyz;
 	result.uv = input.uv;
 	
 	return result;
@@ -70,7 +75,7 @@ struct SurfaceData
 SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
 {
     SurfaceData surface;
-    surface.positionView = input.positionView;
+    surface.positionView = input.positionV;
 
     // These arguably aren't really useful in this path since they are really only used to
     // derive shading frequencies and composite derivatives but might as well compute them
@@ -81,8 +86,8 @@ SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
     surface.positionViewDY = ddy_coarse(surface.positionView);
 
     // Optionally use face normal instead of shading normal
-    //float3 faceNormal = ComputeFaceNormal(input.positionView);
-    surface.normal = input.normal;
+    //float3 faceNormal = ComputeFaceNormal(input.positionV);
+    surface.normal = input.normalV;
     
     surface.albedo = g_txDiffuse.Sample(g_sampler, input.uv);
     surface.albedo.a = 1.0f;
@@ -109,23 +114,10 @@ float2 EncodeSphereMap(float3 n)
     return n.xy / p * 0.5f + 0.5f;
 }
 
-float3 DecodeSphereMap(float2 e)
-{
-    float2 tmp = e - e * e;
-    float f = tmp.x + tmp.y;
-    float m = sqrt(4.0f * f - 1.0f);
-    
-    float3 n;
-    n.xy = m * (e * 4.0f - 2.0f);
-    n.z  = 3.0f - 8.0f * f;
-    return n;
-}
-
-
 PsOutput PSMain(PSInput input)
 {
 	PsOutput result;
-
+/*
 	SurfaceData surface = ComputeSurfaceDataFromGeometry(input);
 
     	result.color0 = float4(EncodeSphereMap(surface.normal),
@@ -135,6 +127,13 @@ PsOutput PSMain(PSInput input)
 	result.color1.a = 1.0f;
     	result.color2.xy = float2(ddx_coarse(surface.positionView.z),
                                          ddy_coarse(surface.positionView.z));
+	result.color2.z = input.position.z;
+*/
+	result.color0 = float4(input.positionW.xyz,1.0f);
+	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
+	//原始模型没有法线信息
+	result.color2 =  float4(1,0,0,1);
+	//result.color2 = float4(normalize(input.normalW.xyz),1.0f);
 
 	return result;
 }

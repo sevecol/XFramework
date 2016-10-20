@@ -24,9 +24,24 @@ cbuffer FrameBuffer : register(b0)
 	float fValue;
 };
 
+struct PointLight
+{
+    float3 positionView;
+    float attenuationBegin;
+    float3 color;
+    float attenuationEnd;
+};
+cbuffer LightBuffer : register(b1)
+{
+	float4x4   mWorldViewProj;
+	PointLight sLight[16];
+	uint uLightNum;
+}
+
 Texture2D g_texture0 : register(t0);
 Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
+
 RWTexture2D<float4> gFramebuffer : register(u0);
 
 groupshared uint sMinZ;
@@ -35,6 +50,162 @@ groupshared uint sMaxZ;
 // Light list for the tile
 groupshared uint sTileLightIndices[32];
 groupshared uint sTileNumLights;
+
+//
+struct SurfaceData
+{
+    float3 positionView;         // View space position
+    float3 positionViewDX;       // Screen space derivatives
+    float3 positionViewDY;       // of view space position
+    float3 normal;               // View space normal
+    float4 albedo;
+    float specularAmount;        // Treated as a multiplier on albedo
+    float specularPower;
+};
+
+float3 DecodeSphereMap(float2 e)
+{
+    float2 tmp = e - e * e;
+    float f = tmp.x + tmp.y;
+    float m = sqrt(4.0f * f - 1.0f);
+    
+    float3 n;
+    n.xy = m * (e * 4.0f - 2.0f);
+    n.z  = 3.0f - 8.0f * f;
+    return n;
+}
+
+float3 ComputePositionViewFromZ(float2 positionScreen,
+                                float viewSpaceZ)
+{
+    float2 screenSpaceRay = float2(positionScreen.x / mWorldViewProj._11,
+                                   positionScreen.y / mWorldViewProj._22);
+    
+    float3 positionView;
+    positionView.z = viewSpaceZ;
+    // Solve the two projection equations
+    positionView.xy = screenSpaceRay.xy * positionView.z;
+    
+    return positionView;
+}
+
+SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
+{
+    // Load the raw data from the GBuffer
+    //GBuffer rawData;
+    float4 normal_specular = g_texture0.Load(positionViewport).xyzw;
+    float4 albedo = g_texture1.Load(positionViewport).xyzw;
+    float2 positionZGrad = g_texture2.Load(positionViewport).xy;
+    float zBuffer = g_texture2.Load(positionViewport).z;
+    
+    float2 gbufferDim = float2(1280,720);
+    //uint dummy;
+    //gGBufferTextures[0].GetDimensions(gbufferDim.x, gbufferDim.y, dummy);
+    
+    // Compute screen/clip-space position and neighbour positions
+    // NOTE: Mind DX11 viewport transform and pixel center!
+    // NOTE: This offset can actually be precomputed on the CPU but it's actually slower to read it from
+    // a constant buffer than to just recompute it.
+    float2 screenPixelOffset = float2(2.0f, -2.0f) / gbufferDim;
+    float2 positionScreen = (float2(positionViewport.xy) + 0.5f) * screenPixelOffset.xy + float2(-1.0f, 1.0f);
+    float2 positionScreenX = positionScreen + float2(screenPixelOffset.x, 0.0f);
+    float2 positionScreenY = positionScreen + float2(0.0f, screenPixelOffset.y);
+        
+    // Decode into reasonable outputs
+/*
+    SurfaceData data;
+        
+    // Unproject depth buffer Z value into view space
+    float viewSpaceZ = mWorldViewProj._43 / (zBuffer - mWorldViewProj._33);
+
+    data.positionView = ComputePositionViewFromZ(positionScreen, viewSpaceZ);
+    data.positionViewDX = ComputePositionViewFromZ(positionScreenX, viewSpaceZ + positionZGrad.x) - data.positionView;
+    data.positionViewDY = ComputePositionViewFromZ(positionScreenY, viewSpaceZ + positionZGrad.y) - data.positionView;
+
+    data.normal = DecodeSphereMap(normal_specular.xy);
+    data.albedo = albedo;
+
+    data.specularAmount = normal_specular.z;
+    data.specularPower = normal_specular.w;
+*/
+	
+    SurfaceData data;
+    data.positionView = g_texture0.Load(positionViewport).xyz;
+    data.albedo = g_texture1.Load(positionViewport);
+    data.normal = g_texture2.Load(positionViewport).xyz;
+
+    data.specularAmount = 0.9f;
+    data.specularPower = 25.0f;
+    
+    return data;
+}
+
+float linstep(float min, float max, float v)
+{
+    return saturate((v - min) / (max - min));
+}
+
+//
+// As below, we separate this for diffuse/specular parts for convenience in deferred lighting
+void AccumulatePhongBRDF(float3 normal,
+                         float3 lightDir,
+                         float3 viewDir,
+                         float3 lightContrib,
+                         float specularPower,
+                         inout float3 litDiffuse,
+                         inout float3 litSpecular)
+{
+    // Simple Phong
+    float NdotL = dot(normal, lightDir);
+    [flatten] if (NdotL > 0.0f) {
+        float3 r = reflect(lightDir, normal);
+        float RdotV = max(0.0f, dot(r, viewDir));
+        float specular = pow(RdotV, specularPower);
+
+        litDiffuse += lightContrib * NdotL;
+        litSpecular += lightContrib * specular;
+    }
+}
+
+// Accumulates separate "diffuse" and "specular" components of lighting from a given
+// This is not possible for all BRDFs but it works for our simple Phong example here
+// and this separation is convenient for deferred lighting.
+// Uses an in-out for accumulation to avoid returning and accumulating 0
+void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
+                                   inout float3 litDiffuse,
+                                   inout float3 litSpecular)
+{
+    float3 directionToLight = light.positionView - surface.positionView;
+    float distanceToLight = length(directionToLight);
+
+    [branch] if (distanceToLight < light.attenuationEnd) {
+        float attenuation = linstep(light.attenuationEnd, light.attenuationBegin, distanceToLight);
+        directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
+        
+        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
+            attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
+    }
+}
+
+// Uses an in-out for accumulation to avoid returning and accumulating 0
+void AccumulateBRDF(SurfaceData surface, PointLight light,
+                    inout float3 lit)
+{
+    float3 directionToLight = light.positionView - surface.positionView;
+    float distanceToLight = length(directionToLight);
+
+    [branch] if (distanceToLight < light.attenuationEnd) {
+        float attenuation = linstep(light.attenuationEnd, light.attenuationBegin, distanceToLight);
+        directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
+
+        float3 litDiffuse = float3(0.0f, 0.0f, 0.0f);
+        float3 litSpecular = float3(0.0f, 0.0f, 0.0f);
+        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
+            attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
+        
+        lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
+    }
+}
 
 [numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
 void CSMain(uint3 groupId          : SV_GroupID,
@@ -54,12 +225,18 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float4 color = g_texture0.Load(dispatchThreadId.xyz);
     if (color.a!=0.0f)
     {
-	gFramebuffer[dispatchThreadId.xy] = color;
-    }
+	//gFramebuffer[dispatchThreadId.xy] = color;
 
-    //gFramebuffer[dispatchThreadId.y*1280+dispatchThreadId.x].fR = 1.0f;
-    
-    //gFramebuffer[1] = dispatchThreadId.y;
+	//
+	SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
+
+	float3 result = float3(0,0,0);
+	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
+	{
+		AccumulateBRDF(surface, sLight[lightindex], result);
+	}
+	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
+    }
 
     // NOTE: This is currently necessary rather than just using SV_GroupIndex to work
     // around a compiler bug on Fermi.
