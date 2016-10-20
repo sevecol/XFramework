@@ -111,6 +111,8 @@ class XRenderTarget
 	D3D12_GPU_DESCRIPTOR_HANDLE			m_hRTVGpuHandle;
 	D3D12_CPU_DESCRIPTOR_HANDLE			m_hSRVCpuHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE			m_hSRVGpuHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE			m_hUAVCpuHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE			m_hUAVGpuHandle;
 public:
 	ID3D12Resource* GetResource() { return m_pRenderTarget.Get(); }
 	D3D12_CPU_DESCRIPTOR_HANDLE& GetRTVCpuHandle()
@@ -129,6 +131,14 @@ public:
 	{
 		return m_hSRVGpuHandle;
 	}
+	D3D12_CPU_DESCRIPTOR_HANDLE& GetUAVCpuHandle()
+	{
+		return m_hUAVCpuHandle;
+	}
+	D3D12_GPU_DESCRIPTOR_HANDLE& GetUAVGpuHandle()
+	{
+		return m_hUAVGpuHandle;
+	}
 
-	static XRenderTarget* CreateRenderTarget(DXGI_FORMAT Format, UINT uWidth, UINT uHeight, UINT uRTVIndex, UINT uSRVIndex);
+	static XRenderTarget* CreateRenderTarget(DXGI_FORMAT Format, UINT uWidth, UINT uHeight, UINT uRTVIndex, UINT uSRVIndex, UINT uUAVIndex = 0xFFFFFFFF);
 };
