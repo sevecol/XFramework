@@ -9,3 +9,7 @@ HDR:
 1 Use CS Compute Luminance
 2 PixelShader ToneMapping
 ![image](https://github.com/sevecol/XFramework/blob/master/hdr.png)
+
+TiledBase DS
+Use CS cull light Compute shading
+![image](https://github.com/sevecol/XFramework/blob/master/ds.png)
