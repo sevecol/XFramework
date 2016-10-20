@@ -189,7 +189,11 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer,3 for DeferredShading RenderTarget ShaderView,3 For AlphaRender UAV,4 for HDR (RenderTraget,Texture,UAV),2 for Entity's Texture
+	// 3 for FrameResource ContentBuffer's SRV
+	// 3 for DeferredShading RenderTarget SRV
+	// 3 For AlphaRender UAV
+	// 5 for HDR RenderTraget SRV and UAV,SBuffer UAV,ConstantBuffer SRV
+	// 2 for Entity's Texture SRV
 	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 5 + 2 + 1;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -245,7 +249,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	//
 	{
 		CD3DX12_DESCRIPTOR_RANGE cranges[4];
-		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);			// Texture
+		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
 		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV S
 		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);			// UAV D
 		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content

@@ -9,6 +9,8 @@ void CleanHDR();
 
 void HDR_Bind(ID3D12GraphicsCommandList* pCommandList);
 void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList);
+class XRenderTarget;
+XRenderTarget* HDR_GetRenderTarget();
 
 struct HDRConstantBuffer
 {

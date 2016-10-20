@@ -21,7 +21,10 @@
 //#include "FramebufferFlat.hlsl"
 //#include "ShaderDefines.h"
 
-RWStructuredBuffer<uint2> gFramebuffer : register(u0);
+Texture2D g_texture0 : register(t0);
+Texture2D g_texture1 : register(t1);
+Texture2D g_texture2 : register(t2);
+RWTexture2D<float4> gFramebuffer : register(u0);
 
 groupshared uint sMinZ;
 groupshared uint sMaxZ;
@@ -30,21 +33,32 @@ groupshared uint sMaxZ;
 groupshared uint sTileLightIndices[32];
 groupshared uint sTileNumLights;
 
-[numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
+//[numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
+[numthreads(1, 1, 1)]
 void CSMain(uint3 groupId          : SV_GroupID,
                          uint3 dispatchThreadId : SV_DispatchThreadID,
                          uint3 groupThreadId    : SV_GroupThreadID
                          )
 {
+    float4 color = g_texture0.Load(dispatchThreadId.xyz);
+    if (color.a!=0.0f)
+    {
+	gFramebuffer[dispatchThreadId.xy] = color;
+    }
+
+    //gFramebuffer[dispatchThreadId.y*1280+dispatchThreadId.x].fR = 1.0f;
+    
+    //gFramebuffer[1] = dispatchThreadId.y;
+
     // NOTE: This is currently necessary rather than just using SV_GroupIndex to work
     // around a compiler bug on Fermi.
-    uint groupIndex = groupThreadId.y * COMPUTE_SHADER_TILE_GROUP_DIM + groupThreadId.x;
+    //uint groupIndex = groupThreadId.y * COMPUTE_SHADER_TILE_GROUP_DIM + groupThreadId.x;
     
     // How many total lights?
-    uint totalLights, dummy;
+    //uint totalLights, dummy;
     //gLight.GetDimensions(totalLights, dummy);
 
-    uint2 globalCoords = dispatchThreadId.xy;
+    //uint2 globalCoords = dispatchThreadId.xy;
 /*
     SurfaceData surfaceSamples[MSAA_SAMPLES];
     ComputeSurfaceDataFromGBufferAllSamples(globalCoords, surfaceSamples);

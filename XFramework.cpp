@@ -1,3 +1,4 @@
+
 #include <Windows.h>
 //#include "XFramework.h"
 #include "XDirectX12.h"
@@ -6,7 +7,6 @@
 #include "UI\UIManager.h"
 #include "Loader\XBinLoader.h"
 #include "Thread\XResourceThread.h"
-
 
 extern XCamera			g_Camera;
 extern XEntity			*g_pEntityNormal;
