@@ -232,11 +232,15 @@ void CSMain(uint3 groupId          : SV_GroupID,
     //ComputeSurfaceDataFromGBufferAllSamples(globalCoords, surfaceSamples);
         
     // Work out Z bounds for our samples
-    float minZSample = 0.0f;
-    float maxZSample = 100.0f;
+    float minZSample = 1000.0f;
+    float maxZSample =    1.0f;
     {
-        minZSample = min(minZSample, surface.positionView.z);
-    	maxZSample = max(maxZSample, surface.positionView.z);
+        bool validPixel = surface.positionView.z >= 1.0f && surface.positionView.z <  1000.0f;
+        [flatten] if (validPixel) 
+	{
+                minZSample = min(minZSample, surface.positionView.z);
+                maxZSample = max(maxZSample, surface.positionView.z);
+	}
     }
     
     // Initialize shared memory light list and Z bounds
@@ -421,6 +425,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
     //
     GroupMemoryBarrierWithGroupSync();
 
+    
     //
     if (dispatchThreadId.x>=uScreen.x)
     {
@@ -433,20 +438,16 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float4 color = g_texture0.Load(dispatchThreadId.xyz);
     if (color.a!=0.0f)
     {
-	//gFramebuffer[dispatchThreadId.xy] = color;
-
-	//
-	//SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
-
 	float3 result = float3(0,0,0);
-	for (uint lightindex = 0; lightindex < sTileNumLights; ++lightindex) 
+	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
 	{
  		uint lindex = sTileLightIndices[lightindex];
-		AccumulateBRDF(surface, sLight[lindex], result);
+		AccumulateBRDF(surface, sLight[lightindex], result);
 	}
 	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
-	//gFramebuffer[dispatchThreadId.xy] = float4(numLights,numLights,numLights,1.0f);
+	//gFramebuffer[dispatchThreadId.xy] = float4(numLights/2.0f,numLights/2.0f,numLights/2.0f,1.0f);
     }
+    //gFramebuffer[dispatchThreadId.xy] = float4(surface.positionView.z,surface.positionView.z,surface.positionView.z,1.0f);
 }
 
 #endif // COMPUTE_SHADER_TILE_HLSL

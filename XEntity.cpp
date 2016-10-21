@@ -4,9 +4,8 @@
 #include "DXSampleHelper.h"
 #include "Math\XMathSIMD.h"
 
-#define GCSUBASE_ENTITY					14
-
-extern XResourceThread					*g_pResourceThread;
+extern XResourceThread *g_pResourceThread;
+extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 
 struct sVertex
 {
@@ -17,7 +16,18 @@ struct sVertex
 };
 sVertex *pData = nullptr;
 
+namespace Entity
+{
+	UINT								uGpuCSUBase;
+}
+using namespace Entity;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void XEntity::Init(ID3D12Device* pDevice)
+{
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,2);
+}
+
 XEntity::XEntity():m_pTextureSet(nullptr),m_pShader(nullptr),m_pGeometry(nullptr){}
 XEntity::~XEntity()
 {
@@ -94,13 +104,13 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 */
 XTextureSet* XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureFileType eFileType)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, GCSUBASE_ENTITY, eFileType);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase, eFileType);
 	return m_pTextureSet;
 }
 
 XTextureSet* XEntity::InitTexture(LPCWSTR pName, UINT uWidth,UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, GCSUBASE_ENTITY, uWidth, uHeight, Format, pData, uPixelSize);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uGpuCSUBase, uWidth, uHeight, Format, pData, uPixelSize);
 	return m_pTextureSet;
 }
 

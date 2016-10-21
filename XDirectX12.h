@@ -48,6 +48,7 @@ struct PointLight
 };
 void AddPointLight(PointLight& sPointLight);
 
+//
 class XEngine
 {
 public:
@@ -65,6 +66,7 @@ public:
 	ComPtr<ID3D12Fence>					m_pFence;
 
 	// Heap|Resource
+/*
 	ComPtr<ID3D12DescriptorHeap>		m_pRDescriptorHeap;
 	UINT								m_uRDescriptorSize;
 
@@ -72,8 +74,33 @@ public:
 	ComPtr<ID3D12Resource>				m_pDepthStencil;
 
 	ComPtr<ID3D12DescriptorHeap>		m_pGpuCSUDescriptorHeap;
+	UINT								m_uGpuCSUStart;
+	UINT								m_uGpuCSUCount;
 	ComPtr<ID3D12DescriptorHeap>		m_pCpuCSUDescriptorHeap;
+	UINT								m_uCpuCSUStart;
+	UINT								m_uCpuCSUCount;
+
 	UINT								m_uCSUDescriptorSize;
+*/
+	struct XDescriptorHeap
+	{
+		ComPtr<ID3D12DescriptorHeap>	m_pDescriptorHeap;
+		UINT							m_uSize;
+		UINT							m_uStart;
+		UINT							m_uCount;
+	};
+
+	enum XDescriptorHeapType
+	{
+		XDESCRIPTORHEAPTYPE_RTV = 0,
+		XDESCRIPTORHEAPTYPE_DSV,
+		XDESCRIPTORHEAPTYPE_GCSU,
+		XDESCRIPTORHEAPTYPE_CCSU,
+
+		XDESCRIPTORHEAPTYPE_COUNT
+	};
+	XDescriptorHeap						m_hHandleHeap[XDESCRIPTORHEAPTYPE_COUNT];
+	ComPtr<ID3D12Resource>				m_pDepthStencil;
 
 	//
 	D3D12_VIEWPORT						m_Viewport;

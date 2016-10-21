@@ -46,7 +46,7 @@ static const float	c_brightThreshold	= 0.5f;
 float4 PSMain(PSInput input) : SV_TARGET
 {
 	float4 color = g_texture0.Sample(g_sampler, input.uv);
-	return color;
+	//return color;
 	//if (input.uv.x>0.5f)
 	//	return color;
 	

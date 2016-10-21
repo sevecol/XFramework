@@ -30,6 +30,8 @@ public:
 	XEntity();
 	~XEntity();
 
+	static void Init(ID3D12Device* pDevice);
+
 	//
 	//virtual void SetResourceCheck(UINT uResourceCheck);
 	//virtual void IncreaseResourceComplate();

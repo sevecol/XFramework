@@ -31,18 +31,30 @@ DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
 };
 
 //
-XEngine								*g_pEngine;
-ID3D12DescriptorHeap				*GetCpuCSUDHeap()
+XEngine *g_pEngine = nullptr;
+ID3D12DescriptorHeap *GetHandleHeap(XEngine::XDescriptorHeapType eType)
 {
-	return g_pEngine->m_pCpuCSUDescriptorHeap.Get();
+	return g_pEngine->m_hHandleHeap[eType].m_pDescriptorHeap.Get();
 }
-ID3D12DescriptorHeap				*GetGpuCSUDHeap()
+D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex)
 {
-	return g_pEngine->m_pGpuCSUDescriptorHeap.Get();
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(GetHandleHeap(eType)->GetCPUDescriptorHandleForHeapStart(), uIndex, g_pEngine->m_hHandleHeap[eType].m_uSize);
 }
-UINT								GetCSUDHeapSize()
+D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex)
 {
-	return g_pEngine->m_uCSUDescriptorSize;
+	return CD3DX12_GPU_DESCRIPTOR_HANDLE(GetHandleHeap(eType)->GetGPUDescriptorHandleForHeapStart(), uIndex, g_pEngine->m_hHandleHeap[eType].m_uSize);
+}
+UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType,UINT uCount)
+{
+	if ((g_pEngine->m_hHandleHeap[eType].m_uStart + uCount) > g_pEngine->m_hHandleHeap[eType].m_uCount)
+	{
+		return 0xFFFFFFFF;
+	}
+
+	UINT uStart = g_pEngine->m_hHandleHeap[eType].m_uStart;
+	g_pEngine->m_hHandleHeap[eType].m_uStart += uCount;
+
+	return uStart;
 }
 
 // FrameResource
@@ -147,22 +159,18 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	// Create descriptor heaps.
 	// Describe and create a render target view (RTV) descriptor heap.
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uStart = 0;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = 7;
+
 	D3D12_DESCRIPTOR_HEAP_DESC RHeapDesc = {};
 	// 3 for FrameSource RenderTarget,3 for DeferredShading RenderTarget,1 for HDR
-	RHeapDesc.NumDescriptors = 3+3+1;
+	RHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount;
 	RHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	RHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&RHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pRDescriptorHeap)));
-
-	g_pEngine->m_uRDescriptorSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&RHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_pDescriptorHeap))));
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	// Describe and create a depth stencil view (DSV) descriptor heap.
-	D3D12_DESCRIPTOR_HEAP_DESC DHeapDesc = {};
-	DHeapDesc.NumDescriptors = 1;
-	DHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	DHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&DHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pDDescriptorHeap)));
-
 	// Create the depth stencil.
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
 	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -183,32 +191,43 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		IID_PPV_ARGS(&g_pEngine->m_pDepthStencil)
 		));
 
-	g_pEngine->m_pDevice->CreateDepthStencilView(g_pEngine->m_pDepthStencil.Get(), &depthStencilDesc, g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
 	//
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uStart = 0;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uCount = 1;
+
+	D3D12_DESCRIPTOR_HEAP_DESC DHeapDesc = {};
+	DHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uCount;
+	DHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	DHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&DHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap))));
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+	g_pEngine->m_pDevice->CreateDepthStencilView(g_pEngine->m_pDepthStencil.Get(), &depthStencilDesc, g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uStart = 0;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uCount = 32;
+
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
-	// 3 for FrameResource ContentBuffer's SRV
-	// 3 for DeferredShading RenderTarget SRV
-	// 3 For AlphaRender UAV
-	// 5 for HDR RenderTraget SRV and UAV,SBuffer UAV,ConstantBuffer SRV
-	// 2 for Entity's Texture SRV
-	// 1 For SkyBox
-	// 1 For LightConstantBuffer CBV
-	CSUHeapDesc.NumDescriptors = 3 + 3 + 3 + 5 + 2 + 1 + 1;
+	CSUHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uCount;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pGpuCSUDescriptorHeap)));
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_pDescriptorHeap))));
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	
+	//
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_uStart = 0;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_uCount = 5;
 
 	//
-	CSUHeapDesc.NumDescriptors = 5;
+	CSUHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_uCount;
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&g_pEngine->m_pCpuCSUDescriptorHeap)));
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_pDescriptorHeap))));
 
 	//
-	g_pEngine->m_uCSUDescriptorSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//
 	{
@@ -291,6 +310,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	XTextureSet::Init(g_pEngine->m_pDevice);
 
 	//
+	XFrameResource::Init(g_pEngine->m_pDevice);
 	for (UINT n = 0; n < FRAME_NUM; n++)
 	{
 		g_pFrameResource[n] = new XFrameResource();
@@ -299,7 +319,10 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
 	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
+
+	//
 	InitSkyBox(g_pEngine->m_pDevice, uWidth, uHeight);
+	XEntity::Init(g_pEngine->m_pDevice);
 
 	//
 	//g_UIManager.Init(g_pEngine->m_pDevice.Get(),  uWidth, uHeight);

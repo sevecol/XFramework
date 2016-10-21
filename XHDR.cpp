@@ -6,24 +6,23 @@
 #include "Resource\XTexture.h"
 #include "Resource\XBuffer.h"
 
-// 9 RenderTarget SRV,10 RenderTarget UAV,11,12 SBuffer UVA,13 ConstantBuffer CBV
-#define GCSUBASE_HDR					9
-#define CCSUBASE_HDR					3
-#define RBASE_HDR						6
-
 #define DISPATCHX_MAX					100
 #define DISPATCHY_MAX					100
 #define DISPATCHNUM_MAX					(DISPATCHX_MAX*DISPATCHY_MAX)
 
-extern XEngine							*g_pEngine;
-extern XResourceThread					*g_pResourceThread;
-extern ID3D12DescriptorHeap				*GetCpuCSUDHeap();
-extern ID3D12DescriptorHeap				*GetGpuCSUDHeap();
-extern UINT								GetCSUDHeapSize();
+extern XEngine *g_pEngine;
+extern XResourceThread *g_pResourceThread;
+
+extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
+extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
+extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
 //
 namespace HDR
 {
+	UINT								uRenderTargetBase,uGpuCSUBase, uCpuCSUBase;
+
 	UINT								uDispatchX, uDispatchY, uPixelCount;
 	UINT								uSrcIndex = 0;
 
@@ -62,19 +61,24 @@ using namespace HDR;
 bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
 	//
+	uRenderTargetBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_RTV, 1);
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,5);
+	uCpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_CCSU,2);
+
+	//
 	uDispatchX = min(uWidth / 16, DISPATCHX_MAX);
 	uDispatchY = min(uHeight / 16, DISPATCHY_MAX);
 	uPixelCount = uWidth * uHeight;
 
 	// RenderTarget
 	{
-		pRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, RBASE_HDR, GCSUBASE_HDR, GCSUBASE_HDR+1);
+		pRenderTarget = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, uWidth, uHeight, uRenderTargetBase, uGpuCSUBase, uGpuCSUBase +1);
 	}
 	// StructuredBuffer
 	for (UINT i = 0;i < ESBUFFERTYPE_COUNT;++i)
 	{
-		pSBuffer[i] = new XStructuredBuffer<float>(pDevice, DISPATCHNUM_MAX, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 2 + i, GetCSUDHeapSize()));
-		pSBuffer[i]->SetUAVGpuHandle(CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 2 + i, GetCSUDHeapSize()));
+		pSBuffer[i] = new XStructuredBuffer<float>(pDevice, DISPATCHNUM_MAX, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 2 + i));
+		pSBuffer[i]->SetUAVGpuHandle(GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 2 + i));
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC UDesc = {};
 		UDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -85,7 +89,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), CCSUBASE_HDR + i, GetCSUDHeapSize());
+		hUAVCpuHandle[i] = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_CCSU, uCpuCSUBase + i);
 		pDevice->CreateUnorderedAccessView(pSBuffer[i]->GetResource(), nullptr, &UDesc, hUAVCpuHandle[i]);
 	}
 	// ConstantBuffer
@@ -116,7 +120,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 		ConstantDesc.BufferLocation = pConstantUploadHeap->GetGPUVirtualAddress();
 		ConstantDesc.SizeInBytes = sizeof(HDRConstantBuffer);
-		pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
+		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 	}
 
 	// Shader
@@ -190,16 +194,16 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 {
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTarget->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart());
 	pCommandList->OMSetRenderTargets(1, &pRenderTarget->GetRTVCpuHandle(), FALSE, &DHandle);
 
 	// Record commands.
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVCpuHandle(), clearColor, 0, nullptr);
-	pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	
 	//
-	pCommandList->SetComputeRootDescriptorTable(3, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
+	pCommandList->SetComputeRootDescriptorTable(3, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
@@ -214,9 +218,9 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 	HDR_Luminance(pCommandList);
 
 	//
-	D3D12_GPU_DESCRIPTOR_HANDLE hStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 2 + uSrcIndex - 1, GetCSUDHeapSize());
+	D3D12_GPU_DESCRIPTOR_HANDLE hStart = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 2 + uSrcIndex - 1);
 	pCommandList->SetGraphicsRootDescriptorTable(3, hStart);
-	pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_HDR + 4, GetCSUDHeapSize()));
+	pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 
 	// ToneMapping
 	RenderFullScreen(pCommandList, pShaderToneMapping);

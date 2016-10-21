@@ -7,17 +7,18 @@
 #include "Resource\XTexture.h"
 
 #define MAX_PIXELS	32
-// 6,7,8 SBuffer
-#define GCSUBASE_ALPHARENDER			6
-#define CCSUBASE_ALPHARENDER			0
 
-extern XEngine							*g_pEngine;
-extern ID3D12DescriptorHeap				*GetCpuCSUDHeap();
-extern ID3D12DescriptorHeap				*GetGpuCSUDHeap();
-extern UINT								GetCSUDHeapSize();
+extern XEngine *g_pEngine;
+extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
+extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
+extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
 namespace AlphaRender
 {
+	UINT									uGpuCSUBase;
+	UINT									uCpuCSUBase;
+
 	enum eSBufferType
 	{
 		ESBUFFERTYPE_COUNTER = 0,
@@ -43,13 +44,18 @@ using namespace AlphaRender;
 //
 bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 {
+	//
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,3);
+	uCpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_CCSU,3);
+
+	//
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hUAVCpuHandle[ESBUFFERTYPE_COUNT];
 	CD3DX12_GPU_DESCRIPTOR_HANDLE hUAVGpuHandle[ESBUFFERTYPE_COUNT];
 
 	for (UINT i = 0;i < ESBUFFERTYPE_COUNT;++i)
 	{
-		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_ALPHARENDER + i, GetCSUDHeapSize());
-		hUAVGpuHandle[i] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), GCSUBASE_ALPHARENDER + i, GetCSUDHeapSize());
+		hUAVCpuHandle[i] = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + i);
+		hUAVGpuHandle[i] = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + i);
 	}
 
 	pSBuffer[ESBUFFERTYPE_COUNTER] = new XStructuredBuffer<UINT>(pDevice, 1, hUAVCpuHandle[ESBUFFERTYPE_COUNTER]);
@@ -75,7 +81,7 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		hUAVCpuHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GetCpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), CCSUBASE_ALPHARENDER+i, GetCSUDHeapSize());
+		hUAVCpuHandle[i] = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_CCSU, uCpuCSUBase+i);
 		pDevice->CreateUnorderedAccessView(pSBuffer[i]->GetResource(), nullptr, &UDesc, hUAVCpuHandle[i]);
 	}
 
