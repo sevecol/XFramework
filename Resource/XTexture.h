@@ -34,7 +34,7 @@ public:
 
 	void Release();
 	virtual UINT GetSBaseIndex() { return m_uSBaseIndex; }
-	UINT GetTextureCount() { return m_vpTexture.size(); }
+	UINT GetTextureCount() { return (UINT)m_vpTexture.size(); }
 
 	D3D12_CPU_DESCRIPTOR_HANDLE& GetSRVCpuHandle()
 	{

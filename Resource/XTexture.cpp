@@ -354,7 +354,7 @@ void DDSTextureSetLoad::LoadFromFile()
 		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[0].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
 
 		//
-		UINT uCount = subresources.size();
+		UINT uCount = (UINT)subresources.size();
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, uCount);
 
 		// Create the GPU upload buffer.
@@ -685,7 +685,7 @@ UINT8* CreateTextureFromWIC(LPCWSTR pFileName, DXGI_FORMAT& Format, UINT& PixelS
 	{
 		return nullptr;
 	}
-	PixelSize = bpp / 8;
+	PixelSize = (UINT)(bpp / 8);
 
 	// Handle sRGB formats
 	forceSRGB = false;
