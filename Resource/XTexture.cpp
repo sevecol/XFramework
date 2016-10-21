@@ -7,8 +7,12 @@
 
 inline size_t BitsPerPixel(_In_ DXGI_FORMAT fmt);
 
-extern XEngine							*g_pEngine;
-extern XResourceThread					*g_pResourceThread;
+extern XEngine *g_pEngine;
+extern XResourceThread *g_pResourceThread;
+
+extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
+extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
 //
 XTextureSet::~XTextureSet()
@@ -262,13 +266,13 @@ void TextureSetLoad::PostLoad()
 		}
 		
 		//
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex() + i, g_pEngine->m_uCSUDescriptorSize));
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + i));
 
 		//
 		m_pTextureSet->m_vpTexture.push_back(pTexture);
 	}
-	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
-	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
+	m_pTextureSet->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
 
 	//m_pResourceSet->IncreaseResourceComplate();
 }
@@ -306,8 +310,8 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 		IID_PPV_ARGS(&pRenderTarget->m_pRenderTarget)));
 
 	//
-	pRenderTarget->m_hRTVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uRTVIndex, g_pEngine->m_uRDescriptorSize);
-	pRenderTarget->m_hRTVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pRDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), uRTVIndex, g_pEngine->m_uRDescriptorSize);
+	pRenderTarget->m_hRTVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRTVIndex);
+	pRenderTarget->m_hRTVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRTVIndex);
 	g_pEngine->m_pDevice->CreateRenderTargetView(pRenderTarget->m_pRenderTarget.Get(), nullptr, pRenderTarget->m_hRTVCpuHandle);
 
 	//
@@ -317,8 +321,8 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 
-	pRenderTarget->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
-	pRenderTarget->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), uSRVIndex, g_pEngine->m_uCSUDescriptorSize);
+	pRenderTarget->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uSRVIndex);
+	pRenderTarget->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uSRVIndex);
 	g_pEngine->m_pDevice->CreateShaderResourceView(pRenderTarget->m_pRenderTarget.Get(), &srvDesc, pRenderTarget->m_hSRVCpuHandle);
 
 	//
@@ -330,8 +334,8 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 		UDesc.Texture2D.MipSlice = 0;
 		UDesc.Texture2D.PlaneSlice = 0;
 
-		pRenderTarget->m_hUAVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), uUAVIndex, g_pEngine->m_uCSUDescriptorSize);
-		pRenderTarget->m_hUAVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), uUAVIndex, g_pEngine->m_uCSUDescriptorSize);
+		pRenderTarget->m_hUAVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uUAVIndex);
+		pRenderTarget->m_hUAVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uUAVIndex);
 		g_pEngine->m_pDevice->CreateUnorderedAccessView(pRenderTarget->m_pRenderTarget.Get(), nullptr, &UDesc, pRenderTarget->m_hUAVCpuHandle);
 	}
 
@@ -382,13 +386,14 @@ void DDSTextureSetLoad::LoadFromFile()
 
 		//
 		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize));
+		
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + i));
 
 		//
 		m_pTextureSet->m_vpTexture.push_back(pTexture);
 	}
-	m_pTextureSet->m_hSRVCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
-	m_pTextureSet->m_hSRVGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(g_pEngine->m_pGpuCSUDescriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_pTextureSet->GetSBaseIndex(), g_pEngine->m_uCSUDescriptorSize);
+	m_pTextureSet->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
+	m_pTextureSet->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
 }
 
 void DDSTextureSetLoad::PostLoad()

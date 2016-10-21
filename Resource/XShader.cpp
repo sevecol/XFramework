@@ -5,10 +5,10 @@
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
-extern XEngine							*g_pEngine;
+extern XEngine *g_pEngine;
 
-extern UINT								g_uRenderTargetCount[ESHADINGPATH_COUNT];
-extern DXGI_FORMAT						g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
+extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
+extern DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
 
 //
 XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)

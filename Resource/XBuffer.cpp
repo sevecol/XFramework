@@ -10,11 +10,11 @@
 #define BLOCKBUFFER_SIZE			1024*1024
 #define BLOCKBUFFER_NUM				20
 
-extern XEngine						*g_pEngine;
-extern XResourceThread				*g_pResourceThread;
+extern XEngine *g_pEngine;
+extern XResourceThread *g_pResourceThread;
 
-extern UINT							g_uFrameIndex;
-extern XFrameResource				*g_pFrameResource[FRAME_NUM];
+extern UINT g_uFrameIndex;
+extern XFrameResource *g_pFrameResource[FRAME_NUM];
 
 D3D12_GPU_VIRTUAL_ADDRESS XStaticBuffer::GetGpuAddress()
 {

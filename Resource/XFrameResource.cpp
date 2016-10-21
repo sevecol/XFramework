@@ -3,20 +3,31 @@
 #include "XBuffer.h"
 #include "..\DXSampleHelper.h"
 
-#define FRAMERESOURCE_RENDERTARGET_RBASE	0
-#define GCSUBASE_FRAMERESOURCE				0
 #define SHADING_RENDERTARGET_COUNT			1
 
-extern XEngine								*g_pEngine;
-extern ID3D12DescriptorHeap					*GetCpuCSUDHeap();
-extern ID3D12DescriptorHeap					*GetGpuCSUDHeap();
-extern UINT									GetCSUDHeapSize();
+extern XEngine *g_pEngine;
+extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
+extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
+extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+
+namespace FrameResource
+{
+	UINT									uRenderTargetBase,uGpuCSUBase;
+}
+using namespace FrameResource;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XFrameResource::~XFrameResource()
 {
 	m_pConstantUploadHeap->Unmap(0, nullptr);
 	m_pConstantBuffers = nullptr;
+}
+
+void XFrameResource::Init(ID3D12Device* pDevice)
+{
+	uRenderTargetBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_RTV, 3);
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,3);
 }
 
 void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapChain3 *pSwapChain)
@@ -26,7 +37,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 
 	//
 	ThrowIfFailed(pSwapChain->GetBuffer(m_uIndex, IID_PPV_ARGS(&m_pRenderTargets)));
-	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pEngine->m_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), FRAMERESOURCE_RENDERTARGET_RBASE+m_uIndex, g_pEngine->m_uRDescriptorSize));
+	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRenderTargetBase+m_uIndex));
 
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
@@ -56,7 +67,7 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 	ConstantDesc.BufferLocation = m_pConstantUploadHeap->GetGPUVirtualAddress();
 	ConstantDesc.SizeInBytes = sizeof(XFrameResource::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetCPUDescriptorHandleForHeapStart(), GCSUBASE_FRAMERESOURCE +m_uIndex, GetCSUDHeapSize()));
+	pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
 }
 
 extern D3D12_VIEWPORT						g_Viewport;
@@ -78,10 +89,10 @@ void XFrameResource::PreRender()
 	m_pCommandList->SetGraphicsRootSignature(g_pEngine->m_pGraphicRootSignature.Get());
 	m_pCommandList->SetComputeRootSignature(g_pEngine->m_pComputeRootSignature.Get());
 
-	ID3D12DescriptorHeap* ppHeaps[] = { GetGpuCSUDHeap() };
+	ID3D12DescriptorHeap* ppHeaps[] = { GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_GCSU) };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_pCommandList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), m_uIndex, GetCSUDHeapSize()));
-	m_pCommandList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(GetGpuCSUDHeap()->GetGPUDescriptorHandleForHeapStart(), m_uIndex, GetCSUDHeapSize()));
+	m_pCommandList->SetGraphicsRootDescriptorTable(0, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
+	m_pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);
@@ -92,14 +103,14 @@ void XFrameResource::BeginRender()
 	// Indicate that the back buffer will be used as a render target.
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE RHandle(g_pEngine->m_pRDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uIndex, g_pEngine->m_uRDescriptorSize);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE RHandle(GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRenderTargetBase+m_uIndex));
+	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart());
 	m_pCommandList->OMSetRenderTargets(1, &RHandle, FALSE, &DHandle);
 
 	// Record commands.
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(RHandle, clearColor, 0, nullptr);
-	m_pCommandList->ClearDepthStencilView(g_pEngine->m_pDDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void XFrameResource::EndRender()

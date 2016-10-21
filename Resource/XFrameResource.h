@@ -30,6 +30,7 @@ public:
 public:
 	~XFrameResource();
 
+	static void Init(ID3D12Device* pDevice);
 	void InitInstance(UINT uIndex,ID3D12Device* pDevice, IDXGISwapChain3 *pSwapChain);
 	void PreRender();
 	void BeginRender();
