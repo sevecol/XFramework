@@ -130,9 +130,9 @@ PsOutput PSMain(PSInput input)
                                          ddy_coarse(surface.positionView.z));
 	result.color2.z = input.position.z;
 */
-	result.color0 = float4(input.positionV.xyz,1.0f);
+	result.color0 = float4(input.positionW.xyz,1.0f);
 	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color2 = float4(normalize(input.normalV.xyz),1.0f);
+	result.color2 = float4(normalize(input.normalW.xyz),1.0f);
 
 	return result;
 }

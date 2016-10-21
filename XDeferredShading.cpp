@@ -202,14 +202,14 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 	XMFLOAT4X4 mMatrix;
 
 	//
-	//XMMATRIX temp = XMMatrixTranspose(model * view * projection);
-	XMMATRIX temp = model * view * projection;//XMMatrixTranspose
+	XMMATRIX temp = XMMatrixTranspose(model * view * projection);
+	//XMMATRIX temp = model * view * projection;//XMMatrixTranspose
 	XMStoreFloat4x4(&mMatrix, temp);
 	pConstantBuffers->mMvp = mMatrix;
 
 	//
-	//temp = XMMatrixTranspose(projection);
-	temp = projection;
+	temp = XMMatrixTranspose(projection);
+	//temp = projection;
 	XMStoreFloat4x4(&mMatrix, temp);
 	pConstantBuffers->mP = mMatrix;
 
@@ -223,10 +223,10 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 		wLightPos.m128_f32[1] = vPointLight[i].fPosY;
 		wLightPos.m128_f32[2] = vPointLight[i].fPosZ;
 		wLightPos.m128_f32[3] = 1.0f;
-		XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
-		pConstantBuffers->sLight[i].fPosX = vLightPos.m128_f32[0];
-		pConstantBuffers->sLight[i].fPosY = vLightPos.m128_f32[1];
-		pConstantBuffers->sLight[i].fPosZ = vLightPos.m128_f32[2];
+		//XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
+		pConstantBuffers->sLight[i].fPosX = wLightPos.m128_f32[0];
+		pConstantBuffers->sLight[i].fPosY = wLightPos.m128_f32[1];
+		pConstantBuffers->sLight[i].fPosZ = wLightPos.m128_f32[2];
 
 		pConstantBuffers->sLight[i].fAttenuationBegin = vPointLight[i].fAttenuationBegin;
 		pConstantBuffers->sLight[i].fAttenuationEnd = vPointLight[i].fAttenuationEnd;

@@ -142,9 +142,9 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     return data;
 }
 
-float linstep(float min, float max, float v)
+float linstep(float minv, float maxv, float v)
 {
-    return saturate((v - min) / (max - min));
+    return 1.0f - saturate((v - minv) / (maxv - minv));
 }
 
 //
@@ -197,7 +197,7 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
     float distanceToLight = length(directionToLight);
 
     [branch] if (distanceToLight < light.attenuationEnd) {
-        float attenuation = linstep(light.attenuationEnd, light.attenuationBegin, distanceToLight);
+        float attenuation = linstep(light.attenuationBegin, light.attenuationEnd, distanceToLight);
         directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
 
         float3 litDiffuse = float3(0.0f, 0.0f, 0.0f);
@@ -206,6 +206,14 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
             attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
         
         lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
+
+	//float NdotL = dot(surface.normal, directionToLight);
+	//lit += surface.albedo.rgb*NdotL * litDiffuse *attenuation;
+	//lit = float3(attenuation,attenuation,attenuation);
+    }
+    else
+    {
+	//lit = float3(light.attenuationBegin,light.attenuationEnd,0); 
     }
 }
 
