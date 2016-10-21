@@ -16,6 +16,7 @@
 #define COMPUTE_SHADER_TILE_HLSL
 
 #define COMPUTE_SHADER_TILE_GROUP_DIM 32
+#define COMPUTE_SHADER_TILE_GROUP_SIZE COMPUTE_SHADER_TILE_GROUP_DIM*COMPUTE_SHADER_TILE_GROUP_DIM
 
 cbuffer FrameBuffer : register(b0)
 {
@@ -34,6 +35,7 @@ struct PointLight
 cbuffer LightBuffer : register(b1)
 {
 	float4x4   mWorldViewProj;
+	float4x4   mProj;
 	PointLight sLight[16];
 	uint uLightNum;
 }
@@ -214,29 +216,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
                          )
 {
     //
-    if (dispatchThreadId.x>=uScreen.x)
-    {
-	if (dispatchThreadId.y>=uScreen.y)
-	{    
-		return;
-	}
-    }
-
-    float4 color = g_texture0.Load(dispatchThreadId.xyz);
-    if (color.a!=0.0f)
-    {
-	//gFramebuffer[dispatchThreadId.xy] = color;
-
-	//
-	SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
-
-	float3 result = float3(0,0,0);
-	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
-	{
-		AccumulateBRDF(surface, sLight[lightindex], result);
-	}
-	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
-    }
+    SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
 
     // NOTE: This is currently necessary rather than just using SV_GroupIndex to work
     // around a compiler bug on Fermi.
@@ -247,31 +227,24 @@ void CSMain(uint3 groupId          : SV_GroupID,
     //gLight.GetDimensions(totalLights, dummy);
 
     //uint2 globalCoords = dispatchThreadId.xy;
-/*
-    SurfaceData surfaceSamples[MSAA_SAMPLES];
-    ComputeSurfaceDataFromGBufferAllSamples(globalCoords, surfaceSamples);
+
+    //SurfaceData surfaceSamples[MSAA_SAMPLES];
+    //ComputeSurfaceDataFromGBufferAllSamples(globalCoords, surfaceSamples);
         
     // Work out Z bounds for our samples
-    float minZSample = mCameraNearFar.y;
-    float maxZSample = mCameraNearFar.x;
+    float minZSample = 0.0f;
+    float maxZSample = 100.0f;
     {
-        [unroll] for (uint sample = 0; sample < MSAA_SAMPLES; ++sample) {
-            // Avoid shading skybox/background or otherwise invalid pixels
-            float viewSpaceZ = surfaceSamples[sample].positionView.z;
-            bool validPixel = 
-                 viewSpaceZ >= mCameraNearFar.x &&
-                 viewSpaceZ <  mCameraNearFar.y;
-            [flatten] if (validPixel) {
-                minZSample = min(minZSample, viewSpaceZ);
-                maxZSample = max(maxZSample, viewSpaceZ);
-            }
-        }
+        minZSample = min(minZSample, surface.positionView.z);
+    	maxZSample = max(maxZSample, surface.positionView.z);
     }
     
     // Initialize shared memory light list and Z bounds
-    if (groupIndex == 0) {
+    uint groupIndex = groupThreadId.y * COMPUTE_SHADER_TILE_GROUP_DIM + groupThreadId.x;
+    if (groupIndex == 0)
+    {
         sTileNumLights = 0;
-        sNumPerSamplePixels = 0;
+        //sNumPerSamplePixels = 0;
         sMinZ = 0x7F7FFFFF;      // Max float
         sMaxZ = 0;
     }
@@ -301,13 +274,13 @@ void CSMain(uint3 groupId          : SV_GroupID,
     // little bit of math anyways, but worth testing.
 
     // Work out scale/bias from [0, 1]
-    float2 tileScale = float2(mFramebufferDimensions.xy) * rcp(float(2 * COMPUTE_SHADER_TILE_GROUP_DIM));
+    float2 tileScale = float2(1280,720) * rcp(float(2 * COMPUTE_SHADER_TILE_GROUP_DIM));
     float2 tileBias = tileScale - float2(groupId.xy);
 
     // Now work out composite projection matrix
     // Relevant matrix columns for this tile frusta
-    float4 c1 = float4(mCameraProj._11 * tileScale.x, 0.0f, tileBias.x, 0.0f);
-    float4 c2 = float4(0.0f, -mCameraProj._22 * tileScale.y, tileBias.y, 0.0f);
+    float4 c1 = float4(mProj._11 * tileScale.x, 0.0f, tileBias.x, 0.0f);
+    float4 c2 = float4(0.0f, -mProj._22 * tileScale.y, tileBias.y, 0.0f);
     float4 c4 = float4(0.0f, 0.0f, 1.0f, 0.0f);
 
     // Derive frustum planes
@@ -325,27 +298,10 @@ void CSMain(uint3 groupId          : SV_GroupID,
     [unroll] for (uint i = 0; i < 4; ++i) {
         frustumPlanes[i] *= rcp(length(frustumPlanes[i].xyz));
     }
-
-#if MORE_CULLING
-    // heuristic plane separation test
-    float minZminX = -(1 - float(groupId.x - 1) / tileScale.x)*minTileZ / mCameraProj._11;
-    float minZmaxX = -(1 - float(groupId.x + 1) / tileScale.x)*minTileZ / mCameraProj._11;
-    float minZminY = (1 - float(groupId.y - 1) / tileScale.y)*minTileZ / mCameraProj._22;
-    float minZmaxY = (1 - float(groupId.y + 1) / tileScale.y)*minTileZ / mCameraProj._22;
-
-    float maxZminX = -(1 - float(groupId.x - 1) / tileScale.x)*maxTileZ / mCameraProj._11;
-    float maxZmaxX = -(1 - float(groupId.x + 1) / tileScale.x)*maxTileZ / mCameraProj._11;
-    float maxZminY = (1 - float(groupId.y - 1) / tileScale.y)*maxTileZ / mCameraProj._22;
-    float maxZmaxY = (1 - float(groupId.y + 1) / tileScale.y)*maxTileZ / mCameraProj._22;
-    
-    float3 minZcenter = { (minZminX + minZmaxX) / 2, (minZminY + minZmaxY) / 2, minTileZ };
-    float3 maxZcenter = { (maxZminX + maxZmaxX) / 2, (maxZminY + maxZmaxY) / 2, maxTileZ };
-    float3 center = (minZcenter + maxZcenter) / 2;
-#endif
         
     // Cull lights for this tile
-    for (uint lightIndex = groupIndex; lightIndex < totalLights; lightIndex += COMPUTE_SHADER_TILE_GROUP_SIZE) {
-        PointLight light = gLight[lightIndex];
+    for (uint lightIndex = groupIndex; lightIndex < uLightNum; lightIndex += COMPUTE_SHADER_TILE_GROUP_SIZE) {
+        PointLight light = sLight[lightIndex];
                 
         // Cull: point light sphere vs tile frustum
         bool inFrustum = true;
@@ -353,23 +309,6 @@ void CSMain(uint3 groupId          : SV_GroupID,
             float d = dot(frustumPlanes[i], float4(light.positionView, 1.0f));
             inFrustum = inFrustum && (d >= -light.attenuationEnd);
         }
-        
-#if MORE_CULLING
-        float3 normal = center - light.positionView;
-        normal /= length(normal);
-        // compute distance of all corners to the tangent plane, with a few shortcuts (saves 14 muls)
-        float min_d1 = -dot(normal, light.positionView);
-        float min_d2 = min_d1;
-        min_d1 += min(normal.x * minZminX, normal.x * minZmaxX);
-        min_d1 += min(normal.y * minZminY, normal.y * minZmaxY);
-        min_d1 += normal.z * minTileZ;
-        min_d2 += min(normal.x * maxZminX, normal.x * maxZmaxX);
-        min_d2 += min(normal.y * maxZminY, normal.y * maxZmaxY);
-        min_d2 += normal.z * maxTileZ;
-        float min_d = min(min_d1, min_d2);
-        bool separated = min_d > light.attenuationEnd;
-        if (separated) inFrustum = false;
-#endif
 
         [branch] if (inFrustum) {
             // Append light to list
@@ -383,7 +322,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
     GroupMemoryBarrierWithGroupSync();
     
     uint numLights = sTileNumLights;
-
+/*
     // Only process onscreen pixels (tiles can span screen edges)
     if (all(globalCoords < mFramebufferDimensions.xy)) {
         [branch] if (mUI.visualizeLightCount) {
@@ -466,6 +405,48 @@ void CSMain(uint3 groupId          : SV_GroupID,
         }
     #endif
 */
+
+    //
+    GroupMemoryBarrierWithGroupSync();
+
+    if (groupIndex == 0)
+    {
+        sTileNumLights = uLightNum;
+	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
+	{
+		sTileLightIndices[lightindex] = lightindex;
+	}
+    } 
+
+    //
+    GroupMemoryBarrierWithGroupSync();
+
+    //
+    if (dispatchThreadId.x>=uScreen.x)
+    {
+	if (dispatchThreadId.y>=uScreen.y)
+	{    
+		return;
+	}
+    }
+
+    float4 color = g_texture0.Load(dispatchThreadId.xyz);
+    if (color.a!=0.0f)
+    {
+	//gFramebuffer[dispatchThreadId.xy] = color;
+
+	//
+	//SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
+
+	float3 result = float3(0,0,0);
+	for (uint lightindex = 0; lightindex < sTileNumLights; ++lightindex) 
+	{
+ 		uint lindex = sTileLightIndices[lightindex];
+		AccumulateBRDF(surface, sLight[lindex], result);
+	}
+	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
+	//gFramebuffer[dispatchThreadId.xy] = float4(numLights,numLights,numLights,1.0f);
+    }
 }
 
 #endif // COMPUTE_SHADER_TILE_HLSL

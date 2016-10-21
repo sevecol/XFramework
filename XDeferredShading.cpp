@@ -196,21 +196,34 @@ extern std::vector<PointLight> vPointLight;
 void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 {
 	//
-	XMMATRIX model;
-	XMFLOAT4X4 mv, mvp;
-
-	model = XMMatrixIdentity();
+	XMMATRIX model = XMMatrixIdentity();
+	XMFLOAT4X4 mMatrix;
 
 	//
 	XMMATRIX temp = XMMatrixTranspose(model * view * projection);
-	XMStoreFloat4x4(&mvp, temp);
-	pConstantBuffers->mMvp = mvp;
+	XMStoreFloat4x4(&mMatrix, temp);
+	pConstantBuffers->mMvp = mMatrix;
+
+	//
+	temp = XMMatrixTranspose(projection);
+	XMStoreFloat4x4(&mMatrix, temp);
+	pConstantBuffers->mP = mMatrix;
+
+	//
 	pConstantBuffers->uLightNum = vPointLight.size();
 	for (UINT i = 0;i < pConstantBuffers->uLightNum;++i)
 	{
-		pConstantBuffers->sLight[i].fPosX = vPointLight[i].fPosX;
-		pConstantBuffers->sLight[i].fPosY = vPointLight[i].fPosY;
-		pConstantBuffers->sLight[i].fPosZ = vPointLight[i].fPosZ;
+		//
+		XMVECTOR wLightPos;
+		wLightPos.m128_f32[0] = vPointLight[i].fPosX;
+		wLightPos.m128_f32[1] = vPointLight[i].fPosY;
+		wLightPos.m128_f32[2] = vPointLight[i].fPosZ;
+		wLightPos.m128_f32[3] = 1.0f;
+		XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
+		pConstantBuffers->sLight[i].fPosX = vLightPos.m128_f32[0];
+		pConstantBuffers->sLight[i].fPosY = vLightPos.m128_f32[1];
+		pConstantBuffers->sLight[i].fPosZ = vLightPos.m128_f32[2];
+
 		pConstantBuffers->sLight[i].fAttenuationBegin = vPointLight[i].fAttenuationBegin;
 		pConstantBuffers->sLight[i].fAttenuationEnd = vPointLight[i].fAttenuationEnd;
 
@@ -218,15 +231,4 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 		pConstantBuffers->sLight[i].fG = vPointLight[i].fG;
 		pConstantBuffers->sLight[i].fB = vPointLight[i].fB;
 	}
-
-	////
-	//XMVECTOR wLightPos;
-	//wLightPos.m128_f32[0] = 0.0f;
-	//wLightPos.m128_f32[1] = 5.0f;
-	//wLightPos.m128_f32[2] = 0.0f;
-	//wLightPos.m128_f32[3] = 1.0f;
-	//XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
-	//pConstantBuffers->sLight[0].fPosX = vLightPos.m128_f32[0];
-	//pConstantBuffers->sLight[0].fPosY = vLightPos.m128_f32[1];
-	//pConstantBuffers->sLight[0].fPosZ = vLightPos.m128_f32[2];
 }

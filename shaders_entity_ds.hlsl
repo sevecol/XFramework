@@ -37,13 +37,14 @@ cbuffer FrameBuffer : register(b0)
 PSInput VSMain(VSInput input)
 {
 	PSInput result;
+
+	float3 normal = float3(1,0,0);
 	
 	result.position = mul(float4(input.position, 1.0f), g_mWorldViewProj);
 	result.positionW 	= input.position.xyz;
 	result.positionV 	= mul(float4(input.position, 1.0f), g_mWorldView).xyz;
-	result.normalW  	= input.normal.xyz;
-	result.normalW.y	*= -1;
-	result.normalV   	= mul(float4(input.normal, 0.0f), g_mWorldView).xyz;
+	result.normalW  	= normal.xyz;
+	result.normalV   	= mul(float4(normal, 0.0f), g_mWorldView).xyz;
 	result.uv = input.uv;
 	
 	return result;
@@ -129,11 +130,9 @@ PsOutput PSMain(PSInput input)
                                          ddy_coarse(surface.positionView.z));
 	result.color2.z = input.position.z;
 */
-	result.color0 = float4(input.positionW.xyz,1.0f);
+	result.color0 = float4(input.positionV.xyz,1.0f);
 	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
-	//原始模型没有法线信息
-	result.color2 =  float4(1,0,0,1);
-	//result.color2 = float4(normalize(input.normalW.xyz),1.0f);
+	result.color2 = float4(normalize(input.normalV.xyz),1.0f);
 
 	return result;
 }
