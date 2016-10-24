@@ -172,14 +172,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	pp.fPosZ = 0.0f;
 	pp.fAttenuationEnd = 7.0f;
 	pp.fAttenuationBegin = 0.0f;
-	pp.fR = 1.0f;
+	pp.fR = 2.0f;
 	pp.fG = 0.0f;
 	pp.fB = 0.0f;
 	AddPointLight(pp);
 
 	pp.fPosX = 3.0f;
 	pp.fR = 0.0f;
-	pp.fG = 1.0f;
+	pp.fG = 2.0f;
 	AddPointLight(pp);
 
 	return TRUE;

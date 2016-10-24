@@ -13,9 +13,10 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection);
 
 struct LightConstantBuffer
 {
-	XMFLOAT4X4		mMvp;						// Model-view-projection (MVP) matrix.
-	XMFLOAT4X4		mP;							// Projection (P) matrix.
+	XMFLOAT4X4		mViewR;						// View Rotation matrix.
+	XMFLOAT4X4		mProj;						// Projection (P) matrix.
+	XMFLOAT4X4		mViewProj;					// View Projection (VP) matrix.
 	PointLight		sLight[LIGHT_MAXNUM];
 	UINT			uLightNum;
-	FLOAT			fPadding[31];
+	FLOAT			fPadding[15];
 };

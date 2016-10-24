@@ -27,15 +27,16 @@ cbuffer FrameBuffer : register(b0)
 
 struct PointLight
 {
-    float3 positionView;
+    float3 position;
     float attenuationBegin;
     float3 color;
     float attenuationEnd;
 };
 cbuffer LightBuffer : register(b1)
 {
-	float4x4   mWorldViewProj;
+        float4x4   mViewR;
 	float4x4   mProj;
+        float4x4   mViewProj;
 	PointLight sLight[16];
 	uint uLightNum;
 }
@@ -56,10 +57,10 @@ groupshared uint sTileNumLights;
 //
 struct SurfaceData
 {
-    float3 positionView;         // View space position
-    float3 positionViewDX;       // Screen space derivatives
-    float3 positionViewDY;       // of view space position
-    float3 normal;               // View space normal
+    float3 position;             // position
+    //float3 positionDX;         // derivatives
+    //float3 positionDY;         // of view space position
+    float3 normal;               // normal
     float4 albedo;
     float specularAmount;        // Treated as a multiplier on albedo
     float specularPower;
@@ -80,8 +81,8 @@ float3 DecodeSphereMap(float2 e)
 float3 ComputePositionViewFromZ(float2 positionScreen,
                                 float viewSpaceZ)
 {
-    float2 screenSpaceRay = float2(positionScreen.x / mWorldViewProj._11,
-                                   positionScreen.y / mWorldViewProj._22);
+    float2 screenSpaceRay = float2(positionScreen.x / mViewProj._11,
+                                   positionScreen.y / mViewProj._22);
     
     float3 positionView;
     positionView.z = viewSpaceZ;
@@ -95,6 +96,7 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
 {
     // Load the raw data from the GBuffer
     //GBuffer rawData;
+/*
     float4 normal_specular = g_texture0.Load(positionViewport).xyzw;
     float4 albedo = g_texture1.Load(positionViewport).xyzw;
     float2 positionZGrad = g_texture2.Load(positionViewport).xy;
@@ -112,13 +114,14 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     float2 positionScreen = (float2(positionViewport.xy) + 0.5f) * screenPixelOffset.xy + float2(-1.0f, 1.0f);
     float2 positionScreenX = positionScreen + float2(screenPixelOffset.x, 0.0f);
     float2 positionScreenY = positionScreen + float2(0.0f, screenPixelOffset.y);
-        
+*/        
+
     // Decode into reasonable outputs
 /*
     SurfaceData data;
         
     // Unproject depth buffer Z value into view space
-    float viewSpaceZ = mWorldViewProj._43 / (zBuffer - mWorldViewProj._33);
+    float viewSpaceZ = mViewProj._43 / (zBuffer - mViewProj._33);
 
     data.positionView = ComputePositionViewFromZ(positionScreen, viewSpaceZ);
     data.positionViewDX = ComputePositionViewFromZ(positionScreenX, viewSpaceZ + positionZGrad.x) - data.positionView;
@@ -132,12 +135,14 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
 */
 	
     SurfaceData data;
-    data.positionView = g_texture0.Load(positionViewport).xyz;
+    float3 position = g_texture0.Load(positionViewport).xyz;
     data.albedo = g_texture1.Load(positionViewport);
-    data.normal = g_texture2.Load(positionViewport).xyz;
-
+    float3 normal = g_texture2.Load(positionViewport).xyz;
     data.specularAmount = 0.9f;
     data.specularPower = 25.0f;
+
+    data.position = mul(float4(position, 1.0f), mViewR).xyz;
+    data.normal = mul(float4(normal, 1.0f), mViewR).xyz;
     
     return data;
 }
@@ -177,6 +182,7 @@ void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
                                    inout float3 litDiffuse,
                                    inout float3 litSpecular)
 {
+/*
     float3 directionToLight = light.positionView - surface.positionView;
     float distanceToLight = length(directionToLight);
 
@@ -187,33 +193,28 @@ void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
         AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
             attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
     }
+*/
 }
 
 // Uses an in-out for accumulation to avoid returning and accumulating 0
 void AccumulateBRDF(SurfaceData surface, PointLight light,
                     inout float3 lit)
 {
-    float3 directionToLight = light.positionView - surface.positionView;
+    // All in view space
+    float3 directionToLight = light.position - surface.position;
     float distanceToLight = length(directionToLight);
 
+    //
     [branch] if (distanceToLight < light.attenuationEnd) {
         float attenuation = linstep(light.attenuationBegin, light.attenuationEnd, distanceToLight);
         directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
-
-        float3 litDiffuse = float3(0.0f, 0.0f, 0.0f);
-        float3 litSpecular = float3(0.0f, 0.0f, 0.0f);
-        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
+	
+	float3 litDiffuse = float3(0,0,0);
+        float3 litSpecular = float3(0,0,0);
+        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.position),
             attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
         
-        lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
-
-	//float NdotL = dot(surface.normal, directionToLight);
-	//lit += surface.albedo.rgb*NdotL * litDiffuse *attenuation;
-	//lit = float3(attenuation,attenuation,attenuation);
-    }
-    else
-    {
-	//lit = float3(light.attenuationBegin,light.attenuationEnd,0); 
+        lit += surface.albedo.rgb * (litDiffuse);// + surface.specularAmount * litSpecular);
     }
 }
 
@@ -243,11 +244,11 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float minZSample = 1000.0f;
     float maxZSample =    1.0f;
     {
-        bool validPixel = surface.positionView.z >= 1.0f && surface.positionView.z <  1000.0f;
+        bool validPixel = surface.position.z >= 1.0f && surface.position.z <  1000.0f;
         [flatten] if (validPixel) 
 	{
-                minZSample = min(minZSample, surface.positionView.z);
-                maxZSample = max(maxZSample, surface.positionView.z);
+                minZSample = min(minZSample, surface.position.z);
+                maxZSample = max(maxZSample, surface.position.z);
 	}
     }
     
@@ -318,7 +319,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
         // Cull: point light sphere vs tile frustum
         bool inFrustum = true;
         [unroll] for (uint i = 0; i < 6; ++i) {
-            float d = dot(frustumPlanes[i], float4(light.positionView, 1.0f));
+            float d = dot(frustumPlanes[i], float4(light.position, 1.0f));
             inFrustum = inFrustum && (d >= -light.attenuationEnd);
         }
 
@@ -432,7 +433,6 @@ void CSMain(uint3 groupId          : SV_GroupID,
 
     //
     GroupMemoryBarrierWithGroupSync();
-
     
     //
     if (dispatchThreadId.x>=uScreen.x)
@@ -453,9 +453,8 @@ void CSMain(uint3 groupId          : SV_GroupID,
 		AccumulateBRDF(surface, sLight[lightindex], result);
 	}
 	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
-	//gFramebuffer[dispatchThreadId.xy] = float4(numLights/2.0f,numLights/2.0f,numLights/2.0f,1.0f);
     }
-    //gFramebuffer[dispatchThreadId.xy] = float4(surface.positionView.z,surface.positionView.z,surface.positionView.z,1.0f);
+    //gFramebuffer[dispatchThreadId.xy] = float4(surface.position.z,surface.position.z,surface.position.z,1.0f);
 }
 
 #endif // COMPUTE_SHADER_TILE_HLSL

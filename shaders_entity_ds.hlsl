@@ -21,17 +21,15 @@ struct PSInput
 {
 	float4 position		: SV_POSITION;
         float3 positionW	: positionW;		// World space position
-    	float3 positionV 	: positionV;      	// View space position
-    	float3 normalW      	: normalW;
-	float3 normalV     	: normalV;
+    	float3 normal      	: normalW;
 	float2 uv		: TEXCOORD0;
 };
 
 cbuffer FrameBuffer : register(b0)
 {
-	float4x4 g_mWorldView;
-	float4x4 g_mWorldViewProj;
-	float4x4 g_mWorldViewProjInv;
+	float4x4 mWorldView;
+	float4x4 mWorldViewProj;
+	float4x4 mWorldViewProjInv;
 };
 
 PSInput VSMain(VSInput input)
@@ -40,11 +38,10 @@ PSInput VSMain(VSInput input)
 
 	float3 normal = float3(1,0,0);
 	
-	result.position = mul(float4(input.position, 1.0f), g_mWorldViewProj);
+	result.position = mul(float4(input.position, 1.0f), mWorldViewProj);
 	result.positionW 	= input.position.xyz;
-	result.positionV 	= mul(float4(input.position, 1.0f), g_mWorldView).xyz;
-	result.normalW  	= normal.xyz;
-	result.normalV   	= mul(float4(normal, 0.0f), g_mWorldView).xyz;
+	//result.positionV 	= mul(float4(input.position, 1.0f), mWorldView).xyz;
+	result.normal  		= normal.xyz;
 	result.uv = input.uv;
 	
 	return result;
@@ -64,10 +61,10 @@ struct PsOutput
 // Data that we can read or derive from the surface shader outputs
 struct SurfaceData
 {
-    float3 positionView;         // View space position
-    float3 positionViewDX;       // Screen space derivatives
-    float3 positionViewDY;       // of view space position
-    float3 normal;               // View space normal
+    float3 position;             // position
+    float3 positionDX;           // derivatives
+    float3 positionDY;           // of view space position
+    float3 normal;               // normal
     float4 albedo;
     float specularAmount;        // Treated as a multiplier on albedo
     float specularPower;
@@ -76,6 +73,7 @@ struct SurfaceData
 SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
 {
     SurfaceData surface;
+/*
     surface.positionView = input.positionV;
 
     // These arguably aren't really useful in this path since they are really only used to
@@ -87,7 +85,7 @@ SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
     surface.positionViewDY = ddy_coarse(surface.positionView);
 
     // Optionally use face normal instead of shading normal
-    //float3 faceNormal = ComputeFaceNormal(input.positionV);
+    //float3 faceNormal = ComputeFaceNormal(input.positionW);
     surface.normal = input.normalV;
     
     surface.albedo = g_txDiffuse.Sample(g_sampler, input.uv);
@@ -104,7 +102,7 @@ SurfaceData ComputeSurfaceDataFromGeometry(PSInput input)
     // representative performance measurement.
     surface.specularAmount = 0.9f;
     surface.specularPower = 25.0f;
-
+*/
     return surface;
 }
 
@@ -132,7 +130,7 @@ PsOutput PSMain(PSInput input)
 */
 	result.color0 = float4(input.positionW.xyz,1.0f);
 	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color2 = float4(normalize(input.normalW.xyz),1.0f);
+	result.color2 = float4(normalize(input.normal.xyz),1.0f);
 
 	return result;
 }

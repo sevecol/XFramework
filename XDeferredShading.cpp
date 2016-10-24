@@ -198,20 +198,28 @@ extern std::vector<PointLight> vPointLight;
 void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 {
 	//
-	XMMATRIX model = XMMatrixIdentity();
 	XMFLOAT4X4 mMatrix;
 
 	//
-	XMMATRIX temp = XMMatrixTranspose(model * view * projection);
+	XMMATRIX tView = view;
+	tView.r[3].m128_f32[0] = 0.0f;
+	tView.r[3].m128_f32[1] = 0.0f;
+	tView.r[3].m128_f32[2] = 0.0f;
+	XMMATRIX temp = XMMatrixTranspose(tView);// *projection);
 	//XMMATRIX temp = model * view * projection;//XMMatrixTranspose
 	XMStoreFloat4x4(&mMatrix, temp);
-	pConstantBuffers->mMvp = mMatrix;
+	pConstantBuffers->mViewR = mMatrix;
 
 	//
 	temp = XMMatrixTranspose(projection);
 	//temp = projection;
 	XMStoreFloat4x4(&mMatrix, temp);
-	pConstantBuffers->mP = mMatrix;
+	pConstantBuffers->mProj = mMatrix;
+
+	temp = XMMatrixTranspose(view*projection);
+	//temp = projection;
+	XMStoreFloat4x4(&mMatrix, temp);
+	pConstantBuffers->mViewProj = mMatrix;
 
 	//
 	pConstantBuffers->uLightNum = vPointLight.size();
@@ -223,10 +231,11 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 		wLightPos.m128_f32[1] = vPointLight[i].fPosY;
 		wLightPos.m128_f32[2] = vPointLight[i].fPosZ;
 		wLightPos.m128_f32[3] = 1.0f;
-		//XMVECTOR vLightPos = XMVector4Transform(wLightPos, view);
-		pConstantBuffers->sLight[i].fPosX = wLightPos.m128_f32[0];
-		pConstantBuffers->sLight[i].fPosY = wLightPos.m128_f32[1];
-		pConstantBuffers->sLight[i].fPosZ = wLightPos.m128_f32[2];
+		XMVECTOR vLightPos0 = XMVector4Transform(wLightPos, tView);
+		//XMVECTOR vLightPos1 = XMVector4Transform(wLightPos, view);
+		pConstantBuffers->sLight[i].fPosX = vLightPos0.m128_f32[0];
+		pConstantBuffers->sLight[i].fPosY = vLightPos0.m128_f32[1];
+		pConstantBuffers->sLight[i].fPosZ = vLightPos0.m128_f32[2];
 
 		pConstantBuffers->sLight[i].fAttenuationBegin = vPointLight[i].fAttenuationBegin;
 		pConstantBuffers->sLight[i].fAttenuationEnd = vPointLight[i].fAttenuationEnd;
