@@ -70,9 +70,10 @@ float4 PSMain(PSInput input,float4 ScreenPos:SV_POSITION) : SV_TARGET
 	uint uOldCounter;
 	InterlockedExchange(gStartOffsetBuffer[uOffset],uCounter,uOldCounter);
 
-	gPixelLinkBuffer[uCounter].color = float4(1,0,0,0.5);
+	gPixelLinkBuffer[uCounter].color = float4(0,0,1,0.25);
 	gPixelLinkBuffer[uCounter].depth = input.position.z;
 	gPixelLinkBuffer[uCounter].next = uOldCounter;
+	discard;
 	
 	//return input.color;
 	return g_txDiffuse.Sample(g_sampler, input.uv);

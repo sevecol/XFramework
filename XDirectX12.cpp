@@ -272,7 +272,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		CD3DX12_DESCRIPTOR_RANGE cranges[5];
 		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
 		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV S
-		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1);			// UAV D
+		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 1);			// UAV D
 		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content 0 
 		cranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content 1
 
@@ -376,14 +376,13 @@ bool Render()
 	///////////////////////////////////////////////////////////////////////
 	// ForwordShading
 	// Alpha Blend
-/*
 	AlphaRender_Begin(pCommandList);
 	if (g_pEntityAlpha)
 	{
 		g_pEntityAlpha->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
 	AlphaRender_End(pCommandList);
-*/
+
 	// AddAll
 
 	//

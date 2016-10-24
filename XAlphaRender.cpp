@@ -18,6 +18,7 @@ namespace AlphaRender
 {
 	UINT									uGpuCSUBase;
 	UINT									uCpuCSUBase;
+	UINT									uDispatchX, uDispatchY;
 
 	enum eSBufferType
 	{
@@ -37,7 +38,11 @@ namespace AlphaRender
 		UINT								m_uNext;
 	};
 
-	XShader*								pShader;
+	XShader									*pShader;
+	XComputeShader							*pComputeShader;
+
+	//
+	ID3D12Resource							*pResultBuffer = nullptr;
 }
 using namespace AlphaRender;
 
@@ -47,6 +52,10 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	//
 	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,3);
 	uCpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_CCSU,3);
+
+	//
+	uDispatchX = uWidth / 32 + 1;
+	uDispatchY = uHeight / 32 + 1;
 
 	//
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hUAVCpuHandle[ESBUFFERTYPE_COUNT];
@@ -81,8 +90,8 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		UDesc.Buffer.CounterOffsetInBytes = 0;
 		UDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		hUAVCpuHandle[i] = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_CCSU, uCpuCSUBase+i);
-		pDevice->CreateUnorderedAccessView(pSBuffer[i]->GetResource(), nullptr, &UDesc, hUAVCpuHandle[i]);
+		AlphaRender::hUAVCpuHandle[i] = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_CCSU, uCpuCSUBase+i);
+		pDevice->CreateUnorderedAccessView(pSBuffer[i]->GetResource(), nullptr, &UDesc, AlphaRender::hUAVCpuHandle[i]);
 	}
 
 	//
@@ -93,7 +102,18 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	pShader = XShader::CreateShaderFromFile(L"shaders_oit_final.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_FORWORD);
+	pComputeShader = XComputeShader::CreateComputeShaderFromFile(L"shaders_oit_finalcs.hlsl", "CSMain", "cs_5_0");
 
+	// ResultBuffer
+/*
+	ThrowIfFailed(pDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(1280 * 720 * 4 * sizeof(float), D3D12_RESOURCE_FLAG_NONE),
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&pResultBuffer)));
+*/
 	return true;
 }
 
@@ -104,6 +124,10 @@ void CleanAlphaRender()
 		SAFE_DELETE(pSBuffer[i]);
 	}
 	SAFE_DELETE(pShader);
+	SAFE_DELETE(pComputeShader);
+
+	//
+	SAFE_RELEASE(pResultBuffer);
 }
 
 void AlphaRender_PreRender(ID3D12GraphicsCommandList* pCommandList)
@@ -121,7 +145,49 @@ void AlphaRender_Begin(ID3D12GraphicsCommandList* pCommandList)
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
+extern XRenderTarget* HDR_GetRenderTarget();
 void AlphaRender_End(ID3D12GraphicsCommandList* pCommandList)
 {
-	RenderFullScreen(pCommandList, pShader);
+	pCommandList->OMSetRenderTargets(0, nullptr, true, nullptr);
+
+	//
+	XRenderTarget* pHDRRenderTarget = HDR_GetRenderTarget();
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+	//
+	pCommandList->SetPipelineState(pComputeShader->GetPipelineState());
+
+	//pCommandList->SetComputeRootDescriptorTable(0, );
+	pCommandList->SetComputeRootDescriptorTable(1, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(2, pSBuffer[ESBUFFERTYPE_PIXELLINK]->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(4, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 3));
+
+	//
+	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
+
+	//
+	// GetResult
+/*
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
+	pCommandList->CopyResource(pResultBuffer, pHDRRenderTarget->GetResource());
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+	float *pAddress = nullptr;
+	CD3DX12_RANGE readRange(0, 1280 * 720 * 4 * sizeof(float));
+	pResultBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pAddress));
+	//float fValue = *pAddress;
+
+	float fValue = 0.0f;
+	//for (UINT i = 0;i < g_uDispatchX * g_uDispatchY;++i)
+	{
+		fValue += pAddress[0];
+	}
+	pResultBuffer->Unmap(0, nullptr);
+*/
+	//
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart());
+	pCommandList->OMSetRenderTargets(1, &pHDRRenderTarget->GetRTVCpuHandle(), FALSE, &DHandle);
+
+	//RenderFullScreen(pCommandList, pShader);
 }

@@ -67,22 +67,6 @@ public:
 	ComPtr<ID3D12Fence>					m_pFence;
 
 	// Heap|Resource
-/*
-	ComPtr<ID3D12DescriptorHeap>		m_pRDescriptorHeap;
-	UINT								m_uRDescriptorSize;
-
-	ComPtr<ID3D12DescriptorHeap>		m_pDDescriptorHeap;
-	ComPtr<ID3D12Resource>				m_pDepthStencil;
-
-	ComPtr<ID3D12DescriptorHeap>		m_pGpuCSUDescriptorHeap;
-	UINT								m_uGpuCSUStart;
-	UINT								m_uGpuCSUCount;
-	ComPtr<ID3D12DescriptorHeap>		m_pCpuCSUDescriptorHeap;
-	UINT								m_uCpuCSUStart;
-	UINT								m_uCpuCSUCount;
-
-	UINT								m_uCSUDescriptorSize;
-*/
 	struct XDescriptorHeap
 	{
 		ComPtr<ID3D12DescriptorHeap>	m_pDescriptorHeap;
