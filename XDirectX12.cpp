@@ -238,7 +238,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
 		CD3DX12_ROOT_PARAMETER grootParameters[4];
-		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
@@ -336,8 +336,10 @@ bool Update()
 	g_Camera.Update(static_cast<float>(g_Timer.GetElapsedSeconds()));
 	XBuffer::Update();
 
-	g_pFrameResource[g_uFrameIndex]->UpdateConstantBuffers(g_Camera.GetViewMatrix(), g_Camera.GetProjectionMatrix());
-	DeferredShading_Update(g_Camera.GetViewMatrix(), g_Camera.GetProjectionMatrix());
+	XMMATRIX matView = g_Camera.GetViewMatrix();
+	XMMATRIX matProj = g_Camera.GetProjectionMatrix();
+	g_pFrameResource[g_uFrameIndex]->UpdateConstantBuffers(matView, matProj);
+	DeferredShading_Update(matView, matProj);
 
 	return true;
 }
@@ -560,4 +562,11 @@ void AddPointLight(PointLight& sPointLight)
 		return;
 
 	vPointLight.push_back(sPointLight);
+}
+PointLight* GetPointLight(UINT uIndex)
+{
+	if (uIndex >= vPointLight.size())
+		return nullptr;
+
+	return &vPointLight[uIndex];
 }

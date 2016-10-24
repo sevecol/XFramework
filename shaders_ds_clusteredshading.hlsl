@@ -142,7 +142,7 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     data.specularPower = 25.0f;
 
     data.position = mul(float4(position, 1.0f), mViewR).xyz;
-    data.normal = mul(float4(normal, 1.0f), mViewR).xyz;
+    data.normal = mul(float4(normal, 1.0f), (float3x3)mViewR).xyz;
     
     return data;
 }
@@ -201,9 +201,11 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
                     inout float3 lit)
 {
     // All in view space
-    float3 directionToLight = light.position - surface.position;
-    float distanceToLight = length(directionToLight);
+    float3 lightView  = mul(float4(light.position.xyz, 1.0f), mViewR).xyz;
 
+    float3 directionToLight = lightView - surface.position;
+    float distanceToLight = length(directionToLight);
+    
     //
     [branch] if (distanceToLight < light.attenuationEnd) {
         float attenuation = linstep(light.attenuationBegin, light.attenuationEnd, distanceToLight);
@@ -221,8 +223,7 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
 [numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
 void CSMain(uint3 groupId          : SV_GroupID,
             uint3 dispatchThreadId : SV_DispatchThreadID,
-            uint3 groupThreadId    : SV_GroupThreadID
-                         )
+            uint3 groupThreadId    : SV_GroupThreadID)
 {
     //
     SurfaceData surface = ComputeSurfaceDataFromGBufferSample(dispatchThreadId.xyz);
@@ -454,7 +455,24 @@ void CSMain(uint3 groupId          : SV_GroupID,
 	}
 	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
     }
-    //gFramebuffer[dispatchThreadId.xy] = float4(surface.position.z,surface.position.z,surface.position.z,1.0f);
+
+    //
+/*
+    float3 Value = float3(surface.position.x-surface.normal.x,surface.position.y-surface.normal.y,surface.position.z-surface.normal.z);
+    if (Value.x<0.0f)
+    {
+	Value.x *= -1.0f;
+    }    
+    if (Value.y<0.0f)
+    {
+	Value.y *= -1.0f;
+    }
+    if (Value.z<0.0f)
+    {
+	Value.z *= -1.0f;
+    }
+    gFramebuffer[dispatchThreadId.xy] = float4(Value,1.0f);
+*/
 }
 
 #endif // COMPUTE_SHADER_TILE_HLSL

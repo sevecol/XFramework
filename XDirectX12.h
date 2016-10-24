@@ -47,6 +47,7 @@ struct PointLight
 	FLOAT			fR, fG, fB, fAttenuationEnd;
 };
 void AddPointLight(PointLight& sPointLight);
+PointLight* GetPointLight(UINT uIndex);
 
 //
 class XEngine

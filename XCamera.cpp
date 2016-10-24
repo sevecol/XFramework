@@ -123,6 +123,8 @@ void XCamera::Update(float elapsedSeconds)
 		m_pitch += m_keysPressed.mup * rotateInterval;
 	if (m_keysPressed.mdown)
 		m_pitch -= m_keysPressed.mdown * rotateInterval;
+
+	//m_yaw += 0.11001f;
 	m_keysPressed.mleft = m_keysPressed.mright = m_keysPressed.mup = m_keysPressed.mdown = 0.0f;
 
 	// Prevent looking too far up or down.

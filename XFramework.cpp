@@ -51,6 +51,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 				break;
 		}
 
+		//
+		PointLight* pLight = GetPointLight(1);
+		static float fTime = 0.0f;
+		fTime += 0.01f;
+
+		pLight->fPosX = 3.0f * sinf(fTime);
+		pLight->fPosZ = 3.0f * cosf(fTime);
+
 		Update();
 		Render();
 	}
