@@ -129,6 +129,7 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	//model = XMLoadFloat4x4(&m_modelMatrices[i * m_cityColumnCount + j]);
 
 	//
+	//XMMATRIX temp = model * view;
 	XMMATRIX temp = XMMatrixTranspose(model * view);
 	XMStoreFloat4x4(&mv, temp);
 	m_pConstantBuffers->mMv = mv;
