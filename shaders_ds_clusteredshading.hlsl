@@ -15,6 +15,8 @@
 #ifndef COMPUTE_SHADER_TILE_HLSL
 #define COMPUTE_SHADER_TILE_HLSL
 
+#include "PBR.hlsl"
+
 #define COMPUTE_SHADER_TILE_GROUP_DIM 32
 #define COMPUTE_SHADER_TILE_GROUP_SIZE COMPUTE_SHADER_TILE_GROUP_DIM*COMPUTE_SHADER_TILE_GROUP_DIM
 
@@ -92,61 +94,7 @@ float3 ComputePositionViewFromZ(float2 positionScreen,
     return positionView;
 }
 
-SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
-{
-    // Load the raw data from the GBuffer
-    //GBuffer rawData;
-/*
-    float4 normal_specular = g_texture0.Load(positionViewport).xyzw;
-    float4 albedo = g_texture1.Load(positionViewport).xyzw;
-    float2 positionZGrad = g_texture2.Load(positionViewport).xy;
-    float zBuffer = g_texture2.Load(positionViewport).z;
-    
-    float2 gbufferDim = float2(1280,720);
-    //uint dummy;
-    //gGBufferTextures[0].GetDimensions(gbufferDim.x, gbufferDim.y, dummy);
-    
-    // Compute screen/clip-space position and neighbour positions
-    // NOTE: Mind DX11 viewport transform and pixel center!
-    // NOTE: This offset can actually be precomputed on the CPU but it's actually slower to read it from
-    // a constant buffer than to just recompute it.
-    float2 screenPixelOffset = float2(2.0f, -2.0f) / gbufferDim;
-    float2 positionScreen = (float2(positionViewport.xy) + 0.5f) * screenPixelOffset.xy + float2(-1.0f, 1.0f);
-    float2 positionScreenX = positionScreen + float2(screenPixelOffset.x, 0.0f);
-    float2 positionScreenY = positionScreen + float2(0.0f, screenPixelOffset.y);
-*/        
-
-    // Decode into reasonable outputs
-/*
-    SurfaceData data;
-        
-    // Unproject depth buffer Z value into view space
-    float viewSpaceZ = mViewProj._43 / (zBuffer - mViewProj._33);
-
-    data.positionView = ComputePositionViewFromZ(positionScreen, viewSpaceZ);
-    data.positionViewDX = ComputePositionViewFromZ(positionScreenX, viewSpaceZ + positionZGrad.x) - data.positionView;
-    data.positionViewDY = ComputePositionViewFromZ(positionScreenY, viewSpaceZ + positionZGrad.y) - data.positionView;
-
-    data.normal = DecodeSphereMap(normal_specular.xy);
-    data.albedo = albedo;
-
-    data.specularAmount = normal_specular.z;
-    data.specularPower = normal_specular.w;
-*/
-	
-    SurfaceData data;
-    float3 position = g_texture0.Load(positionViewport).xyz;
-    data.albedo = g_texture1.Load(positionViewport);
-    float3 normal = g_texture2.Load(positionViewport).xyz;
-    data.specularAmount = 0.9f;
-    data.specularPower = 25.0f;
-
-    data.position = mul(float4(position, 1.0f), mViewR).xyz;
-    data.normal = mul(float4(normal, 1.0f), (float3x3)mViewR).xyz;
-    
-    return data;
-}
-
+//
 float linstep(float minv, float maxv, float v)
 {
     return 1.0f - saturate((v - minv) / (maxv - minv));
@@ -174,6 +122,61 @@ void AccumulatePhongBRDF(float3 normal,
     }
 }
 
+#define PI 3.14159265
+void AccumulateCookTorranceBRDF(float3 normal,
+                         float3 lightDir,
+                         float3 viewDir,
+                         float3 lightContrib,
+                         float specularPower,
+                         inout float3 litDiffuse,
+                         inout float3 litSpecular)
+{
+
+    	float NdotL = dot(normal, lightDir);
+    	[flatten] if (NdotL > 0.0f) 
+	{
+		float3 Half = normalize(lightDir+viewDir);
+
+		float _Shininess = 20.0f;
+		float3 _SpecColor = float3(0.972f,0.960f,0.915f);
+
+		float d = (_Shininess+2.0f)/8.0f*pow(dot(normal,Half),_Shininess);
+		float f = _SpecColor+(1-_SpecColor)*pow((1-dot(Half,lightDir)),5.0f);
+		float k = 2.0f/sqrt(PI*(_Shininess+2.0f));
+		float v = 1.0f/((dot(normal,lightDir)*(1.0f-k)+k)*(dot(normal,viewDir)*(1.0f-k)+k));
+
+		// * NdotL ???
+		float cook = d*f*v*NdotL;
+
+		float diff = NdotL;
+		diff = (1-cook)*diff;
+
+		//litDiffuse = cook;
+		litDiffuse += diff*lightContrib;
+		litSpecular += cook*lightContrib;
+	}
+/*
+    	float NdotL = dot(normal, lightDir);
+    	[flatten] if (NdotL > 0.0f) 
+	{
+		float3 Half = normalize(lightDir+viewDir);
+
+		float _Shininess = 200.0f;
+		float3 _SpecColor = float3(0.972f,0.960f,0.915f);
+
+		float d = (_Shininess+2.0f)/(8.0f*PI)*pow(dot(normal,Half),_Shininess);
+		float f = _SpecColor+(1-_SpecColor)*pow((1-dot(Half,lightDir)),5.0f);
+		float k = 2.0f/sqrt(PI*(_Shininess+2.0f));
+		float v = 1.0f/((dot(normal,lightDir)*(1.0f-k)+k)*(dot(normal,viewDir)*(1.0f-k)+k));
+		float cook = d*f*v;
+
+		litDiffuse += lightContrib/PI*NdotL;
+		litSpecular += cook*lightContrib*NdotL;
+	}
+*/
+}
+
+/*
 // Accumulates separate "diffuse" and "specular" components of lighting from a given
 // This is not possible for all BRDFs but it works for our simple Phong example here
 // and this separation is convenient for deferred lighting.
@@ -182,7 +185,6 @@ void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
                                    inout float3 litDiffuse,
                                    inout float3 litSpecular)
 {
-/*
     float3 directionToLight = light.positionView - surface.positionView;
     float distanceToLight = length(directionToLight);
 
@@ -193,8 +195,8 @@ void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
         AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
             attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
     }
-*/
 }
+*/
 
 // Uses an in-out for accumulation to avoid returning and accumulating 0
 void AccumulateBRDF(SurfaceData surface, PointLight light,
@@ -213,11 +215,72 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
 	
 	float3 litDiffuse = float3(0,0,0);
         float3 litSpecular = float3(0,0,0);
-        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.position),
-            attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
-        
-        lit += surface.albedo.rgb * (litDiffuse);// + surface.specularAmount * litSpecular);
+	attenuation = 1.0f;
+
+	// Phong
+        //AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.position),attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
+	//lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
+
+	// CookTorrance
+	AccumulateCookTorranceBRDF(surface.normal,directionToLight, -1.0f*normalize(surface.position),attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
+	lit += surface.albedo.rgb * (litDiffuse+litSpecular);
+	//lit += surface.albedo.rgb * (litSpecular);
     }
+}
+
+SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
+{
+/*
+    // Load the raw data from the GBuffer
+    //GBuffer rawData;
+
+    float4 normal_specular = g_texture0.Load(positionViewport).xyzw;
+    float4 albedo = g_texture1.Load(positionViewport).xyzw;
+    float2 positionZGrad = g_texture2.Load(positionViewport).xy;
+    float zBuffer = g_texture2.Load(positionViewport).z;
+    
+    float2 gbufferDim = float2(1280,720);
+    //uint dummy;
+    //gGBufferTextures[0].GetDimensions(gbufferDim.x, gbufferDim.y, dummy);
+    
+    // Compute screen/clip-space position and neighbour positions
+    // NOTE: Mind DX11 viewport transform and pixel center!
+    // NOTE: This offset can actually be precomputed on the CPU but it's actually slower to read it from
+    // a constant buffer than to just recompute it.
+    float2 screenPixelOffset = float2(2.0f, -2.0f) / gbufferDim;
+    float2 positionScreen = (float2(positionViewport.xy) + 0.5f) * screenPixelOffset.xy + float2(-1.0f, 1.0f);
+    float2 positionScreenX = positionScreen + float2(screenPixelOffset.x, 0.0f);
+    float2 positionScreenY = positionScreen + float2(0.0f, screenPixelOffset.y);   
+
+    // Decode into reasonable outputs
+    SurfaceData data;
+        
+    // Unproject depth buffer Z value into view space
+    float viewSpaceZ = mViewProj._43 / (zBuffer - mViewProj._33);
+
+    data.positionView = ComputePositionViewFromZ(positionScreen, viewSpaceZ);
+    data.positionViewDX = ComputePositionViewFromZ(positionScreenX, viewSpaceZ + positionZGrad.x) - data.positionView;
+    data.positionViewDY = ComputePositionViewFromZ(positionScreenY, viewSpaceZ + positionZGrad.y) - data.positionView;
+
+    data.normal = DecodeSphereMap(normal_specular.xy);
+    data.albedo = albedo;
+
+    data.specularAmount = normal_specular.z;
+    data.specularPower = normal_specular.w;
+*/
+	
+    SurfaceData data;
+    float3 position = g_texture0.Load(positionViewport).xyz;
+    data.albedo = g_texture1.Load(positionViewport);
+    float3 normal = g_texture2.Load(positionViewport).xyz;
+    data.specularAmount = 0.9f;
+    data.specularPower = 25.0f;
+
+    data.position = mul(float4(position, 1.0f), mViewR).xyz;
+    data.normal = mul(normal, (float3x3)mViewR).xyz;//normal;//
+    //data.normal.z *= -1.0f;
+    
+    return data;
 }
 
 [numthreads(COMPUTE_SHADER_TILE_GROUP_DIM, COMPUTE_SHADER_TILE_GROUP_DIM, 1)]
@@ -447,13 +510,14 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float4 color = g_texture0.Load(dispatchThreadId.xyz);
     if (color.a!=0.0f)
     {
-	float3 result = float3(0,0,0);
+	float3 ambent = float3(0.2f,0.2f,0.2f);
+	float3 result = ambent * surface.albedo.rgb;
 	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
 	{
  		uint lindex = sTileLightIndices[lightindex];
 		AccumulateBRDF(surface, sLight[lightindex], result);
 	}
-	gFramebuffer[dispatchThreadId.xy] = float4(result.xyz,1.0f);
+	gFramebuffer[dispatchThreadId.xy] = float4(result,1.0f);
     }
 
     //

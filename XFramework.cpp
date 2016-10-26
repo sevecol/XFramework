@@ -6,11 +6,13 @@
 #include "XEntity.h"
 #include "UI\UIManager.h"
 #include "Loader\XBinLoader.h"
+#include "Loader\XObjLoader.h"
 #include "Thread\XResourceThread.h"
 
 extern XCamera			g_Camera;
 extern XEntity			*g_pEntityNormal;
 extern XEntity			*g_pEntityAlpha;
+extern XEntity			*g_pEntityPBR;
 
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
@@ -56,8 +58,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		static float fTime = 0.0f;
 		fTime += 0.01f;
 
-		pLight->fPosX = 3.0f * sinf(fTime);
-		pLight->fPosZ = 3.0f * cosf(fTime);
+		if (pLight)
+		{
+			pLight->fPosX = 10.0f * sinf(fTime);
+			pLight->fPosY = 0.0f;
+			pLight->fPosZ = 10.0f * cosf(fTime);
+		}
 
 		Update();
 		Render();
@@ -168,24 +174,47 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		pbinresource->pEntity = g_pEntityAlpha;
 		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
+	{
+		g_pEntityPBR = new XEntity();
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityPBR->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+
+		LPCWSTR pTextureFileName[1] = { L"entity.dds" };
+		g_pEntityPBR->InitTexture(L"EntityPBR", 1, pTextureFileName);
+
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		XObjResource *pobjresource = new XObjResource();
+		pobjresource->pEntity = g_pEntityPBR;
+		g_pResourceThread->InsertResourceLoadTask(pobjresource);
+	}
 	//g_ResourceThread.WaitForResource();
 
 	//
-	g_Camera.Init(0.8f, 1.0f);
+	g_Camera.Init(0.8f, 1280.0f/720.0f);
+	g_Camera.InitPos(XMFLOAT3(0, 0, 20));
 
 	//
 	PointLight pp;
-	pp.fPosX = 0.0f;
-	pp.fPosY = 3.0f;
+	pp.fPosX = 13.0f;
+	pp.fPosY = 13.0f;
 	pp.fPosZ = 0.0f;
-	pp.fAttenuationEnd = 7.0f;
+	pp.fAttenuationEnd = 40.0f;
 	pp.fAttenuationBegin = 0.0f;
 	pp.fR = 2.0f;
-	pp.fG = 0.0f;
-	pp.fB = 0.0f;
+	pp.fG = 2.0f;
+	pp.fB = 2.0f;
 	AddPointLight(pp);
 
-	pp.fPosX = 3.0f;
+	pp.fPosX = 13.0f;
 	pp.fR = 0.0f;
 	pp.fG = 2.0f;
 	AddPointLight(pp);

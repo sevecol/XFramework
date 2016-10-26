@@ -36,11 +36,13 @@ PSInput VSMain(VSInput input)
 {
 	PSInput result;
 
-	float3 normal = float3(0,1,0);
+	float3 position = float3(input.position.x,input.position.y,input.position.z);
+	float3 normal = float3(input.normal.x,input.normal.y,input.normal.z);
 	
-	result.position = mul(float4(input.position, 1.0f), mWorldViewProj);
-	result.positionW 	= input.position.xyz;
+	result.position = mul(float4(position, 1.0f), mWorldViewProj);
+	result.positionW 	= position.xyz;
 	result.normal  		= normal.xyz;
+
 	result.uv = input.uv;
 	
 	return result;

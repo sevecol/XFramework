@@ -126,6 +126,9 @@
     <ClInclude Include="XSkyBox.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Loader\XObjLoader.h">
+      <Filter>头文件\Loader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -187,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="XSkyBox.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Loader\XObjLoader.cpp">
+      <Filter>源文件\Loader</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

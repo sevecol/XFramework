@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Loader\XBinLoader.h" />
+    <ClInclude Include="Loader\XObjLoader.h" />
     <ClInclude Include="Resource\dds.h" />
     <ClInclude Include="Resource\DDSTextureLoader.h" />
     <ClInclude Include="Resource\DirectXHelpers.h" />
@@ -175,6 +176,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Loader\XBinLoader.cpp" />
+    <ClCompile Include="Loader\XObjLoader.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
     <ClCompile Include="Resource\ResourceUploadBatch.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />

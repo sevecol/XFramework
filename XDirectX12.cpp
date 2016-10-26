@@ -68,6 +68,7 @@ StepTimer							g_Timer;
 //
 XEntity								*g_pEntityNormal	= nullptr;
 XEntity								*g_pEntityAlpha		= nullptr;
+XEntity								*g_pEntityPBR		= nullptr;
 
 //
 extern XShader						*g_pHDRShaderScreen;
@@ -361,7 +362,11 @@ bool Render()
 	DeferredShading_GBuffer(pCommandList);
 	if (g_pEntityNormal)
 	{
-		g_pEntityNormal->Render(pCommandList, pFrameResource->m_uFenceValue);
+		//g_pEntityNormal->Render(pCommandList, pFrameResource->m_uFenceValue);
+	}
+	if (g_pEntityPBR)
+	{
+		g_pEntityPBR->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
 	
 	// HDR_Bind
@@ -376,13 +381,14 @@ bool Render()
 	///////////////////////////////////////////////////////////////////////
 	// ForwordShading
 	// Alpha Blend
+/*
 	AlphaRender_Begin(pCommandList);
 	if (g_pEntityAlpha)
 	{
 		g_pEntityAlpha->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
 	AlphaRender_End(pCommandList);
-
+*/
 	// AddAll
 
 	//
@@ -446,6 +452,7 @@ void Clean()
 	//
 	SAFE_DELETE(g_pEntityNormal);
 	SAFE_DELETE(g_pEntityAlpha);
+	SAFE_DELETE(g_pEntityPBR);
 	if (pFullScreenGeometry)
 	{
 		XGeometry::DeleteGeometry(&pFullScreenGeometry);

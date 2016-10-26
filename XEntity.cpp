@@ -58,10 +58,13 @@ IntersectionResult XEntity::Update(const OptFrustum* const frustum, UINT32 delta
 */
 void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue)
 {
-	if ((pCommandList)&&(m_pShader->GetPipelineState()))
+	if ((pCommandList)&&(m_pShader)&&(m_pShader->GetPipelineState()))
 	{
-		pCommandList->SetGraphicsRootDescriptorTable(2, m_pTextureSet->GetSRVGpuHandle());
-
+		if (m_pTextureSet)
+		{
+			pCommandList->SetGraphicsRootDescriptorTable(2, m_pTextureSet->GetSRVGpuHandle());
+		}
+		
 		//
 		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
 		pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
