@@ -5,6 +5,8 @@
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
+#define D3D_COMPILE_STANDARD_FILE_INCLUDE ((ID3DInclude*)(UINT_PTR)1)
+
 extern XEngine *g_pEngine;
 
 extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
@@ -59,7 +61,7 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 	//
 	{
 		ComPtr<ID3DBlob> pError;
-		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, &pError);
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, &pError);
 		if (hr != S_OK)
 		{
 			OutputDebugStringA((char*)(pError->GetBufferPointer()));
@@ -68,7 +70,7 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 	}
 	{
 		ComPtr<ID3DBlob> pError;
-		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, &pError);
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, &pError);
 		if (hr != S_OK)
 		{
 			OutputDebugStringA((char*)(pError->GetBufferPointer()));
@@ -122,7 +124,7 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DE
 	//
 	{
 		ComPtr<ID3DBlob> pError;
-		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, &pError);
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, pVSEntryPoint, pVSTarget, compileFlags, 0, &vertexShader, &pError);
 		if (hr != S_OK)
 		{
 			OutputDebugStringA((char*)(pError->GetBufferPointer()));
@@ -131,7 +133,7 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DE
 	}
 	{
 		ComPtr<ID3DBlob> pError;
-		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, &pError);
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, pPSEntryPoint, pPSTarget, compileFlags, 0, &pixelShader, &pError);
 		if (hr != S_OK)
 		{
 			OutputDebugStringA((char*)(pError->GetBufferPointer()));
@@ -163,7 +165,7 @@ XComputeShader* XComputeShader::CreateComputeShaderFromFile(LPCWSTR pFileName, L
 	//
 	{
 		ComPtr<ID3DBlob> pError;
-		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, nullptr, pCSEntryPoint, pCSTarget, compileFlags, 0, &computeShader, &pError);
+		HRESULT hr = D3DCompileFromFile(pFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, pCSEntryPoint, pCSTarget, compileFlags, 0, &computeShader, &pError);
 		if (hr != S_OK)
 		{
 			OutputDebugStringA((char*)(pError->GetBufferPointer()));

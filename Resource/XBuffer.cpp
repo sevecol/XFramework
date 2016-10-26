@@ -7,8 +7,8 @@
 
 #include "..\Thread\XResourceThread.h"
 
-#define BLOCKBUFFER_SIZE			1024*1024
-#define BLOCKBUFFER_NUM				20
+#define BLOCKBUFFER_SIZE			1024*1024*32
+#define BLOCKBUFFER_NUM				4
 
 extern XEngine *g_pEngine;
 extern XResourceThread *g_pResourceThread;
