@@ -186,8 +186,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityPBR->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[1] = { L"entity.dds" };
-		g_pEntityPBR->InitTexture(L"EntityPBR", 1, pTextureFileName);
+		LPCWSTR pTextureFileName[2] = { L"entity.dds",L"default_normal.dds" };
+		g_pEntityPBR->InitTexture(L"EntityPBR", 2, pTextureFileName);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);

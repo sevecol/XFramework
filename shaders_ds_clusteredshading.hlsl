@@ -277,8 +277,7 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     data.specularPower = 25.0f;
 
     data.position = mul(float4(position, 1.0f), mViewR).xyz;
-    data.normal = mul(normal, (float3x3)mViewR).xyz;//normal;//
-    //data.normal.z *= -1.0f;
+    data.normal = normal;//mul(normal, (float3x3)mViewR).xyz;//normal;//
     
     return data;
 }

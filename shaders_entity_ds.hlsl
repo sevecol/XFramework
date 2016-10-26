@@ -11,10 +11,10 @@
 
 struct VSInput
 {
-	float3 position	: POSITION;
-	float3 normal	: NORMAL;
-	float2 uv	: TEXCOORD0;
-	float3 tangent	: TANGENT;
+	float3 position		: POSITION;
+	float3 normal		: NORMAL;
+	float2 uv		: TEXCOORD0;
+	float3 tangent		: TANGENT;
 };
 
 struct PSInput
@@ -22,6 +22,7 @@ struct PSInput
 	float4 position		: SV_POSITION;
         float3 positionW	: positionW;		// World space position
     	float3 normal      	: normalW;
+	float3 tangent		: tangentW;
 	float2 uv		: TEXCOORD0;
 };
 
@@ -42,6 +43,7 @@ PSInput VSMain(VSInput input)
 	result.position = mul(float4(position, 1.0f), mWorldViewProj);
 	result.positionW 	= position.xyz;
 	result.normal  		= normal.xyz;
+	result.tangent		= input.tangent;
 
 	result.uv = input.uv;
 	
@@ -129,9 +131,25 @@ PsOutput PSMain(PSInput input)
                                          ddy_coarse(surface.positionView.z));
 	result.color2.z = input.position.z;
 */
+	//
+	float3 binormal = cross(input.normal.xyz,input.tangent.xyz);
+	float3x3 tbn;
+	tbn[0] = input.tangent;
+	tbn[1] = binormal;
+	tbn[2] = input.normal;
+
+	//
+	float3 texnormal = g_txNormal.Sample(g_sampler, input.uv).xyz;
+	texnormal *= 2.0f;
+	texnormal -= 1.0f;
+
+	// 
+	float3 normal = mul(texnormal,tbn);
+
 	result.color0 = float4(input.positionW.xyz,1.0f);
 	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
-	result.color2 = float4(normalize(input.normal.xyz),1.0f);
+	result.color2 = float4(normalize(normal),1.0f);
+	//result.color2 = float4(input.normal.xyz,1.0f);
 
 	return result;
 }
