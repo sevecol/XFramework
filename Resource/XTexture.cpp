@@ -351,7 +351,7 @@ void DDSTextureSetLoad::LoadFromFile()
 		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
 		ID3D12Resource *pTexture = nullptr;
-		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[0].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
+		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[i].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
 
 		//
 		UINT uCount = (UINT)subresources.size();
