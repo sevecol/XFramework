@@ -180,19 +180,28 @@ void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT
 UINT8 GeometryData[20480000];
 void XObjResource::LoadFromFile()
 {
-	vector<sVertex> vVertex;
-	vector<UINT> vIndex;
-	ReadDataFromObjFile(L"entity.obj", vVertex, vIndex);
+	XGeometry *pGeometry = XGeometry::GetGeometry(L"entity");
+	if (!pGeometry)
+	{
+		vector<sVertex> vVertex;
+		vector<UINT> vIndex;
+		ReadDataFromObjFile(L"entity.obj", vVertex, vIndex);
 
-	UINT uSize = vVertex.size()*sizeof(sVertex) + vIndex.size()*sizeof(UINT);
+		UINT uSize = vVertex.size()*sizeof(sVertex) + vIndex.size()*sizeof(UINT);
 
-	UINT uOffset = 0;
-	memcpy(GeometryData + uOffset, &(vVertex[0]), vVertex.size()*sizeof(sVertex));
-	uOffset = vVertex.size()*sizeof(sVertex);
-	memcpy(GeometryData + uOffset, &(vIndex[0]), vIndex.size()*sizeof(UINT));
+		UINT uOffset = 0;
+		memcpy(GeometryData + uOffset, &(vVertex[0]), vVertex.size()*sizeof(sVertex));
+		uOffset = vVertex.size()*sizeof(sVertex);
+		memcpy(GeometryData + uOffset, &(vIndex[0]), vIndex.size()*sizeof(UINT));
 
-	pEntity->InitGeometry(L"entity", vVertex.size(), sizeof(sVertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
+		pEntity->InitGeometry(L"entity", vVertex.size(), sizeof(sVertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
+
+		//
+		//delete[] pGeometryData;
+
+		return;
+	}
 
 	//
-	//delete[] pGeometryData;
+	pEntity->m_pGeometry = pGeometry;
 }
