@@ -30,6 +30,7 @@ public:
 	virtual UINT GetNumVertexs() { return m_uNumVertexs; }
 
 	//
+	static XGeometry* GetGeometry(LPCWSTR pName);
 	static XGeometry* CreateGeometry(LPCWSTR pName,UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData);
 	static void DeleteGeometry(XGeometry** ppGeometry);
 };

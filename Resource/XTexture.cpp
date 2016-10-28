@@ -375,12 +375,12 @@ void DDSTextureSetLoad::LoadFromFile()
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = ddsFormat;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.MipLevels = uCount;
 		switch (m_vTextureLayer[i].m_eType)
 		{
 		case XTextureSet::ETEXTURETYPE_CUBE:
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-			srvDesc.TextureCube.MipLevels = 1;
+			srvDesc.TextureCube.MipLevels = uCount/6;
 			break;
 		}
 

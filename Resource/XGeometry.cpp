@@ -11,6 +11,22 @@ XGeometry::~XGeometry()
 	XBuffer::DeleteBuffer(m_pBuffer);
 }
 
+XGeometry* XGeometry::GetGeometry(LPCWSTR pName)
+{
+	//
+	std::map<std::wstring, XGeometry*>::iterator it = XGeometry::m_mGeometry.find(pName);
+	if (it != XGeometry::m_mGeometry.end())
+	{
+		XGeometry *pGeometry = it->second;
+		if (pGeometry)
+		{
+			pGeometry->AddRef();
+		}
+		return pGeometry;
+	}
+	return nullptr;
+}
+
 XGeometry* XGeometry::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UINT uVertexStride, UINT uIndexCount, UINT uIndexFormat, UINT8* pGeometryData)
 {
 	//
