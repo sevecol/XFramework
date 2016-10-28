@@ -47,7 +47,8 @@ cbuffer LightBuffer : register(b1)
 Texture2D g_texture0 : register(t0);
 Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
-TextureCube g_Environment : register(t3);
+TextureCube g_EnvironmentLight : register(t3);
+TextureCube g_EnvironmentDiffuse : register(t4);
 
 SamplerState g_sampler : register(s0);
 
@@ -262,14 +263,18 @@ void AccumulateImageLightBRDF(SurfaceData surface,inout float3 lit)
 	float3 viewDirW = normalize(vEyePos-surface.positionW);
 	float3 lightDirW = reflect(-1.0f*viewDirW,surface.normalW);
 
-	float3 lightcolor = g_Environment.SampleLevel(g_sampler,lightDirW,0).xyz;
+	float level = 10*surface.roughness;
+	float3 lightcolor = g_EnvironmentLight.SampleLevel(g_sampler,lightDirW,level).xyz;
 
 	float3 litDiffuse = float3(0,0,0);
         float3 litSpecular = float3(0,0,0);
 
 	//
+	float3 diffuse = g_EnvironmentDiffuse.SampleLevel(g_sampler,surface.normalW,10).xyz;
+
+	//
 	AccumulateCookTorranceBRDF(2,surface.normalW,lightDirW,viewDirW,surface.f0,lightcolor,surface.roughness,litDiffuse,litSpecular);
-	lit += surface.albedo.rgb*litDiffuse*(1.0f-surface.metallic)+litSpecular;//
+	lit += surface.albedo.rgb*diffuse*(1.0f-surface.metallic)+surface.metallic*litSpecular;//
 	//lit += lightcolor;//litSpecular;//lightcolor;//lightcolor;//
 }
 
@@ -570,14 +575,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
  		uint lindex = sTileLightIndices[lightindex];
 		AccumulatePointLightBRDF(surface, sLight[lightindex], result);
 	}
-	if (surface.metallic>0.5f)
-	{
-		AccumulateImageLightBRDF(surface,result);
-	}
-	else
-	{
-		result += float3(0.3f,0.3f,0.3f)*surface.albedo.xyz;
-	}
+	AccumulateImageLightBRDF(surface,result);
 
 	//
 	gFramebuffer[dispatchThreadId.xy] = float4(result,1.0f);

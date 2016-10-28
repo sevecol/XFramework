@@ -13,8 +13,9 @@ namespace SkyBox
 {
 	UINT								uGpuCSUBase;
 
-	XShader								*pSkyBoxShader	= nullptr;
-	XTextureSet							*pSkyBoxTexture = nullptr;
+	XShader								*pSkyBoxShader		= nullptr;
+	XTextureSet							*pSkyBoxTexture		= nullptr;
+	XTextureSet							*pSkyDiffuseTexture = nullptr;
 }
 using namespace SkyBox;
 
@@ -22,10 +23,11 @@ using namespace SkyBox;
 bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 {
 	//
-	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,1);
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,2);
 
 	// Texture
 	pSkyBoxTexture = XTextureSet::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", uGpuCSUBase);
+	pSkyDiffuseTexture = XTextureSet::CreateCubeTexture(L"SkyDiffuseTexture", L"skydiffuse.dds", uGpuCSUBase+1);
 
 	// Shader
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -47,6 +49,7 @@ void CleanSkyBox()
 {
 	SAFE_DELETE(pSkyBoxShader);
 	SAFE_DELETE(pSkyBoxTexture);
+	SAFE_DELETE(pSkyDiffuseTexture);
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
