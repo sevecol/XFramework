@@ -19,13 +19,15 @@ sVertex *pData = nullptr;
 namespace Entity
 {
 	UINT								uGpuCSUBase;
+	UINT								uGpuCSUOffset;
 }
 using namespace Entity;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void XEntity::Init(ID3D12Device* pDevice)
 {
-	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,2);
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,32);
+	uGpuCSUOffset = 0;
 }
 
 XEntity::XEntity():m_pTextureSet(nullptr),m_pShader(nullptr),m_pGeometry(nullptr){}
@@ -107,13 +109,15 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 */
 XTextureSet* XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureFileType eFileType)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase, eFileType);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase+ uGpuCSUOffset, eFileType);
+	uGpuCSUOffset += uCount;
 	return m_pTextureSet;
 }
 
 XTextureSet* XEntity::InitTexture(LPCWSTR pName, UINT uWidth,UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uGpuCSUBase, uWidth, uHeight, Format, pData, uPixelSize);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uGpuCSUBase+ uGpuCSUOffset, uWidth, uHeight, Format, pData, uPixelSize);
+	uGpuCSUOffset += 1;
 	return m_pTextureSet;
 }
 

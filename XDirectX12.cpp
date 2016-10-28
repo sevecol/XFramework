@@ -68,7 +68,9 @@ StepTimer							g_Timer;
 //
 XEntity								*g_pEntityNormal	= nullptr;
 XEntity								*g_pEntityAlpha		= nullptr;
-XEntity								*g_pEntityPBR		= nullptr;
+XEntity								*g_pEntityPBRL		= nullptr;
+XEntity								*g_pEntityPBRC		= nullptr;
+XEntity								*g_pEntityPBRR		= nullptr;
 
 //
 extern XShader						*g_pHDRShaderScreen;
@@ -208,7 +210,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uStart = 0;
-	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uCount = 32;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uCount = 64;
 
 	D3D12_DESCRIPTOR_HEAP_DESC CSUHeapDesc = {};
 	CSUHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uCount;
@@ -381,9 +383,17 @@ bool Render()
 	{
 		//g_pEntityNormal->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
-	if (g_pEntityPBR)
+	if (g_pEntityPBRL)
 	{
-		g_pEntityPBR->Render(pCommandList, pFrameResource->m_uFenceValue);
+		g_pEntityPBRL->Render(pCommandList, pFrameResource->m_uFenceValue);
+	}
+	if (g_pEntityPBRC)
+	{
+		g_pEntityPBRC->Render(pCommandList, pFrameResource->m_uFenceValue);
+	}
+	if (g_pEntityPBRR)
+	{
+		g_pEntityPBRR->Render(pCommandList, pFrameResource->m_uFenceValue);
 	}
 	
 	// HDR_Bind
@@ -469,7 +479,9 @@ void Clean()
 	//
 	SAFE_DELETE(g_pEntityNormal);
 	SAFE_DELETE(g_pEntityAlpha);
-	SAFE_DELETE(g_pEntityPBR);
+	SAFE_DELETE(g_pEntityPBRL);
+	SAFE_DELETE(g_pEntityPBRC);
+	SAFE_DELETE(g_pEntityPBRR);
 	if (pFullScreenGeometry)
 	{
 		XGeometry::DeleteGeometry(&pFullScreenGeometry);

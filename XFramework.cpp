@@ -12,7 +12,9 @@
 extern XCamera			g_Camera;
 extern XEntity			*g_pEntityNormal;
 extern XEntity			*g_pEntityAlpha;
-extern XEntity			*g_pEntityPBR;
+extern XEntity			*g_pEntityPBRL;
+extern XEntity			*g_pEntityPBRC;
+extern XEntity			*g_pEntityPBRR;
 
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
@@ -54,15 +56,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 
 		//
-		PointLight* pLight = GetPointLight(1);
+		PointLight* pLight = GetPointLight(0);
 		static float fTime = 0.0f;
 		fTime += 0.01f;
 
 		if (pLight)
 		{
-			pLight->fPosX = 10.0f * sinf(fTime);
-			pLight->fPosY = 0.0f;
-			pLight->fPosZ = 10.0f * cosf(fTime);
+			pLight->fPosX = 13.0f * sinf(fTime);
+			pLight->fPosY = 13.0f;
+			pLight->fPosZ = 13.0f * cosf(fTime);
 		}
 
 		Update();
@@ -178,7 +180,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
 	{
-		g_pEntityPBR = new XEntity();
+		g_pEntityPBRC = new XEntity();
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -187,16 +189,60 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBR->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRC->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[2] = { L"entity.dds",L"default_normal.dds" };
-		g_pEntityPBR->InitTexture(L"EntityPBR", 2, pTextureFileName);
+		LPCWSTR pTextureFileName[3] = { L"albedo_stone.jpg",L"normal.jpg",L"mask_nonmetal.jpg" };
+		g_pEntityPBRC->InitTexture(L"EntityPBRC", 3, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
 		XObjResource *pobjresource = new XObjResource();
-		pobjresource->pEntity = g_pEntityPBR;
+		pobjresource->pEntity = g_pEntityPBRC;
+		g_pResourceThread->InsertResourceLoadTask(pobjresource);
+	}
+	{
+		g_pEntityPBRL = new XEntity();
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityPBRL->InitShader(L"shaders_entityl_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+
+		LPCWSTR pTextureFileName[3] = { L"albedo_silver.jpg",L"normal.jpg",L"mask_metal.jpg" };
+		g_pEntityPBRL->InitTexture(L"EntityPBRL", 3, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		XObjResource *pobjresource = new XObjResource();
+		pobjresource->pEntity = g_pEntityPBRL;
+		g_pResourceThread->InsertResourceLoadTask(pobjresource);
+	}
+	{
+		g_pEntityPBRR = new XEntity();
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityPBRR->InitShader(L"shaders_entityr_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+
+		LPCWSTR pTextureFileName[3] = { L"albedo_gold.jpg",L"normal.jpg",L"mask_metal.jpg" };
+		g_pEntityPBRR->InitTexture(L"EntityPBRR", 3, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		XObjResource *pobjresource = new XObjResource();
+		pobjresource->pEntity = g_pEntityPBRR;
 		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
 	//g_ResourceThread.WaitForResource();

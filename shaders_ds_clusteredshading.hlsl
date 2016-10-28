@@ -159,8 +159,8 @@ void AccumulateCookTorranceBRDF(uint type,float3 normal,float3 lightDir,float3 v
                          inout float3 litDiffuse,
                          inout float3 litSpecular)
 {
-    	//float NdotL = saturate(dot(normal, lightDir));
-	float NdotL = dot(normal, lightDir);
+    	float NdotL = saturate(dot(normal, lightDir));
+	//float NdotL = dot(normal, lightDir);
     	//[flatten] if (NdotL > 0.0f) 
 	{
 		float3 Half = normalize(lightDir+viewDir);
@@ -181,7 +181,7 @@ void AccumulateCookTorranceBRDF(uint type,float3 normal,float3 lightDir,float3 v
 
 		//
 		float3 cook = (fresnel*geometry*denominator);///(4.0*NdotL*NoV);
-		float3 diff = (1-fresnel);
+		float3 diff = (1-fresnel);		
 
 		litDiffuse += diff*lightContrib*NdotL;
 		litSpecular += cook*lightContrib*NdotL;
@@ -314,27 +314,24 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     data.specularPower = normal_specular.w;
 */
 	
+    float4 color0 = g_texture0.Load(positionViewport);
+    float4 color1 = g_texture1.Load(positionViewport);
+    float4 color2 = g_texture2.Load(positionViewport);
+
     SurfaceData data;
-    float3 position = g_texture0.Load(positionViewport).xyz;
-    float3 normal = g_texture2.Load(positionViewport).xyz;
+    float3 position = color0.xyz;
+    float3 normal = color1.xyz;
 
     data.positionW = position;
     data.normalW = normal;
     data.positionV = mul(float4(position, 1.0f), mView).xyz;
     data.normalV = mul(normal, (float3x3)mView).xyz;
 
-    //
-    //data.metallic = 0.0f;
-    //data.albedo = g_texture1.Load(positionViewport);
-    //data.f0 = float4(0.04f,0.04f,0.04f,1.0f);
-    //data.roughness = 0.8f;
-
-    data.metallic = 1.0f;
-    data.albedo = g_texture1.Load(positionViewport);
-    data.f0 = float4(0.972f,0.96f,0.915f,1.0f);
-    data.f0 = float4(1.0f,0.8f,0.5f,1.0f);
-    data.roughness = 0.2f;
-
+    data.metallic = color0.w;
+    data.roughness = color1.w;
+    data.albedo = color2;
+    data.f0 = color2;
+    
     data.specularAmount = 0.9f;
     data.specularPower = 25.0f;
 
@@ -565,8 +562,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
 	}
     }
 
-    float4 color = g_texture0.Load(dispatchThreadId.xyz);
-    if (color.a!=0.0f)
+    if (surface.albedo.a!=0.0f)
     {
 	float3 result = float3(0.0f,0.0f,0.0f);
 	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
@@ -574,11 +570,18 @@ void CSMain(uint3 groupId          : SV_GroupID,
  		uint lindex = sTileLightIndices[lightindex];
 		AccumulatePointLightBRDF(surface, sLight[lightindex], result);
 	}
-	AccumulateImageLightBRDF(surface,result);
+	if (surface.metallic>0.5f)
+	{
+		AccumulateImageLightBRDF(surface,result);
+	}
+	else
+	{
+		result += float3(0.3f,0.3f,0.3f)*surface.albedo.xyz;
+	}
 
 	//
 	gFramebuffer[dispatchThreadId.xy] = float4(result,1.0f);
-	gFramebuffer[float2(0,0)] = float4(result,1.0f);
+	//gFramebuffer[float2(0,0)] = float4(surface.metallic,surface.metallic,surface.metallic,1.0f);
     }
 
     //
