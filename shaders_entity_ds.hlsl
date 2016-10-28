@@ -145,11 +145,11 @@ PsOutput PSMain(PSInput input)
 
 	// 
 	float3 normal = mul(texnormal,tbn);
+	normal = lerp(normal,input.normal,1.0f);
 
 	result.color0 = float4(input.positionW.xyz,1.0f);
 	result.color1 = g_txDiffuse.Sample(g_sampler, input.uv);
 	result.color2 = float4(normalize(normal),1.0f);
-	//result.color2 = float4(input.normal.xyz,1.0f);
 
 	return result;
 }

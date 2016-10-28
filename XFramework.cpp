@@ -112,9 +112,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance; // 将实例句柄存储在全局变量中
 
+	int width = GetSystemMetrics(SM_CXSCREEN);
+	int height = GetSystemMetrics(SM_CYSCREEN);
+
 	MyRegisterClass(hInstance);
 	HWND hWnd = CreateWindowW(L"Class", L"XFramework", WS_OVERLAPPEDWINDOW,
-		0, 0, 1280, 720, nullptr, nullptr, hInstance, nullptr);
+		(width-1280)/2.0f,(height-720)/2.0f, 1280, 720, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -200,7 +203,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	//
 	g_Camera.Init(0.8f, 1280.0f/720.0f);
-	g_Camera.InitPos(XMFLOAT3(0, 0, 20));
+	g_Camera.InitPos(XMFLOAT3(0, 0, 24));
 
 	//
 	PointLight pp;
@@ -217,7 +220,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	pp.fPosX = 13.0f;
 	pp.fR = 0.0f;
 	pp.fG = 2.0f;
-	AddPointLight(pp);
+	//AddPointLight(pp);
 
 	return TRUE;
 }

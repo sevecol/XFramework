@@ -277,3 +277,8 @@ OptFrustum* XCamera::GetFrustum()
 {
 	return &m_frustum;
 }
+
+XMFLOAT3* XCamera::GetPosition()
+{
+	return &m_position;
+}

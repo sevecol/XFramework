@@ -36,16 +36,20 @@ struct PointLight
 };
 cbuffer LightBuffer : register(b1)
 {
-        float4x4   mViewR;
+        float4x4   mView;
 	float4x4   mProj;
         float4x4   mViewProj;
 	PointLight sLight[16];
+	float3     vEyePos;
 	uint uLightNum;
 }
 
 Texture2D g_texture0 : register(t0);
 Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
+TextureCube g_Environment : register(t3);
+
+SamplerState g_sampler : register(s0);
 
 RWTexture2D<float4> gFramebuffer : register(u0);
 
@@ -59,11 +63,14 @@ groupshared uint sTileNumLights;
 //
 struct SurfaceData
 {
-    float3 position;             // position
-    //float3 positionDX;         // derivatives
-    //float3 positionDY;         // of view space position
-    float3 normal;               // normal
+    float3 positionW;
+    float3 normalW;
+    float3 positionV;            // position
+    float3 normalV;              // normal
     float4 albedo;
+    float4 f0;
+    float roughness;
+    float metallic;
     float specularAmount;        // Treated as a multiplier on albedo
     float specularPower;
 };
@@ -123,89 +130,111 @@ void AccumulatePhongBRDF(float3 normal,
 }
 
 #define PI 3.14159265
-void AccumulateCookTorranceBRDF(float3 normal,
-                         float3 lightDir,
-                         float3 viewDir,
-                         float3 lightContrib,
-                         float specularPower,
+float chiGGX(float v)
+{
+    return v > 0 ? 1 : 0;
+}
+float GGX_Distribution(float3 n, float3 h, float alpha)
+{
+    float NoH = dot(n,h);
+    float alpha2 = alpha * alpha;
+    float NoH2 = NoH * NoH;
+    float den = NoH2 * alpha2 + (1 - NoH2);
+    return (chiGGX(NoH) * alpha2) / ( PI * den * den );
+}
+float GGX_PartialGeometryTerm(float3 v, float3 n, float3 h, float alpha)
+{
+    float VoH2 = saturate(dot(v,h));
+    float chi = chiGGX( VoH2 / saturate(dot(v,n)) );
+    VoH2 = VoH2 * VoH2;
+    float tan2 = ( 1 - VoH2 ) / VoH2;
+    return (chi * 2) / ( 1 + sqrt( 1 + alpha * alpha * tan2 ) );
+}
+float3 Fresnel_Schlick(float cosT, float3 F0)
+{
+  return F0 + (1-F0) * pow( 1 - cosT, 5);
+}
+
+void AccumulateCookTorranceBRDF(uint type,float3 normal,float3 lightDir,float3 viewDir,float3 F0,float3 lightContrib,float roughness,
                          inout float3 litDiffuse,
                          inout float3 litSpecular)
 {
-
-    	float NdotL = dot(normal, lightDir);
-    	[flatten] if (NdotL > 0.0f) 
+    	//float NdotL = saturate(dot(normal, lightDir));
+	float NdotL = dot(normal, lightDir);
+    	//[flatten] if (NdotL > 0.0f) 
 	{
 		float3 Half = normalize(lightDir+viewDir);
+		float  NoV = saturate(dot(normal,viewDir));
 
-		float _Shininess = 20.0f;
-		float3 _SpecColor = float3(0.972f,0.960f,0.915f);
+		// roughness 0-1
+		float3 fresnel = Fresnel_Schlick(saturate(dot(Half,viewDir)),F0);
+ 		float geometry = GGX_PartialGeometryTerm(viewDir,normal,Half,roughness)*GGX_PartialGeometryTerm(lightDir,normal,Half,roughness);
+		float denominator = 0.0f;
+		if (type==1)
+		{
+			denominator = GGX_Distribution(normal,Half,roughness);
+		}
+		if (type==2)
+		{
+			denominator = saturate(4*(NoV*saturate(dot(Half,normal))+0.05));
+		}			
 
-		float d = (_Shininess+2.0f)/8.0f*pow(dot(normal,Half),_Shininess);
-		float f = _SpecColor+(1-_SpecColor)*pow((1-dot(Half,lightDir)),5.0f);
-		float k = 2.0f/sqrt(PI*(_Shininess+2.0f));
-		float v = 1.0f/((dot(normal,lightDir)*(1.0f-k)+k)*(dot(normal,viewDir)*(1.0f-k)+k));
+		//
+		float3 cook = (fresnel*geometry*denominator);///(4.0*NdotL*NoV);
+		float3 diff = (1-fresnel);
 
-		// * NdotL ???
-		float cook = d*f*v*NdotL;
-
-		float diff = NdotL;
-		diff = (1-cook)*diff;
-
-		//litDiffuse = cook;
-		litDiffuse += diff*lightContrib;
-		litSpecular += cook*lightContrib;
+		litDiffuse += diff*lightContrib*NdotL;
+		litSpecular += cook*lightContrib*NdotL;
 	}
+
 /*
     	float NdotL = dot(normal, lightDir);
     	[flatten] if (NdotL > 0.0f) 
 	{
 		float3 Half = normalize(lightDir+viewDir);
 
-		float _Shininess = 200.0f;
-		float3 _SpecColor = float3(0.972f,0.960f,0.915f);
+		// roughness 0-2048
+		float denominator = (roughness+2.0f)/8.0f*pow(dot(normal,Half),roughness);
+		float3 fresnel = F0+(1-F0)*pow((1-dot(Half,lightDir)),5.0f);
+		float k = 2.0f/sqrt(PI*(roughness+2.0f));
+		float geometry = 1.0f/((dot(normal,lightDir)*(1.0f-k)+k)*(dot(normal,viewDir)*(1.0f-k)+k));
 
-		float d = (_Shininess+2.0f)/(8.0f*PI)*pow(dot(normal,Half),_Shininess);
-		float f = _SpecColor+(1-_SpecColor)*pow((1-dot(Half,lightDir)),5.0f);
-		float k = 2.0f/sqrt(PI*(_Shininess+2.0f));
-		float v = 1.0f/((dot(normal,lightDir)*(1.0f-k)+k)*(dot(normal,viewDir)*(1.0f-k)+k));
-		float cook = d*f*v;
+		//
+		float3 cook = denominator*fresnel*geometry;
+		float3 diff = (1-fresnel);//*diff;
 
-		litDiffuse += lightContrib/PI*NdotL;
+		//litDiffuse = cook;
+		litDiffuse += diff*lightContrib*NdotL;
+		litSpecular += cook*lightContrib*NdotL;
+	}
+*/
+/*
+    	float NdotL = dot(normal, lightDir);
+    	[flatten] if (NdotL > 0.0f) 
+	{
+		float3 Half = normalize(lightDir+viewDir);
+
+		// roughness 0-2048
+		float denominator = (roughness+2.0f)/(8.0f*PI)*pow(dot(normal,Half),roughness);
+		float3 fresnel = F0+(1-F0)*pow((1-dot(Half,lightDir)),5.0f);
+
+		float3 cook = denominator*fresnel;//*v;
+		float3 diff = (1-fresnel);//*diff;
+
+		litDiffuse += diff*lightContrib*NdotL;
 		litSpecular += cook*lightContrib*NdotL;
 	}
 */
 }
 
-/*
-// Accumulates separate "diffuse" and "specular" components of lighting from a given
-// This is not possible for all BRDFs but it works for our simple Phong example here
-// and this separation is convenient for deferred lighting.
 // Uses an in-out for accumulation to avoid returning and accumulating 0
-void AccumulateBRDFDiffuseSpecular(SurfaceData surface, PointLight light,
-                                   inout float3 litDiffuse,
-                                   inout float3 litSpecular)
-{
-    float3 directionToLight = light.positionView - surface.positionView;
-    float distanceToLight = length(directionToLight);
-
-    [branch] if (distanceToLight < light.attenuationEnd) {
-        float attenuation = linstep(light.attenuationEnd, light.attenuationBegin, distanceToLight);
-        directionToLight *= rcp(distanceToLight);       // A full normalize/RSQRT might be as fast here anyways...
-        
-        AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.positionView),
-            attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
-    }
-}
-*/
-
-// Uses an in-out for accumulation to avoid returning and accumulating 0
-void AccumulateBRDF(SurfaceData surface, PointLight light,
+void AccumulatePointLightBRDF(SurfaceData surface, PointLight light,
                     inout float3 lit)
 {
     // All in view space
-    float3 lightView  = mul(float4(light.position.xyz, 1.0f), mViewR).xyz;
+    float3 lightView  = mul(float4(light.position.xyz, 1.0f), mView).xyz;
 
-    float3 directionToLight = lightView - surface.position;
+    float3 directionToLight = lightView - surface.positionV;
     float distanceToLight = length(directionToLight);
     
     //
@@ -218,14 +247,30 @@ void AccumulateBRDF(SurfaceData surface, PointLight light,
 	attenuation = 1.0f;
 
 	// Phong
-        //AccumulatePhongBRDF(surface.normal, directionToLight, normalize(surface.position),attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
+        //AccumulatePhongBRDF(surface.normalV,directionToLight,normalize(surface.positionV),attenuation*light.color,surface.specularPower,litDiffuse,litSpecular);
 	//lit += surface.albedo.rgb * (litDiffuse + surface.specularAmount * litSpecular);
 
 	// CookTorrance
-	AccumulateCookTorranceBRDF(surface.normal,directionToLight, -1.0f*normalize(surface.position),attenuation * light.color, surface.specularPower, litDiffuse, litSpecular);
-	lit += surface.albedo.rgb * (litDiffuse+litSpecular);
-	//lit += surface.albedo.rgb * (litSpecular);
+	AccumulateCookTorranceBRDF(1,surface.normalV,directionToLight,-1.0f*normalize(surface.positionV),surface.f0.xyz,attenuation*light.color,surface.roughness,litDiffuse,litSpecular);
+	lit += surface.albedo.rgb*litDiffuse*(1.0f-surface.metallic)+litSpecular;
     }
+}
+
+void AccumulateImageLightBRDF(SurfaceData surface,inout float3 lit)
+{
+	// IBL
+	float3 viewDirW = normalize(vEyePos-surface.positionW);
+	float3 lightDirW = reflect(-1.0f*viewDirW,surface.normalW);
+
+	float3 lightcolor = g_Environment.SampleLevel(g_sampler,lightDirW,0).xyz;
+
+	float3 litDiffuse = float3(0,0,0);
+        float3 litSpecular = float3(0,0,0);
+
+	//
+	AccumulateCookTorranceBRDF(2,surface.normalW,lightDirW,viewDirW,surface.f0,lightcolor,surface.roughness,litDiffuse,litSpecular);
+	lit += surface.albedo.rgb*litDiffuse*(1.0f-surface.metallic)+litSpecular;//
+	//lit += lightcolor;//litSpecular;//lightcolor;//lightcolor;//
 }
 
 SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
@@ -271,14 +316,28 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
 	
     SurfaceData data;
     float3 position = g_texture0.Load(positionViewport).xyz;
-    data.albedo = g_texture1.Load(positionViewport);
     float3 normal = g_texture2.Load(positionViewport).xyz;
+
+    data.positionW = position;
+    data.normalW = normal;
+    data.positionV = mul(float4(position, 1.0f), mView).xyz;
+    data.normalV = mul(normal, (float3x3)mView).xyz;
+
+    //
+    //data.metallic = 0.0f;
+    //data.albedo = g_texture1.Load(positionViewport);
+    //data.f0 = float4(0.04f,0.04f,0.04f,1.0f);
+    //data.roughness = 0.8f;
+
+    data.metallic = 1.0f;
+    data.albedo = g_texture1.Load(positionViewport);
+    data.f0 = float4(0.972f,0.96f,0.915f,1.0f);
+    data.f0 = float4(1.0f,0.8f,0.5f,1.0f);
+    data.roughness = 0.2f;
+
     data.specularAmount = 0.9f;
     data.specularPower = 25.0f;
 
-    data.position = mul(float4(position, 1.0f), mViewR).xyz;
-    data.normal = normal;//mul(normal, (float3x3)mViewR).xyz;//normal;//
-    
     return data;
 }
 
@@ -307,11 +366,11 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float minZSample = 1000.0f;
     float maxZSample =    1.0f;
     {
-        bool validPixel = surface.position.z >= 1.0f && surface.position.z <  1000.0f;
+        bool validPixel = surface.positionV.z >= 1.0f && surface.positionV.z <  1000.0f;
         [flatten] if (validPixel) 
 	{
-                minZSample = min(minZSample, surface.position.z);
-                maxZSample = max(maxZSample, surface.position.z);
+                minZSample = min(minZSample, surface.positionV.z);
+                maxZSample = max(maxZSample, surface.positionV.z);
 	}
     }
     
@@ -509,14 +568,17 @@ void CSMain(uint3 groupId          : SV_GroupID,
     float4 color = g_texture0.Load(dispatchThreadId.xyz);
     if (color.a!=0.0f)
     {
-	float3 ambent = float3(0.2f,0.2f,0.2f);
-	float3 result = ambent * surface.albedo.rgb;
+	float3 result = float3(0.0f,0.0f,0.0f);
 	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
 	{
  		uint lindex = sTileLightIndices[lightindex];
-		AccumulateBRDF(surface, sLight[lightindex], result);
+		AccumulatePointLightBRDF(surface, sLight[lightindex], result);
 	}
+	AccumulateImageLightBRDF(surface,result);
+
+	//
 	gFramebuffer[dispatchThreadId.xy] = float4(result,1.0f);
+	gFramebuffer[float2(0,0)] = float4(result,1.0f);
     }
 
     //

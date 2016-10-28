@@ -24,6 +24,9 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	//
 	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,1);
 
+	// Texture
+	pSkyBoxTexture = XTextureSet::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", uGpuCSUBase);
+
 	// Shader
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
@@ -38,9 +41,6 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	depthStencilDesc.StencilEnable = FALSE;
 	pSkyBoxShader = XShader::CreateShaderFromFile(L"shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
 
-	// Texture
-	pSkyBoxTexture = XTextureSet::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", uGpuCSUBase);
-
 	return true;
 }
 void CleanSkyBox()
@@ -53,4 +53,9 @@ extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *p
 void SkyBox_Render(ID3D12GraphicsCommandList* pCommandList)
 {
 	RenderFullScreen(pCommandList, pSkyBoxShader, pSkyBoxTexture);
+}
+
+XTextureSet* GetSkyBoxTexture()
+{
+	return pSkyBoxTexture;
 }

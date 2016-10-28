@@ -158,9 +158,9 @@ void AlphaRender_End(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetPipelineState(pComputeShader->GetPipelineState());
 
 	//pCommandList->SetComputeRootDescriptorTable(0, );
-	pCommandList->SetComputeRootDescriptorTable(1, pHDRRenderTarget->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(2, pSBuffer[ESBUFFERTYPE_PIXELLINK]->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(4, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 3));
+	pCommandList->SetComputeRootDescriptorTable(2, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(3, pSBuffer[ESBUFFERTYPE_PIXELLINK]->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(5, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 3));
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);

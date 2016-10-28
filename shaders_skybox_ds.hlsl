@@ -40,10 +40,10 @@ PSInput VSMain(VSInput input)
 	return result;
 }
 
-TextureCube	g_Environment	: register( t0 );
-SamplerState 	g_sampler	: register( s0 );
+TextureCube	g_Environment	: register(t0);
+SamplerState 	g_sampler	: register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return g_Environment.Sample( g_sampler, input.uv );
+	return g_Environment.SampleLevel(g_sampler,input.uv,0);
 }

@@ -5,7 +5,12 @@
 #include "Resource\XShader.h"
 #include "Resource\XTexture.h"
 
+#include "XSkyBox.h"
+#include "XCamera.h"
+
 #define DEFERREDSHADING_RENDERTARGET_COUNT		RENDERTARGET_MAXNUM
+
+extern XCamera									g_Camera;
 
 extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
 extern DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
@@ -21,8 +26,8 @@ namespace DeferredShading
 	UINT										uRenderTargetBase,uGpuCSUBase;
 	UINT										uDispatchX, uDispatchY;
 	XRenderTarget								*pRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
-	XShader										*pShadingShader;
-	XComputeShader								*pClusteredShadingShader;
+	XShader										*pShadingShader = nullptr;
+	XComputeShader								*pClusteredShadingShader = nullptr;
 
 	LightConstantBuffer							*pConstantBuffers = nullptr;
 	ID3D12Resource								*pConstantUploadHeap = nullptr;
@@ -81,11 +86,10 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
 		ConstantDesc.BufferLocation = pConstantUploadHeap->GetGPUVirtualAddress();
 		ConstantDesc.SizeInBytes = sizeof(LightConstantBuffer);
-		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase +3));
+		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+3));
 	}
 
 	// ResultBuffer
-/*
 	ThrowIfFailed(pDevice->CreateCommittedResource(
 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
 	D3D12_HEAP_FLAG_NONE,
@@ -93,7 +97,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	D3D12_RESOURCE_STATE_COPY_DEST,
 	nullptr,
 	IID_PPV_ARGS(&pResultBuffer)));
-*/
+
 	return true;
 }
 
@@ -159,18 +163,18 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetPipelineState(pClusteredShadingShader->GetPipelineState());
 
 	pCommandList->SetComputeRootDescriptorTable(0, pRenderTargets[0]->GetSRVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(1, pHDRRenderTarget->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(4, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase +3));
+	pCommandList->SetComputeRootDescriptorTable(1, GetSkyBoxTexture()->GetSRVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(2, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(5, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase +3));
 
 	// For D3DWaring
-	pCommandList->SetComputeRootDescriptorTable(2, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(3, pHDRRenderTarget->GetUAVGpuHandle());
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
 
 	//
 	// GetResult
-/*
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
 	pCommandList->CopyResource(pResultBuffer, pHDRRenderTarget->GetResource());
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
@@ -186,7 +190,7 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 		fValue += pAddress[0];
 	}
 	pResultBuffer->Unmap(0, nullptr);
-*/
+
 	//
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart());
@@ -210,7 +214,7 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 	XMMATRIX temp = XMMatrixTranspose(tView);// *projection);
 	//XMMATRIX temp = model * view * projection;//XMMatrixTranspose
 	XMStoreFloat4x4(&mMatrix, temp);
-	pConstantBuffers->mViewR = mMatrix;
+	pConstantBuffers->mView = mMatrix;
 
 	//
 	temp = XMMatrixTranspose(projection);
@@ -222,6 +226,9 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 	//temp = projection;
 	XMStoreFloat4x4(&mMatrix, temp);
 	pConstantBuffers->mViewProj = mMatrix;
+
+	//
+	pConstantBuffers->vEyePos = *(g_Camera.GetPosition());
 
 	//
 	pConstantBuffers->uLightNum = vPointLight.size();

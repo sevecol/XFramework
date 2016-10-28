@@ -35,6 +35,7 @@ public:
 	void SetTurnSpeed(float radiansPerSecond);
 
 	OptFrustum* GetFrustum();
+	XMFLOAT3* GetPosition();
 
 private:
 	void Reset();

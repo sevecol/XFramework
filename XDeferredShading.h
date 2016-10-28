@@ -3,6 +3,7 @@
 
 #include "XDirectX12.h"
 #include "d3dx12.h"
+#include "Resource\XTexture.h"
 
 bool InitDeferredShading(ID3D12Device* pDevice, UINT uWidth, UINT uHeight);
 void CleanDeferredShading();
@@ -13,10 +14,11 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection);
 
 struct LightConstantBuffer
 {
-	XMFLOAT4X4		mViewR;						// View Rotation matrix.
+	XMFLOAT4X4		mView;						// View Rotation matrix.
 	XMFLOAT4X4		mProj;						// Projection (P) matrix.
 	XMFLOAT4X4		mViewProj;					// View Projection (VP) matrix.
 	PointLight		sLight[LIGHT_MAXNUM];
+	XMFLOAT3		vEyePos;
 	UINT			uLightNum;
-	FLOAT			fPadding[15];
+	FLOAT			fPadding[12];
 };
