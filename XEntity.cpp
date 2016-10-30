@@ -107,9 +107,9 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 	return true;
 }
 */
-XTextureSet* XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureFileType eFileType)
+XTextureSet* XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[])
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase+ uGpuCSUOffset, eFileType);
+	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase+ uGpuCSUOffset);
 	uGpuCSUOffset += uCount;
 	return m_pTextureSet;
 }

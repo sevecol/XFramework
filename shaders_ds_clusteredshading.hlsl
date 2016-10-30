@@ -274,7 +274,7 @@ void AccumulateImageLightBRDF(SurfaceData surface,inout float3 lit)
 
 	//
 	AccumulateCookTorranceBRDF(2,surface.normalW,lightDirW,viewDirW,surface.f0,lightcolor,surface.roughness,litDiffuse,litSpecular);
-	lit += surface.albedo.rgb*diffuse*(1.0f-surface.metallic)+surface.metallic*litSpecular;//
+	lit += surface.albedo.rgb*diffuse*(1.0f-surface.metallic)+litSpecular;//
 	//lit += lightcolor;//litSpecular;//lightcolor;//lightcolor;//
 }
 
@@ -336,6 +336,10 @@ SurfaceData ComputeSurfaceDataFromGBufferSample(uint3 positionViewport)
     data.roughness = color1.w;
     data.albedo = color2;
     data.f0 = color2;
+    if (data.metallic<0.5f)
+    {
+	data.f0 = float4(0.04f,0.04f,0.04f,1.0f);
+    }
     
     data.specularAmount = 0.9f;
     data.specularPower = 25.0f;
