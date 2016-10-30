@@ -59,7 +59,7 @@ void XTextureSet::Clean()
 	}
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[],UINT uSRVIndex, eTextureFileType eFileType)
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[],UINT uSRVIndex)
 {
 	XTextureSet *pTextureSet = nullptr;
 	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
@@ -79,39 +79,48 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR p
 
 	//
 	TextureSetLoad *pTextureSetLoad = nullptr;
-	switch (eFileType)
-	{
-	case ETEXTUREFILETYPE_DDS:
-		pTextureSetLoad = new DDSTextureSetLoad();
-		break;
-	case ETEXTUREFILETYPE_OTHER:
-		pTextureSetLoad = new TextureSetLoad();
-		break;
-	}
+
+	pTextureSetLoad = new TextureSetLoad();
 	pTextureSetLoad->m_pTextureSet = pTextureSet;
 
 	for (UINT i = 0;i < uCount;++i)
 	{
-		STextureLayer sTextureLayer;
-		sTextureLayer.m_sFileName = pFileName[i];
-		sTextureLayer.m_eType = eType[i];
-		pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
+		TextureLoad *pTextureLoad = nullptr;
+
+		//
+		LPWSTR pLayerFileName = const_cast<LPWSTR>(pFileName[i]);
+		if (!wcscmp(L"dds", &pLayerFileName[lstrlenW(pFileName[i]) - 3]))
+		{
+			pTextureLoad = new DDSFileTextureLoad();
+		}
+		else
+		{
+			pTextureLoad = new FileTextureLoad();
+		}
+
+		pTextureLoad->m_TextureLayer.m_sFileName = pFileName[i];
+		pTextureLoad->m_TextureLayer.m_eType = eType[i];
+
+		pTextureLoad->m_uIndex = i;
+		pTextureLoad->m_pTextureSet = pTextureSet;
+
+		pTextureSetLoad->m_vTextureLayer.push_back(pTextureLoad);
 	}
 
 	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
 	return pTextureSet;
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureFileType eFileType)
+XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex)
 {
 	eTextureType eType[8] = { ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D };
-	return XTextureSet::CreateTextureSet(pName, uCount, pFileName, eType, uSRVIndex, eFileType);
+	return XTextureSet::CreateTextureSet(pName, uCount, pFileName, eType, uSRVIndex);
 }
 
-XTextureSet* XTextureSet::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex, eTextureFileType eFileType)
+XTextureSet* XTextureSet::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex)
 {
 	eTextureType eType[8] = { ETEXTURETYPE_CUBE };
-	return XTextureSet::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex, eFileType);
+	return XTextureSet::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex);
 }
 
 XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
@@ -133,17 +142,18 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT u
 	XTextureSet::m_mTextureSet[pName] = pTextureSet;
 
 	//
-	TextureSetLoad *pTextureSetLoad = new MemoryTextureSetLoad();
+	TextureSetLoad *pTextureSetLoad = new TextureSetLoad();
 	pTextureSetLoad->m_pTextureSet = pTextureSet;
 
-	STextureLayer sTextureLayer;
-	sTextureLayer.m_Format = Format;
-	sTextureLayer.m_uWidth	= uWidth;
-	sTextureLayer.m_uHeight = uHeight;
-	sTextureLayer.m_uPixelSize = uPixelSize;
-	sTextureLayer.m_pData = pData;
+	TextureLoad *pTextureLoad = new MemoryTextureLoad();
+	pTextureLoad->m_TextureLayer.m_Format = Format;
+	pTextureLoad->m_TextureLayer.m_uWidth	= uWidth;
+	pTextureLoad->m_TextureLayer.m_uHeight = uHeight;
+	pTextureLoad->m_TextureLayer.m_uPixelSize = uPixelSize;
+	pTextureLoad->m_TextureLayer.m_pData = pData;
+	pTextureLoad->m_pTextureSet = pTextureSet;
 
-	pTextureSetLoad->m_vTextureLayer.push_back(sTextureLayer);
+	pTextureSetLoad->m_vTextureLayer.push_back(pTextureLoad);
 
 	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
 	return pTextureSet;
@@ -172,10 +182,7 @@ TextureSetLoad::~TextureSetLoad()
 {
 	for (UINT i = 0;i < m_vTextureLayer.size();++i)
 	{
-		if (m_vTextureLayer[i].m_pData)
-		{
-			delete[] m_vTextureLayer[i].m_pData;
-		}
+		SAFE_DELETE(m_vTextureLayer[i]);
 	}
 	m_vTextureLayer.clear();
 }
@@ -183,47 +190,44 @@ TextureSetLoad::~TextureSetLoad()
 extern UINT8* CreateTextureFromWIC(LPCWSTR pFileName, DXGI_FORMAT& Format, UINT& PixelSize, UINT& Width, UINT& Height);
 void TextureSetLoad::LoadFromFile()
 {
-	// Create an upload heap to load the texture onto the GPU. ComPtr's are CPU objects
-	// but this heap needs to stay in scope until the GPU work is complete. We will
-	// synchronize with the GPU at the end of this method before the ComPtr is destroyed.
-	//if (m_pFileName)
-	{
-		for (UINT i = 0;i < m_vTextureLayer.size();++i)
-		{
-			m_vTextureLayer[i].m_pData = CreateTextureFromWIC(m_vTextureLayer[i].m_sFileName.c_str(), m_vTextureLayer[i].m_Format, m_vTextureLayer[i].m_uPixelSize, m_vTextureLayer[i].m_uWidth, m_vTextureLayer[i].m_uHeight);
-		}
-	}
-/*
-	else
-	{
-		if (m_pFun)
-		{
-			m_vTextureLayer[0].m_pData = (UINT8*)((*m_pFun)(m_vTextureLayer[0].m_uWidth, m_vTextureLayer[0].m_uHeight, m_vTextureLayer[0].m_uPixelSize, m_uParameter));
-			m_vTextureLayer[0].m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		}
-	}
-*/
-}
-void TextureSetLoad::PostLoad()
-{
-	//
 	for (UINT i = 0;i < m_vTextureLayer.size();++i)
 	{
-		// Create the texture.
-		// Describe and create a Texture2D.
-		D3D12_RESOURCE_DESC textureDesc = {};
-		textureDesc.MipLevels = 1;
-		textureDesc.Format = m_vTextureLayer[i].m_Format;//DXGI_FORMAT_R8G8B8A8_UNORM;
-		textureDesc.Width = m_vTextureLayer[i].m_uWidth;
-		textureDesc.Height = m_vTextureLayer[i].m_uHeight;
-		textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-		textureDesc.DepthOrArraySize = 1;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.SampleDesc.Quality = 0;
-		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		m_vTextureLayer[i]->LoadFromFile();
+	}
+}
 
-		ID3D12Resource *pTexture = nullptr;
-		ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
+void TextureSetLoad::PostLoad()
+{
+	for (UINT i = 0;i < m_vTextureLayer.size();++i)
+	{
+		m_vTextureLayer[i]->PostLoad();
+	}
+	m_pTextureSet->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
+	m_pTextureSet->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
+}
+
+void FileTextureLoad::LoadFromFile()
+{
+	m_TextureLayer.m_pData = CreateTextureFromWIC(m_TextureLayer.m_sFileName.c_str(), m_TextureLayer.m_Format, m_TextureLayer.m_uPixelSize, m_TextureLayer.m_uWidth, m_TextureLayer.m_uHeight);
+}
+
+void FileTextureLoad::PostLoad()
+{
+	// Create the texture.
+	// Describe and create a Texture2D.
+	D3D12_RESOURCE_DESC textureDesc = {};
+	textureDesc.MipLevels = 1;
+	textureDesc.Format = m_TextureLayer.m_Format;//DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.Width = m_TextureLayer.m_uWidth;
+	textureDesc.Height = m_TextureLayer.m_uHeight;
+	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	textureDesc.DepthOrArraySize = 1;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+	ID3D12Resource *pTexture = nullptr;
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
 			&textureDesc,
@@ -231,53 +235,108 @@ void TextureSetLoad::PostLoad()
 			nullptr,
 			IID_PPV_ARGS(&pTexture)));
 
-		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, 1);
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, 1);
 
-		// Create the GPU upload buffer.
-		ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
+	// Create the GPU upload buffer.
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&m_vTextureLayer[i].m_pTextureUpload)));
+			IID_PPV_ARGS(&m_TextureLayer.m_pTextureUpload)));
 
-		//
-		D3D12_SUBRESOURCE_DATA textureData = {};
-		textureData.pData = m_vTextureLayer[i].m_pData;
-		textureData.RowPitch = m_vTextureLayer[i].m_uWidth * m_vTextureLayer[i].m_uPixelSize;
-		textureData.SlicePitch = textureData.RowPitch * m_vTextureLayer[i].m_uHeight;
+	//
+	D3D12_SUBRESOURCE_DATA textureData = {};
+	textureData.pData = m_TextureLayer.m_pData;
+	textureData.RowPitch = m_TextureLayer.m_uWidth * m_TextureLayer.m_uPixelSize;
+	textureData.SlicePitch = textureData.RowPitch * m_TextureLayer.m_uHeight;
 
-		UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_vTextureLayer[i].m_pTextureUpload.Get(), 0, 0, 1, &textureData);
-		g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+	UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_TextureLayer.m_pTextureUpload.Get(), 0, 0, 1, &textureData);
+	g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-		// Describe and create a SRV for the texture.
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = textureDesc.Format;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
-		switch (m_vTextureLayer[i].m_eType)
-		{
-		case XTextureSet::ETEXTURETYPE_CUBE:
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-			srvDesc.TextureCube.MipLevels = 1;
-			break;
-		}
-		
-		//
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + i));
-
-		//
-		m_pTextureSet->m_vpTexture.push_back(pTexture);
+	// Describe and create a SRV for the texture.
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+	switch (m_TextureLayer.m_eType)
+	{
+	case XTextureSet::ETEXTURETYPE_CUBE:
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		srvDesc.TextureCube.MipLevels = 1;
+		break;
 	}
-	m_pTextureSet->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
-	m_pTextureSet->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
+		
+	//
+	g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + m_uIndex));
 
+	//
+	m_pTextureSet->m_vpTexture.push_back(pTexture);
 	//m_pResourceSet->IncreaseResourceComplate();
 }
 
-XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,UINT uHeight,UINT uRTVIndex,UINT uSRVIndex,UINT uUAVIndex)
+extern DXGI_FORMAT ddsFormat;
+void DDSFileTextureLoad::LoadFromFile()
+{
+	std::unique_ptr<uint8_t[]> ddsData;
+	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+
+	ID3D12Resource *pTexture = nullptr;
+	LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_TextureLayer.m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
+
+	//
+	UINT uCount = (UINT)subresources.size();
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, uCount);
+
+	// Create the GPU upload buffer.
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_TextureLayer.m_pTextureUpload)));
+
+	//
+	UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_TextureLayer.m_pTextureUpload.Get(), 0, 0, uCount, &subresources[0]);
+	g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	// Describe and create a SRV for the texture.
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = ddsFormat;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = uCount;
+	switch (m_TextureLayer.m_eType)
+	{
+	case XTextureSet::ETEXTURETYPE_CUBE:
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		srvDesc.TextureCube.MipLevels = uCount/6;
+		break;
+	}
+
+	g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + m_uIndex));
+
+	//
+	m_pTextureSet->m_vpTexture.push_back(pTexture);
+}
+
+void DDSFileTextureLoad::PostLoad()
+{
+}
+
+void MemoryTextureLoad::LoadFromFile()
+{
+}
+
+void MemoryTextureLoad::PostLoad()
+{
+	FileTextureLoad::PostLoad();
+}
+
+XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format, UINT uWidth, UINT uHeight, UINT uRTVIndex, UINT uSRVIndex, UINT uUAVIndex)
 {
 	XRenderTarget *pRenderTarget = new XRenderTarget;
 
@@ -287,7 +346,7 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 	textureDesc.Format = Format;
 	textureDesc.Width = uWidth;
 	textureDesc.Height = uHeight;
-	textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET| D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	textureDesc.DepthOrArraySize = 1;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
@@ -340,73 +399,6 @@ XRenderTarget* XRenderTarget::CreateRenderTarget(DXGI_FORMAT Format,UINT uWidth,
 	}
 
 	return pRenderTarget;
-}
-
-extern DXGI_FORMAT ddsFormat;
-void DDSTextureSetLoad::LoadFromFile()
-{
-	for (UINT i = 0;i < m_vTextureLayer.size();++i)
-	{
-		std::unique_ptr<uint8_t[]> ddsData;
-		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-
-		ID3D12Resource *pTexture = nullptr;
-		LoadDDSTextureFromFileEx(g_pEngine->m_pDevice, m_vTextureLayer[i].m_sFileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pTexture, ddsData, subresources);
-
-		//
-		UINT uCount = (UINT)subresources.size();
-		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pTexture, 0, uCount);
-
-		// Create the GPU upload buffer.
-		ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&m_vTextureLayer[i].m_pTextureUpload)));
-
-		//
-		UpdateSubresources(g_pResourceThread->GetResourceCommandList(), pTexture, m_vTextureLayer[i].m_pTextureUpload.Get(), 0, 0, uCount, &subresources[0]);
-		g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-		// Describe and create a SRV for the texture.
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = ddsFormat;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = uCount;
-		switch (m_vTextureLayer[i].m_eType)
-		{
-		case XTextureSet::ETEXTURETYPE_CUBE:
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-			srvDesc.TextureCube.MipLevels = uCount/6;
-			break;
-		}
-
-		//
-		//TextureManager *pTextureManager = GetXEngine()->GetTextureManager();
-		
-		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + i));
-
-		//
-		m_pTextureSet->m_vpTexture.push_back(pTexture);
-	}
-	m_pTextureSet->m_hSRVCpuHandle = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
-	m_pTextureSet->m_hSRVGpuHandle = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex());
-}
-
-void DDSTextureSetLoad::PostLoad()
-{
-}
-
-void MemoryTextureSetLoad::LoadFromFile()
-{
-}
-
-void MemoryTextureSetLoad::PostLoad()
-{
-	TextureSetLoad::PostLoad();
 }
 
 ///////////////////////////////////////////////////////

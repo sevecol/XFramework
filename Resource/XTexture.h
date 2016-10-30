@@ -18,11 +18,6 @@ struct XTextureSet : public XResource
 		ETEXTURETYPE_3D,
 		ETEXTURETYPE_CUBE
 	};
-	enum eTextureFileType
-	{
-		ETEXTUREFILETYPE_DDS = 0,
-		ETEXTUREFILETYPE_OTHER,
-	};
 
 	std::vector<ID3D12Resource*>			m_vpTexture;
 	UINT									m_uSBaseIndex;
@@ -49,14 +44,14 @@ private:
 	static IWICImagingFactory						*m_pWIC;
 	static std::map<std::wstring, XTextureSet*>		m_mTextureSet;
 
-	static XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[], UINT uSRVIndex, eTextureFileType eFileType);
+	static XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[], UINT uSRVIndex);
 public:
 	static void Init(ID3D12Device* pDevice);
 	static void Clean();
 	static IWICImagingFactory *GetImagingFactory() { return m_pWIC; }
 
-	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex, eTextureFileType eFileType = ETEXTUREFILETYPE_DDS);
-	static XTextureSet* CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex, eTextureFileType eFileType = ETEXTUREFILETYPE_DDS);
+	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex);
+	static XTextureSet* CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex);
 	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize);
 	static void DeleteTextureSet(XTextureSet** ppTextureSet);
 };
@@ -68,23 +63,36 @@ struct STextureLayer
 	XTextureSet::eTextureType				m_eType;
 	UINT									m_uWidth, m_uHeight, m_uPixelSize;
 	UINT8									*m_pData;
-
+	
 	ComPtr<ID3D12Resource>					m_pTextureUpload;
 
 	STextureLayer() :m_eType(XTextureSet::ETEXTURETYPE_2D),m_pData(nullptr) {}
+	~STextureLayer()
+	{
+		SAFE_DELGRP(m_pData);
+	}
 };
-typedef UINT8* (*CreateTextureFun)(UINT uWidth, UINT uHeight, UINT uPixelSize, UINT uParameter);
+
+//typedef UINT8* (*CreateTextureFun)(UINT uWidth, UINT uHeight, UINT uPixelSize, UINT uParameter);
+struct TextureLoad : public IResourceLoad
+{
+	UINT									m_uIndex;
+	STextureLayer							m_TextureLayer;
+	XTextureSet								*m_pTextureSet;
+
+	TextureLoad() :m_uIndex(0) {};
+	virtual bool IsNeedWaitForResource() { return true; };
+};
+
 struct TextureSetLoad : public IResourceLoad
 {
-	UINT									m_uLayerCount;
-	std::vector<STextureLayer>				m_vTextureLayer;
+	std::vector<TextureLoad*>				m_vTextureLayer;
 
 	XTextureSet								*m_pTextureSet;
-	CreateTextureFun						m_pFun;
 	UINT									m_uParameter;
 
 	//
-	TextureSetLoad() :m_pFun(nullptr), m_uParameter(0) {}
+	TextureSetLoad() :m_uParameter(0) {}//m_pFun(nullptr), 
 	~TextureSetLoad();
 
 	virtual void LoadFromFile();
@@ -92,13 +100,19 @@ struct TextureSetLoad : public IResourceLoad
 	virtual bool IsNeedWaitForResource() { return true; };
 };
 
-struct DDSTextureSetLoad : public TextureSetLoad
+struct FileTextureLoad : public TextureLoad
 {
 	virtual void LoadFromFile();
 	virtual void PostLoad();
 };
 
-struct MemoryTextureSetLoad : public TextureSetLoad
+struct DDSFileTextureLoad : public FileTextureLoad
+{
+	virtual void LoadFromFile();
+	virtual void PostLoad();
+};
+
+struct MemoryTextureLoad : public FileTextureLoad
 {
 	virtual void LoadFromFile();
 	virtual void PostLoad();
