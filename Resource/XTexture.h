@@ -42,18 +42,18 @@ public:
 
 private:
 	static IWICImagingFactory						*m_pWIC;
-	static std::map<std::wstring, XTextureSet*>		m_mTextureSet;
-
-	static XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[], UINT uSRVIndex);
 public:
 	static void Init(ID3D12Device* pDevice);
 	static void Clean();
 	static IWICImagingFactory *GetImagingFactory() { return m_pWIC; }
-
+};
+class XTextureSetManager : public XResourceManager<XTextureSet>
+{
+	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType[], UINT uSRVIndex);
+public:
 	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex);
 	static XTextureSet* CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex);
 	static XTextureSet* CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize);
-	static void DeleteTextureSet(XTextureSet** ppTextureSet);
 };
 
 struct STextureLayer

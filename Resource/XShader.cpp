@@ -13,25 +13,20 @@ extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
 extern DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
 
 //
-std::map<std::wstring, XShader*> XShader::m_mShader;
-XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
+std::map<std::wstring, XGraphicShader*> XGraphicShaderManager::m_mResource;
+XGraphicShader* XGraphicShaderManager::CreateGraphicShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
-	return CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, pInputElementDescs, uInputElementCount, g_uRenderTargetCount[eShadingPath], g_RenderTargetFortmat[eShadingPath]);
+	return CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, pInputElementDescs, uInputElementCount, g_uRenderTargetCount[eShadingPath], g_RenderTargetFortmat[eShadingPath]);
 }
 
 //
-XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[])
+XGraphicShader* XGraphicShaderManager::CreateGraphicShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[])
 {
-	XShader *pShader = nullptr;
-	std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find(pFileName);
-	if (it != XShader::m_mShader.end())
+	//
+	XGraphicShader *pGraphicShader = GetResource(pFileName);
+	if (pGraphicShader)
 	{
-		pShader = it->second;
-		if (pShader)
-		{
-			pShader->AddRef();
-		}
-		return pShader;
+		return pGraphicShader;
 	}
 
 	//
@@ -94,26 +89,21 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 	gpsoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
 	gpsoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
-	pShader = new XShader(pFileName);
-	XShader::m_mShader[pFileName] = pShader;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+	pGraphicShader = new XGraphicShader(pFileName);
+	AddResource(pFileName, pGraphicShader);
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pGraphicShader->m_pPipelineState)));
 	
-	return pShader;
+	return pGraphicShader;
 }
 
 //
-XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DESC &depthstencildesc, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
+XGraphicShader* XGraphicShaderManager::CreateGraphicShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DESC &depthstencildesc, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
-	XShader *pShader = nullptr;
-	std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find(pFileName);
-	if (it != XShader::m_mShader.end())
+	//
+	XGraphicShader *pGraphicShader = GetResource(pFileName);
+	if (pGraphicShader)
 	{
-		pShader = it->second;
-		if (pShader)
-		{
-			pShader->AddRef();
-		}
-		return pShader;
+		return pGraphicShader;
 	}
 
 	//
@@ -170,33 +160,22 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DE
 	gpsoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
 	gpsoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
-	pShader = new XShader(pFileName);
-	XShader::m_mShader[pFileName] = pShader;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+	pGraphicShader = new XGraphicShader(pFileName);
+	AddResource(pFileName, pGraphicShader);
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pGraphicShader->m_pPipelineState)));
 
-	return pShader;
+	return pGraphicShader;
 }
 
-void XShader::DeleteShader(XShader** ppShader)
+std::map<std::wstring, XComputeShader*> XComputeShaderManager::m_mResource;
+XComputeShader* XComputeShaderManager::CreateComputeShaderFromFile(LPCWSTR pFileName, LPCSTR pCSEntryPoint, LPCSTR pCSTarget)
 {
-	if (*ppShader)
+	XComputeShader *pComputeShader = GetResource(pFileName);
+	if (pComputeShader)
 	{
-		int iRef = (*ppShader)->DecRef();
-		if (iRef <= 0)
-		{
-			std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find((*ppShader)->GetName());
-			if (it != XShader::m_mShader.end())
-			{
-				XShader::m_mShader.erase(it);
-			}
-			SAFE_DELETE(*ppShader);
-		}
-		*ppShader = nullptr;
+		return pComputeShader;
 	}
-}
 
-XComputeShader* XComputeShader::CreateComputeShaderFromFile(LPCWSTR pFileName, LPCSTR pCSEntryPoint, LPCSTR pCSTarget)
-{
 	//
 	ComPtr<ID3DBlob> computeShader;
 
@@ -224,8 +203,9 @@ XComputeShader* XComputeShader::CreateComputeShaderFromFile(LPCWSTR pFileName, L
 	cpsoDesc.CS = { reinterpret_cast<UINT8*>(computeShader->GetBufferPointer()), computeShader->GetBufferSize() };
 	cpsoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 
-	XComputeShader* pShader = new XComputeShader;
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateComputePipelineState(&cpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
+	pComputeShader = new XComputeShader(pFileName);
+	AddResource(pFileName, pComputeShader);
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateComputePipelineState(&cpsoDesc, IID_PPV_ARGS(&pComputeShader->m_pPipelineState)));
 
-	return pShader;
+	return pComputeShader;
 }

@@ -32,7 +32,6 @@ void XTextureSet::Release()
 }
 
 IWICImagingFactory* XTextureSet::m_pWIC;
-std::map<std::wstring, XTextureSet*> XTextureSet::m_mTextureSet;
 IWICImagingFactory* _GetWIC()
 {
 	return XTextureSet::GetImagingFactory();
@@ -59,23 +58,18 @@ void XTextureSet::Clean()
 	}
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], eTextureType eType[],UINT uSRVIndex)
+std::map<std::wstring, XTextureSet*> XTextureSetManager::m_mResource;
+XTextureSet* XTextureSetManager::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType[],UINT uSRVIndex)
 {
-	XTextureSet *pTextureSet = nullptr;
-	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
-	if (it != XTextureSet::m_mTextureSet.end())
+	XTextureSet *pTextureSet = GetResource(pName);
+	if (pTextureSet)
 	{
-		pTextureSet = it->second;
-		if (pTextureSet)
-		{
-			pTextureSet->AddRef();
-		}
 		return pTextureSet;
 	}
 
 	//
 	pTextureSet = new XTextureSet(pName,uSRVIndex);
-	XTextureSet::m_mTextureSet[pName] = pTextureSet;
+	AddResource(pName, pTextureSet);
 
 	//
 	TextureSetLoad *pTextureSetLoad = nullptr;
@@ -111,35 +105,30 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR p
 	return pTextureSet;
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex)
+XTextureSet* XTextureSetManager::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], UINT uSRVIndex)
 {
-	eTextureType eType[8] = { ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D ,ETEXTURETYPE_2D };
-	return XTextureSet::CreateTextureSet(pName, uCount, pFileName, eType, uSRVIndex);
+	XTextureSet::eTextureType eType[8] = { XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D ,
+		XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D ,XTextureSet::ETEXTURETYPE_2D };
+	return XTextureSetManager::CreateTextureSet(pName, uCount, pFileName, eType, uSRVIndex);
 }
 
-XTextureSet* XTextureSet::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex)
+XTextureSet* XTextureSetManager::CreateCubeTexture(LPCWSTR pName, LPCWSTR pFileName, UINT uSRVIndex)
 {
-	eTextureType eType[8] = { ETEXTURETYPE_CUBE };
-	return XTextureSet::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex);
+	XTextureSet::eTextureType eType[8] = { XTextureSet::ETEXTURETYPE_CUBE };
+	return XTextureSetManager::CreateTextureSet(pName, 1, &pFileName, eType, uSRVIndex);
 }
 
-XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
+XTextureSet* XTextureSetManager::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
 {
-	XTextureSet *pTextureSet = nullptr;
-	std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find(pName);
-	if (it != XTextureSet::m_mTextureSet.end())
+	XTextureSet *pTextureSet = GetResource(pName);
+	if (pTextureSet)
 	{
-		pTextureSet = it->second;
-		if (pTextureSet)
-		{
-			pTextureSet->AddRef();
-		}
 		return pTextureSet;
 	}
 
 	//
 	pTextureSet = new XTextureSet(pName, uSRVIndex);
-	XTextureSet::m_mTextureSet[pName] = pTextureSet;
+	AddResource(pName, pTextureSet);
 
 	//
 	TextureSetLoad *pTextureSetLoad = new TextureSetLoad();
@@ -157,24 +146,6 @@ XTextureSet* XTextureSet::CreateTextureSet(LPCWSTR pName, UINT uSRVIndex, UINT u
 
 	g_pResourceThread->InsertResourceLoadTask(pTextureSetLoad);
 	return pTextureSet;
-}
-
-void XTextureSet::DeleteTextureSet(XTextureSet** ppTextureSet)
-{
-	if (*ppTextureSet)
-	{
-		int iRef = (*ppTextureSet)->DecRef();
-		if (iRef <= 0)
-		{
-			std::map<std::wstring, XTextureSet*>::iterator it = XTextureSet::m_mTextureSet.find((*ppTextureSet)->GetName());
-			if (it != XTextureSet::m_mTextureSet.end())
-			{
-				XTextureSet::m_mTextureSet.erase(it);
-			}
-			SAFE_DELETE(*ppTextureSet);
-		}
-		*ppTextureSet = nullptr;
-	}
 }
 
 //
