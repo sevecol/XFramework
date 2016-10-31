@@ -1,5 +1,5 @@
 # XFramework
-DirectX 12,Tile-based deferred shading,Dynamic resolution,Order-independent transparency,PBR,HDR
+DirectX 12,Tile-based deferred shading,Dynamic resolution,Order-independent transparency,PBR,HDR,SMAA
 
 OIT:
 Pixel Shader Link Compute AlphaBlend
