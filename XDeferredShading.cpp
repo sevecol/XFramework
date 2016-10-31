@@ -26,7 +26,7 @@ namespace DeferredShading
 	UINT										uRenderTargetBase,uGpuCSUBase;
 	UINT										uDispatchX, uDispatchY;
 	XRenderTarget								*pRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
-	XShader										*pShadingShader = nullptr;
+	XGraphicShader								*pShadingShader = nullptr;
 	XComputeShader								*pClusteredShadingShader = nullptr;
 
 	LightConstantBuffer							*pConstantBuffers = nullptr;
@@ -60,8 +60,8 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	pShadingShader = XShader::CreateShaderFromFile(L"shaders_ds_shading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
-	pClusteredShadingShader = XComputeShader::CreateComputeShaderFromFile(L"shaders_ds_clusteredshading.hlsl", "CSMain", "cs_5_0");
+	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"shaders_ds_shading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	pClusteredShadingShader = XComputeShaderManager::CreateComputeShaderFromFile(L"shaders_ds_clusteredshading.hlsl", "CSMain", "cs_5_0");
 
 	// ConstantBuffer
 	{
@@ -111,8 +111,8 @@ void CleanDeferredShading()
 	}
 	pConstantBuffers = nullptr;
 
-	XShader::DeleteShader(&pShadingShader);
-	SAFE_DELETE(pClusteredShadingShader);
+	XGraphicShaderManager::DelResource(&pShadingShader);
+	XComputeShaderManager::DelResource(&pClusteredShadingShader);
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
 		SAFE_DELETE(pRenderTargets[i]);
@@ -144,7 +144,7 @@ void DeferredShading_GBuffer(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
 extern XRenderTarget* HDR_GetRenderTarget();
 void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 {

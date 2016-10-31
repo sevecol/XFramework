@@ -13,7 +13,7 @@ namespace SkyBox
 {
 	UINT								uGpuCSUBase;
 
-	XShader								*pSkyBoxShader		= nullptr;
+	XGraphicShader						*pSkyBoxShader		= nullptr;
 	XTextureSet							*pSkyBoxTexture		= nullptr;
 	XTextureSet							*pSkyDiffuseTexture = nullptr;
 }
@@ -26,8 +26,8 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,2);
 
 	// Texture
-	pSkyBoxTexture = XTextureSet::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", uGpuCSUBase);
-	pSkyDiffuseTexture = XTextureSet::CreateCubeTexture(L"SkyDiffuseTexture", L"skydiffuse.dds", uGpuCSUBase+1);
+	pSkyBoxTexture = XTextureSetManager::CreateCubeTexture(L"SkyBoxTexture", L"skybox.dds", uGpuCSUBase);
+	pSkyDiffuseTexture = XTextureSetManager::CreateCubeTexture(L"SkyDiffuseTexture", L"skydiffuse.dds", uGpuCSUBase+1);
 
 	// Shader
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -41,18 +41,18 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	depthStencilDesc.StencilEnable = FALSE;
-	pSkyBoxShader = XShader::CreateShaderFromFile(L"shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	pSkyBoxShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
 
 	return true;
 }
 void CleanSkyBox()
 {
-	XShader::DeleteShader(&pSkyBoxShader);
-	SAFE_DELETE(pSkyBoxTexture);
-	SAFE_DELETE(pSkyDiffuseTexture);
+	XGraphicShaderManager::DelResource(&pSkyBoxShader);
+	XTextureSetManager::DelResource(&pSkyBoxTexture);
+	XTextureSetManager::DelResource(&pSkyDiffuseTexture);
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
 void SkyBox_Render(ID3D12GraphicsCommandList* pCommandList)
 {
 	RenderFullScreen(pCommandList, pSkyBoxShader, pSkyBoxTexture);

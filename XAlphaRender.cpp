@@ -38,7 +38,7 @@ namespace AlphaRender
 		UINT								m_uNext;
 	};
 
-	XShader									*pShader;
+	XGraphicShader							*pGraphicShader;
 	XComputeShader							*pComputeShader;
 
 	//
@@ -101,8 +101,8 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	pShader = XShader::CreateShaderFromFile(L"shaders_oit_final.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_FORWORD);
-	pComputeShader = XComputeShader::CreateComputeShaderFromFile(L"shaders_oit_finalcs.hlsl", "CSMain", "cs_5_0");
+	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"shaders_oit_final.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_FORWORD);
+	pComputeShader = XComputeShaderManager::CreateComputeShaderFromFile(L"shaders_oit_finalcs.hlsl", "CSMain", "cs_5_0");
 
 	// ResultBuffer
 /*
@@ -123,8 +123,8 @@ void CleanAlphaRender()
 	{
 		SAFE_DELETE(pSBuffer[i]);
 	}
-	XShader::DeleteShader(&pShader);
-	SAFE_DELETE(pComputeShader);
+	XGraphicShaderManager::DelResource(&pGraphicShader);
+	XComputeShaderManager::DelResource(&pComputeShader);
 
 	//
 	SAFE_RELEASE(pResultBuffer);
@@ -144,7 +144,7 @@ void AlphaRender_Begin(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetGraphicsRootDescriptorTable(3, pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle());
 }
 
-extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture = nullptr);
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
 extern XRenderTarget* HDR_GetRenderTarget();
 void AlphaRender_End(ID3D12GraphicsCommandList* pCommandList)
 {

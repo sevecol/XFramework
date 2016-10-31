@@ -70,7 +70,7 @@ StepTimer							g_Timer;
 XSceneGraph							g_SceneGraph;
 
 //
-extern XShader						*g_pHDRShaderScreen;
+extern XGraphicShader				*g_pHDRShaderScreen;
 extern XTextureSet					*g_pHDRTextureScreen;
 
 //
@@ -364,7 +364,7 @@ bool Update()
 	return true;
 }
 
-void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XShader *pShader, XTextureSet *pTexture);
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture);
 bool Render()
 {
 	XFrameResource* pFrameResource = g_pFrameResource[g_uFrameIndex];
@@ -465,7 +465,7 @@ void Clean()
 	//
 	if (pFullScreenGeometry)
 	{
-		XGeometry::DeleteGeometry(&pFullScreenGeometry);
+		XGeometryManager::DelResource(&pFullScreenGeometry);
 	}
 	//g_UIManager.Clean();
 
@@ -529,7 +529,7 @@ public:
 		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
 		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
 
-		XGeometry *pGeometry = XGeometry::CreateGeometry(L"FullScreenGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"FullScreenGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
 		if (pGeometry)
 		{
 			pFullScreenGeometry = pGeometry;
@@ -545,7 +545,7 @@ public:
 		return true;
 	}
 };
-void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XShader *pShader,XTextureSet *pTexture = nullptr)
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XGraphicShader *pShader,XTextureSet *pTexture = nullptr)
 {
 	if (!pFullScreenGeometry)
 	{
