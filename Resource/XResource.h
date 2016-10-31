@@ -20,3 +20,8 @@ public:
 		return m_iRef;
 	}
 };
+
+template<typename T>
+class XResourceManager
+{
+};

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "..\XEntity.h"
+#include "..\Instance\XEntity.h"
 #include "..\Thread\XResourceThread.h"
 #include "..\DXSampleHelper.h"
 

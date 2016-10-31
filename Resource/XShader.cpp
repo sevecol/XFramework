@@ -13,6 +13,7 @@ extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
 extern DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
 
 //
+std::map<std::wstring, XShader*> XShader::m_mShader;
 XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
 	return CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, pInputElementDescs, uInputElementCount, g_uRenderTargetCount[eShadingPath], g_RenderTargetFortmat[eShadingPath]);
@@ -21,6 +22,18 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 //
 XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[])
 {
+	XShader *pShader = nullptr;
+	std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find(pFileName);
+	if (it != XShader::m_mShader.end())
+	{
+		pShader = it->second;
+		if (pShader)
+		{
+			pShader->AddRef();
+		}
+		return pShader;
+	}
+
 	//
 	ComPtr<ID3DBlob> vertexShader;
 	ComPtr<ID3DBlob> pixelShader;
@@ -81,7 +94,8 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 	gpsoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
 	gpsoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
-	XShader* pShader = new XShader;
+	pShader = new XShader(pFileName);
+	XShader::m_mShader[pFileName] = pShader;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
 	
 	return pShader;
@@ -90,6 +104,18 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, LPCSTR pVSEntryPoint, 
 //
 XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DESC &depthstencildesc, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
+	XShader *pShader = nullptr;
+	std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find(pFileName);
+	if (it != XShader::m_mShader.end())
+	{
+		pShader = it->second;
+		if (pShader)
+		{
+			pShader->AddRef();
+		}
+		return pShader;
+	}
+
 	//
 	ComPtr<ID3DBlob> vertexShader;
 	ComPtr<ID3DBlob> pixelShader;
@@ -144,10 +170,29 @@ XShader* XShader::CreateShaderFromFile(LPCWSTR pFileName, D3D12_DEPTH_STENCIL_DE
 	gpsoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
 	gpsoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
 
-	XShader* pShader = new XShader;
+	pShader = new XShader(pFileName);
+	XShader::m_mShader[pFileName] = pShader;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateGraphicsPipelineState(&gpsoDesc, IID_PPV_ARGS(&pShader->m_pPipelineState)));
 
 	return pShader;
+}
+
+void XShader::DeleteShader(XShader** ppShader)
+{
+	if (*ppShader)
+	{
+		int iRef = (*ppShader)->DecRef();
+		if (iRef <= 0)
+		{
+			std::map<std::wstring, XShader*>::iterator it = XShader::m_mShader.find((*ppShader)->GetName());
+			if (it != XShader::m_mShader.end())
+			{
+				XShader::m_mShader.erase(it);
+			}
+			SAFE_DELETE(*ppShader);
+		}
+		*ppShader = nullptr;
+	}
 }
 
 XComputeShader* XComputeShader::CreateComputeShaderFromFile(LPCWSTR pFileName, LPCSTR pCSEntryPoint, LPCSTR pCSTarget)
