@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Instance\XEntity.h" />
     <ClInclude Include="Loader\XBinLoader.h" />
     <ClInclude Include="Loader\XObjLoader.h" />
     <ClInclude Include="Resource\dds.h" />
@@ -160,6 +161,8 @@
     <ClInclude Include="Resource\XResource.h" />
     <ClInclude Include="Resource\XShader.h" />
     <ClInclude Include="Resource\XTexture.h" />
+    <ClInclude Include="SceneGraph\XNode.h" />
+    <ClInclude Include="SceneGraph\XSceneGraph.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Thread\XResourceThread.h" />
     <ClInclude Include="UI\UIImgWindow.h" />
@@ -169,12 +172,12 @@
     <ClInclude Include="XCamera.h" />
     <ClInclude Include="XDeferredShading.h" />
     <ClInclude Include="XDirectX12.h" />
-    <ClInclude Include="XEntity.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
     <ClInclude Include="XSkyBox.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Instance\XEntity.cpp" />
     <ClCompile Include="Loader\XBinLoader.cpp" />
     <ClCompile Include="Loader\XObjLoader.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
@@ -184,6 +187,8 @@
     <ClCompile Include="Resource\XGeometry.cpp" />
     <ClCompile Include="Resource\XShader.cpp" />
     <ClCompile Include="Resource\XTexture.cpp" />
+    <ClCompile Include="SceneGraph\XNode.cpp" />
+    <ClCompile Include="SceneGraph\XSceneGraph.cpp" />
     <ClCompile Include="Thread\XResourceThread.cpp" />
     <ClCompile Include="UI\UIImgWindow.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
@@ -192,7 +197,6 @@
     <ClCompile Include="XCamera.cpp" />
     <ClCompile Include="XDeferredShading.cpp" />
     <ClCompile Include="XDirectX12.cpp" />
-    <ClCompile Include="XEntity.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
     <ClCompile Include="XSkyBox.cpp" />

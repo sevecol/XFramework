@@ -4,11 +4,12 @@
 #include "XAlphaRender.h"
 #include "XHDR.h"
 #include "XSkyBox.h"
+#include "SceneGraph\XSceneGraph.h"
 
 #include "Resource\XBuffer.h"
 #include "Resource\XTexture.h"
 
-#include "XEntity.h"
+#include "Instance\XEntity.h"
 #include "XCamera.h"
 #include "StepTimer.h"
 #include "Loader\XBinLoader.h"
@@ -66,11 +67,7 @@ XCamera								g_Camera;
 StepTimer							g_Timer;
 
 //
-XEntity								*g_pEntityNormal	= nullptr;
-XEntity								*g_pEntityAlpha		= nullptr;
-XEntity								*g_pEntityPBRL		= nullptr;
-XEntity								*g_pEntityPBRC		= nullptr;
-XEntity								*g_pEntityPBRR		= nullptr;
+XSceneGraph							g_SceneGraph;
 
 //
 extern XShader						*g_pHDRShaderScreen;
@@ -361,6 +358,9 @@ bool Update()
 	g_pFrameResource[g_uFrameIndex]->UpdateConstantBuffers(matView, matProj);
 	DeferredShading_Update(matView, matProj);
 
+	//
+	g_SceneGraph.Update();
+
 	return true;
 }
 
@@ -379,22 +379,8 @@ bool Render()
 	// DeferredShading
 	// DeferredShading_GBuffer
 	DeferredShading_GBuffer(pCommandList);
-	if (g_pEntityNormal)
-	{
-		//g_pEntityNormal->Render(pCommandList, pFrameResource->m_uFenceValue);
-	}
-	if (g_pEntityPBRL)
-	{
-		g_pEntityPBRL->Render(pCommandList, pFrameResource->m_uFenceValue);
-	}
-	if (g_pEntityPBRC)
-	{
-		g_pEntityPBRC->Render(pCommandList, pFrameResource->m_uFenceValue);
-	}
-	if (g_pEntityPBRR)
-	{
-		g_pEntityPBRR->Render(pCommandList, pFrameResource->m_uFenceValue);
-	}
+	g_SceneGraph.Render(ERENDERPATH_NORMAL,pCommandList,pFrameResource->m_uFenceValue);
+
 	
 	// HDR_Bind
 	HDR_Bind(pCommandList);
@@ -410,10 +396,7 @@ bool Render()
 	// Alpha Blend
 /*
 	AlphaRender_Begin(pCommandList);
-	if (g_pEntityAlpha)
-	{
-		g_pEntityAlpha->Render(pCommandList, pFrameResource->m_uFenceValue);
-	}
+	g_SceneGraph.Render(ERENDERPATH_ALPHABLEND,pCommandList,pFrameResource->m_uFenceValue);
 	AlphaRender_End(pCommandList);
 */
 	// AddAll
@@ -477,11 +460,9 @@ void Clean()
 	WaitForGpu();
 
 	//
-	SAFE_DELETE(g_pEntityNormal);
-	SAFE_DELETE(g_pEntityAlpha);
-	SAFE_DELETE(g_pEntityPBRL);
-	SAFE_DELETE(g_pEntityPBRC);
-	SAFE_DELETE(g_pEntityPBRR);
+	g_SceneGraph.Clean();
+
+	//
 	if (pFullScreenGeometry)
 	{
 		XGeometry::DeleteGeometry(&pFullScreenGeometry);

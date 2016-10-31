@@ -47,7 +47,7 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 }
 void CleanSkyBox()
 {
-	SAFE_DELETE(pSkyBoxShader);
+	XShader::DeleteShader(&pSkyBoxShader);
 	SAFE_DELETE(pSkyBoxTexture);
 	SAFE_DELETE(pSkyDiffuseTexture);
 }

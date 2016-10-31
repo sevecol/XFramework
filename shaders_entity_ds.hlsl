@@ -28,19 +28,25 @@ struct PSInput
 
 cbuffer FrameBuffer : register(b0)
 {
-	float4x4 mWorldView;
-	float4x4 mWorldViewProj;
-	float4x4 mWorldViewProjInv;
+	float4x4 mView;
+	float4x4 mViewProj;
+	float4x4 mViewProjInv;
+};
+cbuffer InstanceBuffer : register(b1)
+{
+	float4x4 mWorld;
 };
 
 PSInput VSMain(VSInput input)
 {
 	PSInput result;
 
-	float3 position = float3(input.position.x,input.position.y,input.position.z);
+	//float3 position = float3(input.position.x,input.position.y,input.position.z);
+	float3 position = mul(float4(input.position.x,input.position.y,input.position.z,1.0f), mWorld);
+	
 	float3 normal = float3(input.normal.x,input.normal.y,input.normal.z);
 	
-	result.position = mul(float4(position, 1.0f), mWorldViewProj);
+	result.position = mul(float4(position, 1.0f), mViewProj);
 	result.positionW 	= position.xyz;
 	result.normal  		= normal.xyz;
 	result.tangent		= input.tangent;

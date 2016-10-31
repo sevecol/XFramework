@@ -111,7 +111,7 @@ void CleanDeferredShading()
 	}
 	pConstantBuffers = nullptr;
 
-	SAFE_DELETE(pShadingShader);
+	XShader::DeleteShader(&pShadingShader);
 	SAFE_DELETE(pClusteredShadingShader);
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{

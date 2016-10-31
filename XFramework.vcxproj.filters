@@ -43,6 +43,18 @@
     <Filter Include="源文件\Resource\Helper">
       <UniqueIdentifier>{bf31d37b-fc8c-4df4-a883-790ae03c3418}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Instance">
+      <UniqueIdentifier>{94b305cd-c7f3-44d7-818b-5f0c5615e60d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\SceneGraph">
+      <UniqueIdentifier>{25ffe4c2-630d-400a-bbe9-f604ddc98755}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Instance">
+      <UniqueIdentifier>{b2973df7-fc5a-4320-a225-43b1329b66be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\SceneGraph">
+      <UniqueIdentifier>{a9aa44d1-f01c-47f7-a4cd-4ba3c7d8bf2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">
@@ -74,9 +86,6 @@
     </ClInclude>
     <ClInclude Include="Thread\XResourceThread.h">
       <Filter>头文件\Thread</Filter>
-    </ClInclude>
-    <ClInclude Include="XEntity.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Loader\XBinLoader.h">
       <Filter>头文件\Loader</Filter>
@@ -129,6 +138,15 @@
     <ClInclude Include="Loader\XObjLoader.h">
       <Filter>头文件\Loader</Filter>
     </ClInclude>
+    <ClInclude Include="Instance\XEntity.h">
+      <Filter>头文件\Instance</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneGraph\XNode.h">
+      <Filter>头文件\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneGraph\XSceneGraph.h">
+      <Filter>头文件\SceneGraph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -161,9 +179,6 @@
     <ClCompile Include="Resource\XFrameResource.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="XEntity.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="XCamera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -193,6 +208,15 @@
     </ClCompile>
     <ClCompile Include="Loader\XObjLoader.cpp">
       <Filter>源文件\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance\XEntity.cpp">
+      <Filter>源文件\Instance</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneGraph\XNode.cpp">
+      <Filter>源文件\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneGraph\XSceneGraph.cpp">
+      <Filter>源文件\SceneGraph</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

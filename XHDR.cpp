@@ -179,7 +179,7 @@ void CleanHDR()
 	SAFE_DELETE(pRenderTarget);
 
 	// Shader
-	SAFE_DELETE(pShaderToneMapping);
+	XShader::DeleteShader(&pShaderToneMapping);
 	for (UINT i = 0;i < ELUMINANCEPHASE_COUNT;++i)
 	{
 		SAFE_DELETE(pShaderLuminance[i]);

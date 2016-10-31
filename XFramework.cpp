@@ -3,18 +3,20 @@
 //#include "XFramework.h"
 #include "XDirectX12.h"
 #include "XCamera.h"
-#include "XEntity.h"
+#include "SceneGraph\XSceneGraph.h"
+#include "Instance\XEntity.h"
 #include "UI\UIManager.h"
 #include "Loader\XBinLoader.h"
 #include "Loader\XObjLoader.h"
 #include "Thread\XResourceThread.h"
 
 extern XCamera			g_Camera;
-extern XEntity			*g_pEntityNormal;
-extern XEntity			*g_pEntityAlpha;
-extern XEntity			*g_pEntityPBRL;
-extern XEntity			*g_pEntityPBRC;
-extern XEntity			*g_pEntityPBRR;
+extern XSceneGraph		g_SceneGraph;
+XEntity					*g_pEntityNormal;
+XEntity					*g_pEntityAlpha;
+XEntity					*g_pEntityPBRL;
+XEntity					*g_pEntityPBRC;
+XEntity					*g_pEntityPBRR;
 
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
@@ -70,6 +72,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		Update();
 		Render();
 	}
+
+	//
+	SAFE_DELETE(g_pEntityNormal);
 
 	//
 	//CoUninitialize();
@@ -143,6 +148,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	//
 	{
 		g_pEntityNormal = new XEntity();
+		//g_SceneGraph.AddNode(g_pEntityNormal);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -162,6 +168,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityAlpha = new XEntity();
+		g_SceneGraph.AddNode(ERENDERPATH_ALPHABLEND,g_pEntityAlpha);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -181,6 +188,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityPBRC = new XEntity();
+		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRC);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -203,6 +211,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityPBRL = new XEntity();
+		g_pEntityPBRL->SetPos(-18.0f, 0.0f, 0.0f);
+		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRL);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -211,7 +221,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBRL->InitShader(L"shaders_entityl_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRL->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		LPCWSTR pTextureFileName[3] = { L"albedo_silver.jpg",L"normal.jpg",L"mask_metall.jpg" };
 		g_pEntityPBRL->InitTexture(L"EntityPBRL", 3, pTextureFileName);
@@ -225,6 +235,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityPBRR = new XEntity();
+		g_pEntityPBRR->SetPos(18.0f, 0.0f, 0.0f);
+		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRR);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -233,7 +245,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBRR->InitShader(L"shaders_entityr_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRR->InitShader(L"shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		LPCWSTR pTextureFileName[3] = { L"albedo_gold.jpg",L"normal.jpg",L"mask_metalh.jpg" };
 		g_pEntityPBRR->InitTexture(L"EntityPBRR", 3, pTextureFileName);

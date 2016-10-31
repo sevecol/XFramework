@@ -123,7 +123,7 @@ void CleanAlphaRender()
 	{
 		SAFE_DELETE(pSBuffer[i]);
 	}
-	SAFE_DELETE(pShader);
+	XShader::DeleteShader(&pShader);
 	SAFE_DELETE(pComputeShader);
 
 	//
