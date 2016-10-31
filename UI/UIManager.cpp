@@ -54,7 +54,7 @@ public:
 		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
 		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
 
-		XGeometry *pGeometry = XGeometry::CreateGeometry(L"UIGeometry",6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"UIGeometry",6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
 		if (pGeometry)
 		{
 /*
@@ -165,7 +165,7 @@ void UIManager::Init(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
-	m_pShader = XShader::CreateShaderFromFile(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
+	m_pShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"shaders_ui.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3,1, Format);
 
 	BinResource *pbinresource = new BinResource();
 	pbinresource->pUIManager = this;

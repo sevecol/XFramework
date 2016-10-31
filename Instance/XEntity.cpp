@@ -64,9 +64,9 @@ XEntity::~XEntity()
 	m_pConstantUploadHeap->Unmap(0, nullptr);
 	m_pConstantBuffers = nullptr;
 
-	XTextureSet::DeleteTextureSet(&m_pTextureSet);
-	XShader::DeleteShader(&m_pShader);
-	XGeometry::DeleteGeometry(&m_pGeometry);
+	XTextureSetManager::DelResource(&m_pTextureSet);
+	XGraphicShaderManager::DelResource(&m_pShader);
+	XGeometryManager::DelResource(&m_pGeometry);
 }
 
 //
@@ -132,14 +132,14 @@ void XEntity::Update()
 	m_pConstantBuffers->m = m;
 }
 
-XShader* XEntity::InitShader(LPCWSTR pFileName,LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
+XGraphicShader* XEntity::InitGraphicShader(LPCWSTR pFileName,LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
-	m_pShader = XShader::CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
+	m_pShader = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
 	return m_pShader;
 }
-XShader* XEntity::InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
+XGraphicShader* XEntity::InitGraphicShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
 {
-	m_pShader = XShader::CreateShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
+	m_pShader = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
 	return m_pShader;
 }
 /*
@@ -156,14 +156,14 @@ bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSiz
 */
 XTextureSet* XEntity::InitTexture(LPCWSTR pName,UINT uCount, LPCWSTR pFileName[])
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase+ uGpuCSUOffset);
+	m_pTextureSet = XTextureSetManager::CreateTextureSet(pName, uCount, pFileName, uGpuCSUBase+ uGpuCSUOffset);
 	uGpuCSUOffset += uCount;
 	return m_pTextureSet;
 }
 
 XTextureSet* XEntity::InitTexture(LPCWSTR pName, UINT uWidth,UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize)
 {
-	m_pTextureSet = XTextureSet::CreateTextureSet(pName, uGpuCSUBase+ uGpuCSUOffset, uWidth, uHeight, Format, pData, uPixelSize);
+	m_pTextureSet = XTextureSetManager::CreateTextureSet(pName, uGpuCSUBase+ uGpuCSUOffset, uWidth, uHeight, Format, pData, uPixelSize);
 	uGpuCSUOffset += 1;
 	return m_pTextureSet;
 }
@@ -193,7 +193,7 @@ XGeometry* XEntity::InitGeometry(LPCWSTR pName, UINT uVertexCount, UINT uVertexS
 	g_pDevice->CreateConstantBufferView(&cbvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart(), 3, g_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)));
 */
 	//
-	m_pGeometry = XGeometry::CreateGeometry(pName,uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData);
+	m_pGeometry = XGeometryManager::CreateGeometry(pName,uVertexCount, uVertexStride, uIndexCount, uIndexFormat, pGeometryData);
 	if (m_pGeometry)
 	{
 		//m_AxisAlignedBoundingBox.Add(m_pGeometry->m_vMin);

@@ -17,7 +17,7 @@ class UIManager
 	UIWindow					*m_pRootUIWindow;
 	//std::list<UIWindow*>		m_lpPopUIWindow;
 
-	XShader						*m_pShader;
+	XGraphicShader				*m_pShader;
 	XGeometry					*m_pGeometry;
 	
 	//UINT16					m_uIndex;
@@ -46,7 +46,7 @@ public:
 	bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
 	//
-	XShader* GetShader() { return m_pShader; }
+	XGraphicShader* GetShader() { return m_pShader; }
 	XGeometry* GetGeometry() { return m_pGeometry; }
 	void SetGeometry(XGeometry *pGeometry);
 };

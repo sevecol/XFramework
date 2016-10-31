@@ -19,7 +19,10 @@ void XSceneGraph::Render(eRenderPath eRenderPath,ID3D12GraphicsCommandList* pCom
 {
 	for (unsigned int i = 0;i < m_vNodes[eRenderPath].size();++i)
 	{
-		m_vNodes[eRenderPath][i]->Render(pCommandList, uFenceValue);
+		if (m_vNodes[eRenderPath][i]->GetVisable())
+		{
+			m_vNodes[eRenderPath][i]->Render(pCommandList, uFenceValue);
+		}
 	}
 }
 

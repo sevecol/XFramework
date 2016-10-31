@@ -3,8 +3,18 @@
 
 XNode::XNode()
 {
+	m_bVisiable = true;
 	m_fPosX = m_fPosY = m_fPosZ = 0.0f;
 	m_fScale = 1.0f;
+}
+
+void XNode::SetVisiable(bool bVisiable)
+{
+	m_bVisiable = bVisiable;
+}
+bool XNode::GetVisable()
+{
+	return m_bVisiable;
 }
 
 void XNode::SetPos(float x, float y, float z)
@@ -23,7 +33,7 @@ void XNode::SetScale(float s)
 {
 	m_fScale = s;
 }
-void XNode::GetScale(float& s)
+float XNode::GetScale()
 {
-	s = m_fScale;
+	return m_fScale;
 }

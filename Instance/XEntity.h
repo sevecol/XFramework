@@ -10,7 +10,7 @@ class XEntity : public XNode
 {
 public:
 	XTextureSet						*m_pTextureSet;
-	XShader							*m_pShader;
+	XGraphicShader					*m_pShader;
 	XGeometry						*m_pGeometry;
 
 	UINT64							m_uFenceValue;
@@ -42,8 +42,8 @@ public:
 	virtual void Update();
 
 	//
-	XShader* InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
-	XShader* InitShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
+	XGraphicShader* InitGraphicShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
+	XGraphicShader* InitGraphicShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
 	//virtual bool InitMaterial(LPCWSTR pName, UINT uWidth, UINT uHeight, UINT uPixelSize, CreateTextureFun pFun, UINT uParameter);
 	XTextureSet* InitTexture(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[]);
 	XTextureSet* InitTexture(LPCWSTR pName, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize);

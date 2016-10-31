@@ -180,7 +180,7 @@ void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT
 UINT8 GeometryData[20480000];
 void XObjResource::LoadFromFile()
 {
-	XGeometry *pGeometry = XGeometry::GetGeometry(L"entity");
+	XGeometry *pGeometry = XGeometryManager::GetResource(L"entity");
 	if (!pGeometry)
 	{
 		vector<sVertex> vVertex;
