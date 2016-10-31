@@ -40,8 +40,9 @@ cbuffer LightBuffer : register(b1)
 	float4x4   mProj;
         float4x4   mViewProj;
 	PointLight sLight[16];
-	float3     vEyePos;
-	uint uLightNum;
+	float4     vEyePos;
+	float4	   vCameraNF;
+	uint 	   uLightNum;
 }
 
 Texture2D g_texture0 : register(t0);
@@ -58,7 +59,8 @@ groupshared uint sMinZ;
 groupshared uint sMaxZ;
 
 // Light list for the tile
-groupshared uint sTileLightIndices[32];
+#define LIGHTNUM_MAX	32
+groupshared uint sTileLightIndices[LIGHTNUM_MAX];
 groupshared uint sTileNumLights;
 
 //
@@ -245,7 +247,7 @@ void AccumulatePointLightBRDF(SurfaceData surface, PointLight light,
 	
 	float3 litDiffuse = float3(0,0,0);
         float3 litSpecular = float3(0,0,0);
-	attenuation = 1.0f;
+	//attenuation = 1.0f;
 
 	// Phong
         //AccumulatePhongBRDF(surface.normalV,directionToLight,normalize(surface.positionV),attenuation*light.color,surface.specularPower,litDiffuse,litSpecular);
@@ -369,14 +371,15 @@ void CSMain(uint3 groupId          : SV_GroupID,
     //ComputeSurfaceDataFromGBufferAllSamples(globalCoords, surfaceSamples);
         
     // Work out Z bounds for our samples
-    float minZSample = 1000.0f;
-    float maxZSample =    1.0f;
+    float minZSample = vCameraNF.y;
+    float maxZSample = vCameraNF.x;
     {
-        bool validPixel = surface.positionV.z >= 1.0f && surface.positionV.z <  1000.0f;
+	float ZSample = -1.0f * surface.positionV.z;
+        bool validPixel = (ZSample >= vCameraNF.x) && (ZSample < vCameraNF.y);
         [flatten] if (validPixel) 
 	{
-                minZSample = min(minZSample, surface.positionV.z);
-                maxZSample = max(maxZSample, surface.positionV.z);
+                minZSample = min(minZSample, ZSample);
+                maxZSample = max(maxZSample, ZSample);
 	}
     }
     
@@ -385,7 +388,6 @@ void CSMain(uint3 groupId          : SV_GroupID,
     if (groupIndex == 0)
     {
         sTileNumLights = 0;
-        //sNumPerSamplePixels = 0;
         sMinZ = 0x7F7FFFFF;      // Max float
         sMaxZ = 0;
     }
@@ -415,7 +417,7 @@ void CSMain(uint3 groupId          : SV_GroupID,
     // little bit of math anyways, but worth testing.
 
     // Work out scale/bias from [0, 1]
-    float2 tileScale = float2(1280,720) * rcp(float(2 * COMPUTE_SHADER_TILE_GROUP_DIM));
+    float2 tileScale = float2(uScreen.x,uScreen.y) * rcp(float(2 * COMPUTE_SHADER_TILE_GROUP_DIM));
     float2 tileBias = tileScale - float2(groupId.xy);
 
     // Now work out composite projection matrix
@@ -447,7 +449,9 @@ void CSMain(uint3 groupId          : SV_GroupID,
         // Cull: point light sphere vs tile frustum
         bool inFrustum = true;
         [unroll] for (uint i = 0; i < 6; ++i) {
-            float d = dot(frustumPlanes[i], float4(light.position, 1.0f));
+	    float3 lightView  = mul(float4(light.position.xyz, 1.0f), mView).xyz;
+	    lightView.z *= -1.0f;
+            float d = dot(frustumPlanes[i], float4(lightView.xyz, 1.0f));
             inFrustum = inFrustum && (d >= -light.attenuationEnd);
         }
 
@@ -462,7 +466,6 @@ void CSMain(uint3 groupId          : SV_GroupID,
 
     GroupMemoryBarrierWithGroupSync();
     
-    uint numLights = sTileNumLights;
 /*
     // Only process onscreen pixels (tiles can span screen edges)
     if (all(globalCoords < mFramebufferDimensions.xy)) {
@@ -546,22 +549,6 @@ void CSMain(uint3 groupId          : SV_GroupID,
         }
     #endif
 */
-
-    //
-    GroupMemoryBarrierWithGroupSync();
-
-    if (groupIndex == 0)
-    {
-        sTileNumLights = uLightNum;
-	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
-	{
-		sTileLightIndices[lightindex] = lightindex;
-	}
-    } 
-
-    //
-    GroupMemoryBarrierWithGroupSync();
-    
     //
     if (dispatchThreadId.x>=uScreen.x)
     {
@@ -574,35 +561,18 @@ void CSMain(uint3 groupId          : SV_GroupID,
     if (surface.albedo.a!=0.0f)
     {
 	float3 result = float3(0.0f,0.0f,0.0f);
-	for (uint lightindex = 0; lightindex < uLightNum; ++lightindex) 
+	for (uint lightindex = 0; lightindex < sTileNumLights; ++lightindex) 
 	{
  		uint lindex = sTileLightIndices[lightindex];
-		AccumulatePointLightBRDF(surface, sLight[lightindex], result);
+		AccumulatePointLightBRDF(surface, sLight[lindex], result);
 	}
 	AccumulateImageLightBRDF(surface,result);
 
 	//
 	gFramebuffer[dispatchThreadId.xy] = float4(result,1.0f);
-	//gFramebuffer[float2(0,0)] = float4(surface.metallic,surface.metallic,surface.metallic,1.0f);
+	//gFramebuffer[dispatchThreadId.xy] = float4(sTileNumLights/uLightNum,0.0f,0.0f,1.0f);
+	//gFramebuffer[float2(0,0)] = float4(sTileNumLights,sTileNumLights,0.0f,0.0f);
     }
-
-    //
-/*
-    float3 Value = float3(surface.position.x-surface.normal.x,surface.position.y-surface.normal.y,surface.position.z-surface.normal.z);
-    if (Value.x<0.0f)
-    {
-	Value.x *= -1.0f;
-    }    
-    if (Value.y<0.0f)
-    {
-	Value.y *= -1.0f;
-    }
-    if (Value.z<0.0f)
-    {
-	Value.z *= -1.0f;
-    }
-    gFramebuffer[dispatchThreadId.xy] = float4(Value,1.0f);
-*/
 }
 
 #endif // COMPUTE_SHADER_TILE_HLSL

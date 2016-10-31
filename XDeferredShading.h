@@ -18,7 +18,8 @@ struct LightConstantBuffer
 	XMFLOAT4X4		mProj;						// Projection (P) matrix.
 	XMFLOAT4X4		mViewProj;					// View Projection (VP) matrix.
 	PointLight		sLight[LIGHT_MAXNUM];
-	XMFLOAT3		vEyePos;
+	XMFLOAT4		vEyePos;
+	XMFLOAT4		vCameraNF;
 	UINT			uLightNum;
-	FLOAT			fPadding[12];
+	FLOAT			fPadding[7];
 };

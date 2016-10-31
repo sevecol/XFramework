@@ -266,7 +266,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	pp.fPosX = 13.0f;
 	pp.fPosY = 13.0f;
 	pp.fPosZ = 0.0f;
-	pp.fAttenuationEnd = 40.0f;
+	pp.fAttenuationEnd = 10.0f;
 	pp.fAttenuationBegin = 0.0f;
 	pp.fR = 2.0f;
 	pp.fG = 2.0f;

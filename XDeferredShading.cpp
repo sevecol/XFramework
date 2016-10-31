@@ -228,7 +228,11 @@ void XM_CALLCONV DeferredShading_Update(FXMMATRIX view, CXMMATRIX projection)
 	pConstantBuffers->mViewProj = mMatrix;
 
 	//
-	pConstantBuffers->vEyePos = *(g_Camera.GetPosition());
+	pConstantBuffers->vEyePos.x = g_Camera.GetPosition()->x;
+	pConstantBuffers->vEyePos.y = g_Camera.GetPosition()->y;
+	pConstantBuffers->vEyePos.z = g_Camera.GetPosition()->z;
+	pConstantBuffers->vEyePos.w = 1.0f;
+	pConstantBuffers->vCameraNF = XMFLOAT4(1.0f, 1000.0f,0.0f,0.0f);
 
 	//
 	pConstantBuffers->uLightNum = vPointLight.size();
