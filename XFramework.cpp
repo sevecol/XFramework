@@ -2,9 +2,10 @@
 #include <Windows.h>
 //#include "XFramework.h"
 #include "XDirectX12.h"
-#include "XCamera.h"
+
 #include "SceneGraph\XSceneGraph.h"
 #include "Instance\XEntity.h"
+#include "Instance\XCamera.h"
 #include "UI\UIManager.h"
 #include "Loader\XBinLoader.h"
 #include "Loader\XObjLoader.h"

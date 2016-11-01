@@ -145,7 +145,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AntiAliased\XSMAA.h" />
+    <ClInclude Include="Instance\XCamera.h" />
     <ClInclude Include="Instance\XEntity.h" />
+    <ClInclude Include="Instance\XSkyBox.h" />
     <ClInclude Include="Loader\XBinLoader.h" />
     <ClInclude Include="Loader\XObjLoader.h" />
     <ClInclude Include="Resource\dds.h" />
@@ -169,15 +172,16 @@
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\UIWindow.h" />
     <ClInclude Include="XAlphaRender.h" />
-    <ClInclude Include="XCamera.h" />
     <ClInclude Include="XDeferredShading.h" />
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
-    <ClInclude Include="XSkyBox.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AntiAliased\XSMAA.cpp" />
+    <ClCompile Include="Instance\XCamera.cpp" />
     <ClCompile Include="Instance\XEntity.cpp" />
+    <ClCompile Include="Instance\XSkyBox.cpp" />
     <ClCompile Include="Loader\XBinLoader.cpp" />
     <ClCompile Include="Loader\XObjLoader.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
@@ -194,12 +198,10 @@
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\UIWindow.cpp" />
     <ClCompile Include="XAlphaRender.cpp" />
-    <ClCompile Include="XCamera.cpp" />
     <ClCompile Include="XDeferredShading.cpp" />
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
-    <ClCompile Include="XSkyBox.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

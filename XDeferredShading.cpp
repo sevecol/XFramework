@@ -5,8 +5,8 @@
 #include "Resource\XShader.h"
 #include "Resource\XTexture.h"
 
-#include "XSkyBox.h"
-#include "XCamera.h"
+#include "Instance\XSkyBox.h"
+#include "Instance\XCamera.h"
 
 #define DEFERREDSHADING_RENDERTARGET_COUNT		RENDERTARGET_MAXNUM
 
@@ -88,7 +88,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		ConstantDesc.SizeInBytes = sizeof(LightConstantBuffer);
 		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+3));
 	}
-
+/*
 	// ResultBuffer
 	ThrowIfFailed(pDevice->CreateCommittedResource(
 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
@@ -97,7 +97,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	D3D12_RESOURCE_STATE_COPY_DEST,
 	nullptr,
 	IID_PPV_ARGS(&pResultBuffer)));
-
+*/
 	return true;
 }
 
@@ -175,6 +175,7 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 
 	//
 	// GetResult
+/*
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
 	pCommandList->CopyResource(pResultBuffer, pHDRRenderTarget->GetResource());
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
@@ -190,7 +191,7 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 		fValue += pAddress[0];
 	}
 	pResultBuffer->Unmap(0, nullptr);
-
+*/
 	//
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pHDRRenderTarget->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	CD3DX12_CPU_DESCRIPTOR_HANDLE DHandle(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart());

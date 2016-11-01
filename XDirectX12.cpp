@@ -3,14 +3,17 @@
 #include "XDeferredShading.h"
 #include "XAlphaRender.h"
 #include "XHDR.h"
-#include "XSkyBox.h"
+#include "AntiAliased\XSMAA.h"
+
 #include "SceneGraph\XSceneGraph.h"
 
 #include "Resource\XBuffer.h"
 #include "Resource\XTexture.h"
 
 #include "Instance\XEntity.h"
-#include "XCamera.h"
+#include "Instance\XSkyBox.h"
+#include "Instance\XCamera.h"
+
 #include "StepTimer.h"
 #include "Loader\XBinLoader.h"
 
@@ -244,7 +247,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;//D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
 		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -336,6 +339,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
 	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitSMAA(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	//
 	InitSkyBox(g_pEngine->m_pDevice, uWidth, uHeight);
@@ -399,10 +403,11 @@ bool Render()
 	g_SceneGraph.Render(ERENDERPATH_ALPHABLEND,pCommandList,pFrameResource->m_uFenceValue);
 	AlphaRender_End(pCommandList);
 */
-	// AddAll
 
 	//
-	//RenderFullScreen(pCommandList, g_pHDRShaderScreen, g_pHDRTextureScreen);
+	SMAA_Render(pCommandList);
+
+	//
 	pFrameResource->BeginRender();
 	HDR_ToneMapping(pCommandList);
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
@@ -481,6 +486,8 @@ void Clean()
 	CleanDeferredShading();
 	CleanAlphaRender();
 	CleanHDR();
+	CleanSMAA();
+
 	CleanSkyBox();
 
 	//

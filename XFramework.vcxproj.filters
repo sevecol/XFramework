@@ -55,6 +55,12 @@
     <Filter Include="源文件\SceneGraph">
       <UniqueIdentifier>{a9aa44d1-f01c-47f7-a4cd-4ba3c7d8bf2d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\AntiAliased">
+      <UniqueIdentifier>{0b4e38f1-1d37-4c55-8fd0-2fb1b0e7d7b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\AntiAliased">
+      <UniqueIdentifier>{8988895e-eae7-4047-81cf-c01c6e30b282}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">
@@ -89,9 +95,6 @@
     </ClInclude>
     <ClInclude Include="Loader\XBinLoader.h">
       <Filter>头文件\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="XCamera.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="StepTimer.h">
       <Filter>头文件</Filter>
@@ -132,9 +135,6 @@
     <ClInclude Include="XDeferredShading.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="XSkyBox.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Loader\XObjLoader.h">
       <Filter>头文件\Loader</Filter>
     </ClInclude>
@@ -146,6 +146,15 @@
     </ClInclude>
     <ClInclude Include="SceneGraph\XSceneGraph.h">
       <Filter>头文件\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="AntiAliased\XSMAA.h">
+      <Filter>头文件\AntiAliased</Filter>
+    </ClInclude>
+    <ClInclude Include="Instance\XCamera.h">
+      <Filter>头文件\Instance</Filter>
+    </ClInclude>
+    <ClInclude Include="Instance\XSkyBox.h">
+      <Filter>头文件\Instance</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -179,9 +188,6 @@
     <ClCompile Include="Resource\XFrameResource.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="XCamera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Resource\XTexture.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
@@ -203,9 +209,6 @@
     <ClCompile Include="XDeferredShading.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="XSkyBox.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Loader\XObjLoader.cpp">
       <Filter>源文件\Loader</Filter>
     </ClCompile>
@@ -217,6 +220,15 @@
     </ClCompile>
     <ClCompile Include="SceneGraph\XSceneGraph.cpp">
       <Filter>源文件\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="AntiAliased\XSMAA.cpp">
+      <Filter>源文件\AntiAliased</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance\XCamera.cpp">
+      <Filter>源文件\Instance</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance\XSkyBox.cpp">
+      <Filter>源文件\Instance</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
