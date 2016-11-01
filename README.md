@@ -16,3 +16,6 @@ Use CS cull light Compute shading
 
 PBR:
 ![image](https://github.com/sevecol/XFramework/blob/master/PBR.png)
+
+SMAA:
+![image](https://github.com/sevecol/XFramework/blob/master/smaa.png)
