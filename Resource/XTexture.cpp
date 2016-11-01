@@ -58,6 +58,24 @@ void XTextureSet::Clean()
 	}
 }
 
+UINT64 XTextureSet::GetSize(UINT uIndex)
+{
+	if (uIndex < m_vpTexture.size())
+	{
+		return GetRequiredIntermediateSize(m_vpTexture[uIndex], 0, 1);
+	}
+	return 0xFFFFFFFF;
+}
+
+ID3D12Resource* XTextureSet::GetResource(UINT uIndex)
+{
+	if (uIndex < m_vpTexture.size())
+	{
+		return m_vpTexture[uIndex];
+	}
+	return nullptr;
+}
+
 std::map<std::wstring, XTextureSet*> XTextureSetManager::m_mResource;
 XTextureSet* XTextureSetManager::CreateTextureSet(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[], XTextureSet::eTextureType eType[],UINT uSRVIndex)
 {
@@ -197,6 +215,7 @@ void FileTextureLoad::PostLoad()
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
+	//
 	ID3D12Resource *pTexture = nullptr;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -227,21 +246,24 @@ void FileTextureLoad::PostLoad()
 	g_pResourceThread->GetResourceCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 	// Describe and create a SRV for the texture.
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
-	switch (m_TextureLayer.m_eType)
+	if (m_pTextureSet->GetSBaseIndex() != 0xFFFFFFFF)
 	{
-	case XTextureSet::ETEXTURETYPE_CUBE:
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-		srvDesc.TextureCube.MipLevels = 1;
-		break;
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = textureDesc.Format;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+		switch (m_TextureLayer.m_eType)
+		{
+		case XTextureSet::ETEXTURETYPE_CUBE:
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			srvDesc.TextureCube.MipLevels = 1;
+			break;
+		}
+
+		//
+		g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + m_uIndex));
 	}
-		
-	//
-	g_pEngine->m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pTextureSet->GetSBaseIndex() + m_uIndex));
 
 	//
 	m_pTextureSet->m_vpTexture.push_back(pTexture);

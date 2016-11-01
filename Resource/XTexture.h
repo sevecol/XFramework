@@ -40,6 +40,10 @@ public:
 		return m_hSRVGpuHandle;
 	}
 
+	//
+	UINT64 GetSize(UINT uIndex);
+	ID3D12Resource* GetResource(UINT uIndex);
+
 private:
 	static IWICImagingFactory						*m_pWIC;
 public:
