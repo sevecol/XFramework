@@ -185,7 +185,7 @@ void XObjResource::LoadFromFile()
 	{
 		vector<sVertex> vVertex;
 		vector<UINT> vIndex;
-		ReadDataFromObjFile(L"entity.obj", vVertex, vIndex);
+		ReadDataFromObjFile(L"Media\\entity.obj", vVertex, vIndex);
 
 		UINT uSize = vVertex.size()*sizeof(sVertex) + vIndex.size()*sizeof(UINT);
 
