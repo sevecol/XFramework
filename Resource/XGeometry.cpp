@@ -2,7 +2,12 @@
 #include "XGeometry.h"
 #include "XBuffer.h"
 
+#include "XShader.h"
+#include "XTexture.h"
+
 #include "..\DXSampleHelper.h"
+
+extern XResourceThread *g_pResourceThread;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::map<std::wstring, XGeometry*> XGeometryManager::m_mResource;
@@ -111,4 +116,144 @@ XGeometry* XGeometryManager::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UIN
 	}
 
 	return pGeometry;
+}
+
+//
+void Render(ID3D12GraphicsCommandList *pCommandList, XGeometry *pGeometry, XGraphicShader *pShader, XTextureSet *pTexture)
+{
+	if (pTexture)
+	{
+		pCommandList->SetGraphicsRootDescriptorTable(2, pTexture->GetSRVGpuHandle());
+	}
+
+	//
+	pCommandList->SetPipelineState(pShader->GetPipelineState());
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//
+	pCommandList->IASetVertexBuffers(0, 1, pGeometry->GetVertexBufferView());
+	if (pGeometry->GetNumIndices())
+	{
+		pCommandList->IASetIndexBuffer(pGeometry->GetIndexBufferView());
+		pCommandList->DrawIndexedInstanced(pGeometry->GetNumIndices(), 1, 0, 0, 0);
+	}
+}
+
+//
+XGeometry *pFullScreenGeometry = nullptr;
+class FullScreenResource : public IResourceLoad
+{
+public:
+	virtual void LoadFromFile()
+	{
+		//
+		struct Vertex
+		{
+			DirectX::XMFLOAT4 position;
+			DirectX::XMFLOAT4 color;
+			DirectX::XMFLOAT2 uv;
+		};
+		Vertex triangleVertices[] =
+		{
+			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
+			{ { -1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
+			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+
+			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
+			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+			{ { 1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 1.0f, 0.0f } },
+		};
+		UINT uIndex[] = { 0,1,2,3,4,5 };
+
+		UINT8 *pData = new UINT8[6 * sizeof(Vertex) + 6 * sizeof(UINT)];
+		UINT8 *pVertexData = pData;
+		memcpy(pVertexData, &triangleVertices[0], 6 * sizeof(Vertex));
+		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
+		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
+
+		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"FullScreenGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		if (pGeometry)
+		{
+			pFullScreenGeometry = pGeometry;
+		}
+		delete[] pData;
+	}
+	virtual void PostLoad()
+	{
+		//pUIManager->IncreaseResourceComplate();
+	}
+	virtual bool IsNeedWaitForResource()
+	{
+		return true;
+	}
+};
+void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr)
+{
+	if (!pFullScreenGeometry)
+	{
+		FullScreenResource *pResource = new FullScreenResource();
+		g_pResourceThread->InsertResourceLoadTask(pResource);
+	}
+
+	Render(pCommandList, pFullScreenGeometry, pShader, pTexture);
+}
+
+//
+XGeometry *pXZPlaneGeometry = nullptr;
+class XZPlaneResource : public IResourceLoad
+{
+public:
+	virtual void LoadFromFile()
+	{
+		//
+		struct Vertex
+		{
+			DirectX::XMFLOAT3 position;
+			DirectX::XMFLOAT3 normal;
+			DirectX::XMFLOAT2 uv;
+			DirectX::XMFLOAT3 tangent;
+		};
+		Vertex triangleVertices[] =
+		{
+			{ { -1.0f,  0.0f, -1.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f } },
+			{ { -1.0f,  0.0f,  1.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f } },
+			{ {  1.0f,  0.0f,  1.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f },{ 0.0f, 1.0f, 0.0f } },
+
+			{ { -1.0f,  0.0f, -1.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f } },
+			{ {  1.0f,  0.0f,  1.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f },{ 0.0f, 1.0f, 0.0f } },
+			{ {  1.0f,  0.0f, -1.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f } },
+		};
+		UINT uIndex[] = { 0,1,2,3,4,5 };
+
+		UINT8 *pData = new UINT8[6 * sizeof(Vertex) + 6 * sizeof(UINT)];
+		UINT8 *pVertexData = pData;
+		memcpy(pVertexData, &triangleVertices[0], 6 * sizeof(Vertex));
+		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
+		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
+
+		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"XZPlaneGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		if (pGeometry)
+		{
+			pXZPlaneGeometry = pGeometry;
+		}
+		delete[] pData;
+	}
+	virtual void PostLoad()
+	{
+		//pUIManager->IncreaseResourceComplate();
+	}
+	virtual bool IsNeedWaitForResource()
+	{
+		return true;
+	}
+};
+void RenderXZPlane(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr)
+{
+	if (!pXZPlaneGeometry)
+	{
+		XZPlaneResource *pResource = new XZPlaneResource();
+		g_pResourceThread->InsertResourceLoadTask(pResource);
+	}
+
+	Render(pCommandList, pXZPlaneGeometry, pShader, pTexture);
 }
