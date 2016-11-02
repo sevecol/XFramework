@@ -152,7 +152,7 @@ PsOutput PSMain(PSInput input)
 
 	// 
 	float3 normal = mul(texnormal,tbn);
-	normal = lerp(normal,input.normal,1.0f);
+	normal = lerp(normal,input.normal,0.4f);
 
 	//
 	float4 mask = g_txMask.Sample(g_sampler, input.uv);
