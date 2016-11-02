@@ -176,6 +176,7 @@
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
+    <ClInclude Include="XScreenSpaceReflection.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AntiAliased\XSMAA.cpp" />
@@ -202,6 +203,7 @@
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
+    <ClCompile Include="XScreenSpaceReflection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

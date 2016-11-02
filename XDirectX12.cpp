@@ -3,6 +3,7 @@
 #include "XDeferredShading.h"
 #include "XAlphaRender.h"
 #include "XHDR.h"
+#include "XScreenSpaceReflection.h"
 #include "AntiAliased\XSMAA.h"
 
 #include "SceneGraph\XSceneGraph.h"
@@ -247,7 +248,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
-		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;//D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
+		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
 		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -339,6 +340,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
 	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitScreenSpaceReflection(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitSMAA(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	//
@@ -405,6 +407,7 @@ bool Render()
 */
 
 	//
+	ScreenSpaceReflection_Render(pCommandList);
 	SMAA_Render(pCommandList);
 
 	//
@@ -459,7 +462,8 @@ void WaitForGpu()
 	//m_FrameResource[m_uFrameIndex].m_uFenceValue++;
 }
 
-XGeometry *pFullScreenGeometry = nullptr;
+extern XGeometry *pFullScreenGeometry;
+extern XGeometry *pXZPlaneGeometry;
 void Clean()
 {
 	WaitForGpu();
@@ -471,6 +475,10 @@ void Clean()
 	if (pFullScreenGeometry)
 	{
 		XGeometryManager::DelResource(&pFullScreenGeometry);
+	}
+	if (pXZPlaneGeometry)
+	{
+		XGeometryManager::DelResource(&pXZPlaneGeometry);
 	}
 	//g_UIManager.Clean();
 
@@ -486,6 +494,7 @@ void Clean()
 	CleanDeferredShading();
 	CleanAlphaRender();
 	CleanHDR();
+	CleanScreenSpaceReflection();
 	CleanSMAA();
 
 	CleanSkyBox();
@@ -503,79 +512,6 @@ void Clean()
 	}
 #endif
 	pDevice->Release();
-}
-
-//
-class FullScreenResource : public IResourceLoad
-{
-public:
-	virtual void LoadFromFile()
-	{
-		//
-		struct Vertex
-		{
-			DirectX::XMFLOAT4 position;
-			DirectX::XMFLOAT4 color;
-			DirectX::XMFLOAT2 uv;
-		};
-		Vertex triangleVertices[] =
-		{
-			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
-			{ { -1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
-			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
-
-			{ { -1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
-			{ { 1.00f, -1.00f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
-			{ { 1.00f,  1.00f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f },{ 1.0f, 0.0f } },
-		};
-		UINT uIndex[] = { 0,1,2,3,4,5 };
-
-		UINT8 *pData = new UINT8[6 * sizeof(Vertex) + 6 * sizeof(UINT)];
-		UINT8 *pVertexData = pData;
-		memcpy(pVertexData, &triangleVertices[0], 6 * sizeof(Vertex));
-		UINT8 *pIndexData = pData + 6 * sizeof(Vertex);
-		memcpy(pIndexData, &uIndex[0], 6 * sizeof(UINT));
-
-		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"FullScreenGeometry", 6, sizeof(Vertex), 6, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
-		if (pGeometry)
-		{
-			pFullScreenGeometry = pGeometry;
-		}
-		delete[] pData;
-	}
-	virtual void PostLoad()
-	{
-		//pUIManager->IncreaseResourceComplate();
-	}
-	virtual bool IsNeedWaitForResource()
-	{
-		return true;
-	}
-};
-void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList,XGraphicShader *pShader,XTextureSet *pTexture = nullptr)
-{
-	if (!pFullScreenGeometry)
-	{
-		FullScreenResource *pResource = new FullScreenResource();
-		g_pResourceThread->InsertResourceLoadTask(pResource);
-	}
-
-	if (pTexture)
-	{
-		pCommandList->SetGraphicsRootDescriptorTable(2, pTexture->GetSRVGpuHandle());
-	}
-
-	//
-	pCommandList->SetPipelineState(pShader->GetPipelineState());
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//
-	pCommandList->IASetVertexBuffers(0, 1, pFullScreenGeometry->GetVertexBufferView());
-	if (pFullScreenGeometry->GetNumIndices())
-	{
-		pCommandList->IASetIndexBuffer(pFullScreenGeometry->GetIndexBufferView());
-		pCommandList->DrawIndexedInstanced(pFullScreenGeometry->GetNumIndices(), 1, 0, 0, 0);
-	}
 }
 
 std::vector<PointLight> vPointLight;

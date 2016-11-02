@@ -143,8 +143,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	// Texture
 	//LPCWSTR lpTextureFileName[] = {L"hdr.dds"};
 	//g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, GCSUBASE_HDR+1);
-
-	/*
+/*
 	// ResultBuffer
 	ThrowIfFailed(pDevice->CreateCommittedResource(
 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
@@ -153,8 +152,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	D3D12_RESOURCE_STATE_COPY_DEST,
 	nullptr,
 	IID_PPV_ARGS(&pResultBuffer)));
-	*/
-
+*/
 	return true;
 }
 
@@ -275,12 +273,12 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	}
 /*
 	// GetResult
-	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRSBuffer[uSrcIndex]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
-	pCommandList->CopyResource(pResultBuffer, g_pHDRSBuffer[uSrcIndex]->GetResource());
-	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pHDRSBuffer[uSrcIndex]->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pSBuffer[uSrcIndex]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE));
+	pCommandList->CopyResource(pResultBuffer, pSBuffer[uSrcIndex]->GetResource());
+	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pSBuffer[uSrcIndex]->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
 	float *pAddress = nullptr;
-	CD3DX12_RANGE readRange(0, g_uDispatchX * g_uDispatchY * sizeof(float));
+	CD3DX12_RANGE readRange(0, uDispatchX * uDispatchY * sizeof(float));
 	pResultBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pAddress));
 	//float fValue = *pAddress;
 
@@ -289,9 +287,9 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	{
 		fValue += pAddress[0];
 	}
-	fValue = fValue / g_uPixelCount;
+	fValue = fValue / uPixelCount;
 	pResultBuffer->Unmap(0, nullptr);
-	g_pHDRConstantBuffers->fValue = fValue;
+	//g_pHDRConstantBuffers->fValue = fValue;
 */
 }
 

@@ -156,6 +156,9 @@
     <ClInclude Include="Instance\XSkyBox.h">
       <Filter>头文件\Instance</Filter>
     </ClInclude>
+    <ClInclude Include="XScreenSpaceReflection.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XFramework.cpp">
@@ -229,6 +232,9 @@
     </ClCompile>
     <ClCompile Include="Instance\XSkyBox.cpp">
       <Filter>源文件\Instance</Filter>
+    </ClCompile>
+    <ClCompile Include="XScreenSpaceReflection.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
