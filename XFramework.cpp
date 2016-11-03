@@ -222,7 +222,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityPBRL->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_silver.jpg",L"Media\\normal.jpg",L"Media\\mask_metall.jpg" };
+		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_silver.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metall.jpg" };
 		g_pEntityPBRL->InitTexture(L"EntityPBRL", 3, pTextureFileName);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
@@ -246,7 +246,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityPBRR->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\normal.jpg",L"Media\\mask_metalh.jpg" };
+		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metalh.jpg" };
 		g_pEntityPBRR->InitTexture(L"EntityPBRR", 3, pTextureFileName);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
