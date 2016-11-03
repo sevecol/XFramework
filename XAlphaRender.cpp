@@ -132,7 +132,7 @@ void CleanAlphaRender()
 
 void AlphaRender_PreRender(ID3D12GraphicsCommandList* pCommandList)
 {
-	pCommandList->SetGraphicsRootDescriptorTable(3, pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(4, pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle());
 }
 
 void AlphaRender_Begin(ID3D12GraphicsCommandList* pCommandList)
@@ -141,7 +141,7 @@ void AlphaRender_Begin(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->ClearUnorderedAccessViewUint(pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle(), hUAVCpuHandle[ESBUFFERTYPE_COUNTER], pSBuffer[ESBUFFERTYPE_COUNTER]->GetResource(), &uClearValue[0], 0, nullptr);
 	pCommandList->ClearUnorderedAccessViewUint(pSBuffer[ESBUFFERTYPE_STARTOFFSET]->GetUAVGpuHandle(), hUAVCpuHandle[ESBUFFERTYPE_STARTOFFSET], pSBuffer[ESBUFFERTYPE_STARTOFFSET]->GetResource(), &uClearValue[1], 0, nullptr);
 
-	pCommandList->SetGraphicsRootDescriptorTable(3, pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(4, pSBuffer[ESBUFFERTYPE_COUNTER]->GetUAVGpuHandle());
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);

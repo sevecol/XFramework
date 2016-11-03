@@ -54,7 +54,7 @@ namespace HDR
 	HDRConstantBuffer					*pConstantBuffers		= nullptr;
 	ID3D12Resource						*pConstantUploadHeap	= nullptr;
 
-	ID3D12Resource *pResultBuffer		= nullptr;
+	ID3D12Resource						*pResultBuffer			= nullptr;
 }
 using namespace HDR;
 
@@ -156,7 +156,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	// Texture
 	//LPCWSTR lpTextureFileName[] = {L"hdr.dds"};
 	//g_pHDRTextureScreen = XTextureSet::CreateTextureSet(L"HDRTexture", 1, lpTextureFileName, GCSUBASE_HDR+1);
-/*
+
 	// ResultBuffer
 	ThrowIfFailed(pDevice->CreateCommittedResource(
 	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
@@ -165,7 +165,7 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	D3D12_RESOURCE_STATE_COPY_DEST,
 	nullptr,
 	IID_PPV_ARGS(&pResultBuffer)));
-*/
+
 	return true;
 }
 
@@ -211,7 +211,7 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 	// Record commands.
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVCpuHandle(), clearColor, 0, nullptr);
-	pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	//pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	
 	//
 	pCommandList->SetComputeRootDescriptorTable(4, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
@@ -230,7 +230,7 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 
 	//
 	D3D12_GPU_DESCRIPTOR_HANDLE hStart = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 1 + uSrcIndex - 1);
-	pCommandList->SetGraphicsRootDescriptorTable(3, hStart);
+	pCommandList->SetGraphicsRootDescriptorTable(4, hStart);
 	pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 
 	// ToneMapping
@@ -309,4 +309,13 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 XRenderTarget* HDR_GetRenderTarget()
 {
 	return pRenderTarget;
+}
+
+IStructuredBuffer* GetHDRSBuffer(UINT uIndex)
+{
+	return pSBuffer[uIndex];
+}
+ID3D12Resource* GetHDRResultBuffer()
+{
+	return pResultBuffer;
 }

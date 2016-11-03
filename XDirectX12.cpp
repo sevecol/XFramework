@@ -235,23 +235,25 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE granges[4];
+		CD3DX12_DESCRIPTOR_RANGE granges[5];
 		granges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
 		granges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
 		granges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
-		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
+		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);			// Texture
+		granges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
 
-		CD3DX12_ROOT_PARAMETER grootParameters[4];
+		CD3DX12_ROOT_PARAMETER grootParameters[5];
 		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_ALL);
 		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[4].InitAsDescriptorTable(1, &granges[4], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		sampler.MipLODBias = 0;
 		sampler.MaxAnisotropy = 0;
 		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -291,9 +293,9 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
-		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
 		sampler.MipLODBias = 0;
 		sampler.MaxAnisotropy = 0;
 		sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;

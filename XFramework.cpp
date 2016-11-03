@@ -235,6 +235,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	{
 		g_pEntityPBRR = new XEntity();
 		g_pEntityPBRR->SetPos(18.0f, 0.0f, 0.0f);
+		g_pEntityPBRR->SetScale(1.0f);
 		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRR);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
@@ -260,7 +261,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	//
 	g_Camera.Init(0.8f, 1280.0f/720.0f);
-	g_Camera.InitPos(XMFLOAT3(0, 0, 24));
+	g_Camera.InitPos(XMFLOAT3(0, 0, 80));
 
 	//
 	PointLight pp;
