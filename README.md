@@ -21,3 +21,4 @@ SMAA:
 ![image](https://github.com/sevecol/XFramework/blob/master/smaa.png)
 
 SSR:
+![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
