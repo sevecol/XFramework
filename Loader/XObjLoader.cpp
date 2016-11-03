@@ -171,9 +171,9 @@ void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT
 
 			sPosition& tangent = vVertex[it->second.vVertexIndex[i]].vTangent;
 			float fLength = sqrt(tangent.fValue[0] * tangent.fValue[0] + tangent.fValue[1] * tangent.fValue[1] + tangent.fValue[2] * tangent.fValue[2]);
-			tangent.fValue[0] /= fLength;
-			tangent.fValue[1] /= fLength;
-			tangent.fValue[2] /= fLength;
+			tangent.fValue[0] /= fLength + EPSILON;
+			tangent.fValue[1] /= fLength + EPSILON;
+			tangent.fValue[2] /= fLength + EPSILON;
 		}
 	}
 }
