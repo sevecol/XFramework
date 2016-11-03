@@ -20,5 +20,5 @@ PBR:
 SMAA:
 ![image](https://github.com/sevecol/XFramework/blob/master/smaa.png)
 
-SSR:
+SSR:Sample GBuffer:albedo
 ![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
