@@ -3,7 +3,12 @@
 #include "XBuffer.h"
 #include "..\DXSampleHelper.h"
 
+#include "..\Instance\XCamera.h"
+#include "..\Instance\XSkyBox.h"
+
 #define SHADING_RENDERTARGET_COUNT			1
+
+extern XCamera								g_Camera;
 
 extern XEngine *g_pEngine;
 extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
@@ -93,6 +98,7 @@ void XFrameResource::PreRender()
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 	m_pCommandList->SetGraphicsRootDescriptorTable(0, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
 	m_pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
+	m_pCommandList->SetGraphicsRootDescriptorTable(3, GetSkyBoxTexture()->GetSRVGpuHandle());
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);
@@ -122,20 +128,19 @@ void XFrameResource::EndRender()
 
 void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX projection)
 {
-	XMMATRIX model;
 	XMFLOAT4X4 mv,mvp;
 
-	model = XMMatrixIdentity();
+	//model = XMMatrixIdentity();
 	//model = XMLoadFloat4x4(&m_modelMatrices[i * m_cityColumnCount + j]);
 
 	//
 	//XMMATRIX temp = model * view;
-	XMMATRIX temp = XMMatrixTranspose(model * view);
+	XMMATRIX temp = XMMatrixTranspose(view);
 	XMStoreFloat4x4(&mv, temp);
 	m_pConstantBuffers->mMv = mv;
 
 	// Compute the model-view-projection matrix.
-	temp = XMMatrixTranspose(model * view * projection);
+	temp = XMMatrixTranspose(view * projection);
 	XMStoreFloat4x4(&mvp, temp);
 	m_pConstantBuffers->mMvp = mvp;
 
@@ -144,7 +149,7 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	tView.r[3].m128_f32[0] = 0.0f;
 	tView.r[3].m128_f32[1] = 0.0f;
 	tView.r[3].m128_f32[2] = 0.0f;
-	temp = XMMatrixTranspose(model * tView * projection);
+	temp = XMMatrixTranspose(tView * projection);
 
 	XMVECTOR det;
 	XMMATRIX mvpinv = XMMatrixInverse(&det, temp);
@@ -155,4 +160,10 @@ void XM_CALLCONV XFrameResource::UpdateConstantBuffers(FXMMATRIX view, CXMMATRIX
 	//m_pConstantBuffers[0].mvp._22 = 0.5f;
 	//m_pConstantBuffers[0].mvp._33 = 0.5f;
 	//m_pConstantBuffers[0].mvp._44 = 0.5f;
+
+	m_pConstantBuffers->vEyePos.x = g_Camera.GetPosition()->x;
+	m_pConstantBuffers->vEyePos.y = g_Camera.GetPosition()->y;
+	m_pConstantBuffers->vEyePos.z = g_Camera.GetPosition()->z;
+	m_pConstantBuffers->vEyePos.w = 1.0f;
+	m_pConstantBuffers->vCameraNF = XMFLOAT4(g_Camera.GetNear(), g_Camera.GetFar(), 0.0f, 0.0f);
 }
