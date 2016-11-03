@@ -23,6 +23,7 @@ struct sVertex
 	sPosition vTangent;
 };
 
+#define EPSILON 0.00000001
 void ComputeTangent(sPosition& p0, sPosition& p1, sPosition& p2, sTexcoord& t0, sTexcoord& t1, sTexcoord& t2, sPosition& tangent)
 {
 	XMFLOAT3	p20 = XMFLOAT3(p1.fValue[0] - p0.fValue[0], p1.fValue[1] - p0.fValue[1], p1.fValue[2] - p0.fValue[2]);
@@ -34,14 +35,14 @@ void ComputeTangent(sPosition& p0, sPosition& p1, sPosition& p2, sTexcoord& t0, 
 	float		v30 = t2.fValue[1] - t0.fValue[1];
 
 	//
-	tangent.fValue[0] = (p30.x - (u30 / v20)*p20.x) / (u30 - (u30 / v20)*u20);
-	tangent.fValue[1] = (p30.y - (u30 / v20)*p20.y) / (u30 - (u30 / v20)*u20);
-	tangent.fValue[2] = (p30.z - (u30 / v20)*p20.z) / (u30 - (u30 / v20)*u20);
+	tangent.fValue[0] = (p30.x - (u30 / v20 + EPSILON)*p20.x) / (u30 - (u30 / v20 + EPSILON)*u20);
+	tangent.fValue[1] = (p30.y - (u30 / v20 + EPSILON)*p20.y) / (u30 - (u30 / v20 + EPSILON)*u20);
+	tangent.fValue[2] = (p30.z - (u30 / v20 + EPSILON)*p20.z) / (u30 - (u30 / v20 + EPSILON)*u20);
 
 	float fLength = sqrt(tangent.fValue[0] * tangent.fValue[0] + tangent.fValue[1] * tangent.fValue[1] + tangent.fValue[2] * tangent.fValue[2]);
-	tangent.fValue[0] /= fLength;
-	tangent.fValue[1] /= fLength;
-	tangent.fValue[2] /= fLength;
+	tangent.fValue[0] /= fLength + EPSILON;
+	tangent.fValue[1] /= fLength + EPSILON;
+	tangent.fValue[2] /= fLength + EPSILON;
 }
 
 void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT>& vIndex)
