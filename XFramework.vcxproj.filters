@@ -61,6 +61,9 @@
     <Filter Include="源文件\AntiAliased">
       <UniqueIdentifier>{8988895e-eae7-4047-81cf-c01c6e30b282}</UniqueIdentifier>
     </Filter>
+    <Filter Include="资源文件\hlsl">
+      <UniqueIdentifier>{2bf073b9-be3b-4de3-b35c-f21e5184fc9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XFramework.h">

@@ -386,7 +386,6 @@ bool Render()
 	// DeferredShading_GBuffer
 	DeferredShading_GBuffer(pCommandList);
 	g_SceneGraph.Render(ERENDERPATH_NORMAL,pCommandList,pFrameResource->m_uFenceValue);
-
 	
 	// HDR_Bind
 	HDR_Bind(pCommandList);
