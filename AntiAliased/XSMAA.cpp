@@ -616,5 +616,5 @@ void SMAA_Render(ID3D12GraphicsCommandList* pCommandList)
 	}
 
 	//
-	RenderFullScreen(pCommandList, pShadingShader, pTexture);
+	//RenderFullScreen(pCommandList, pShadingShader, pTexture);
 }
