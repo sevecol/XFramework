@@ -33,7 +33,8 @@ PSInput VSMain(VSInput input)
 {
 	PSInput result;
 
-	float3 position = input.position * 10.0f;	
+	float3 position = input.position * 10.0f;
+	position.y -= 18.0f;
 	result.position = mul(float4(position, 1.0f), mViewProj);
 	result.uv = input.uv;
 
@@ -41,10 +42,12 @@ PSInput VSMain(VSInput input)
 }
 
 Texture2D g_texture0 : register(t0);
+Texture2D g_texture1 : register(t1);
+Texture2D g_texture2 : register(t2);
 SamplerState g_sampler : register(s0);
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	float4 color = g_texture0.Sample(g_sampler, input.uv);
-	return float4(1,1,1,1);
+	float4 color = g_texture1.Sample(g_sampler, input.uv);
+	return color;//float4(1,1,1,1);
 }

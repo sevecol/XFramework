@@ -13,6 +13,7 @@ cbuffer FrameBuffer : register(b0)
 };
 
 Texture2D				g_Texture : register(t0);
+SamplerState g_sampler : register(s0);
 RWStructuredBuffer<float>		g_Result  : register(u0);
 
 static const float4 			c_luminance			= float4(.299, .587, .114, 0);
@@ -26,13 +27,14 @@ void CSMain( uint3 groupId : SV_GroupID, uint3 dispatchId : SV_DispatchThreadID,
 	uint3  location3	= uint3(dispatchId.xy + uint2(0, BLOCK_SIZE_Y * uDispatch.y), 0);
 	uint3  location4	= uint3(dispatchId.xy + uint2(BLOCK_SIZE_X * uDispatch.x, BLOCK_SIZE_Y * uDispatch.y), 0);
 
-	float4 sum		= g_Texture.Load(location1)
-				+ g_Texture.Load(location2)
-				+ g_Texture.Load(location3)
-				+ g_Texture.Load(location4);
+	float4 color1 = g_Texture.Load(location1);
+	float4 color2 = g_Texture.Load(location2);
+	float4 color3 = g_Texture.Load(location3);
+	float4 color4 = g_Texture.Load(location4);
 
-	//float4 sum = float4(1,1,1,1);
-	g_Total[groupIndex]	= dot(sum, c_luminance);
+	//
+	float4 sum = color1 + color2 + color3 + color4;
+	g_Total[groupIndex] = dot(sum, c_luminance);
 
 	// Reduction
 	GroupMemoryBarrierWithGroupSync();

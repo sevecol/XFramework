@@ -133,6 +133,8 @@ void AccumulatePhongBRDF(float3 normal,
 }
 
 #define PI 3.14159265
+#define EPSILON 0.00000001
+
 float chiGGX(float v)
 {
     return v > 0 ? 1 : 0;
@@ -143,15 +145,15 @@ float GGX_Distribution(float3 n, float3 h, float alpha)
     float alpha2 = alpha * alpha;
     float NoH2 = NoH * NoH;
     float den = NoH2 * alpha2 + (1 - NoH2);
-    return (chiGGX(NoH) * alpha2) / ( PI * den * den );
+    return (chiGGX(NoH) * alpha2) / ( PI * den * den + EPSILON );
 }
 float GGX_PartialGeometryTerm(float3 v, float3 n, float3 h, float alpha)
 {
     float VoH2 = saturate(dot(v,h));
-    float chi = chiGGX( VoH2 / saturate(dot(v,n)) );
+    float chi = chiGGX( VoH2 / (saturate(dot(v,n)) + EPSILON) );
     VoH2 = VoH2 * VoH2;
-    float tan2 = ( 1 - VoH2 ) / VoH2;
-    return (chi * 2) / ( 1 + sqrt( 1 + alpha * alpha * tan2 ) );
+    float tan2 = ( 1 - VoH2 ) / ( VoH2 + EPSILON );
+    return (chi * 2) / ( 1 + sqrt( 1 + alpha * alpha * tan2 ) + EPSILON );
 }
 float3 Fresnel_Schlick(float cosT, float3 F0)
 {
