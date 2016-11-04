@@ -1,5 +1,5 @@
 # XFramework
-DirectX 12,Tile-based deferred shading,Dynamic resolution,Order-independent transparency,PBR,SSR,HDR,SMAA
+DirectX 12,Tile-based deferred shading,Dynamic resolution,Order-independent transparency,PBR,SSR,HDR,Nvidia:HBAO,SMAA
 
 OIT:
 Pixel Shader Link Compute AlphaBlend,CS total
@@ -22,3 +22,5 @@ SMAA:
 
 SSR:Sample GBuffer:albedo
 ![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
+
+Nvidia:HBAO
