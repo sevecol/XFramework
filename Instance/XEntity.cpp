@@ -95,9 +95,9 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 	{
 		if (m_pTextureSet)
 		{
-			pCommandList->SetGraphicsRootDescriptorTable(2, m_pTextureSet->GetSRVGpuHandle());
+			pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, m_pTextureSet->GetSRVGpuHandle());
 		}
-		pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pConstantBuffers->uIndex));
+		pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pConstantBuffers->uIndex));
 		
 		//
 		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
@@ -119,15 +119,18 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 }
 void XEntity::Update()
 {
-	XMMATRIX model;
+	XMMATRIX mModel, mScale;
 	XMFLOAT4X4 m;
 
 	float fx, fy, fz;
 	GetPos(fx, fy, fz);
-	model = XMMatrixTranslation(fx, fy, fz);
+	mModel = XMMatrixTranslation(fx, fy, fz);
+
+	float fscale = GetScale();
+	mScale = XMMatrixScaling(fscale, fscale, fscale);
 
 	//
-	XMMATRIX temp = XMMatrixTranspose(model);
+	XMMATRIX temp = XMMatrixTranspose(mScale*mModel);
 	XMStoreFloat4x4(&m, temp);
 	m_pConstantBuffers->m = m;
 }
