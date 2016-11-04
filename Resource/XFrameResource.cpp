@@ -2,7 +2,7 @@
 #include "XFrameResource.h"
 #include "XBuffer.h"
 #include "..\DXSampleHelper.h"
-#include "..\PostProcess\SSAO.h"
+#include "..\PostProcess\XSSAO.h"
 
 #include "..\Instance\XCamera.h"
 #include "..\Instance\XSkyBox.h"
@@ -131,9 +131,9 @@ void XFrameResource::PreRender()
 
 	ID3D12DescriptorHeap* ppHeaps[] = { GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_GCSU) };
 	m_pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	m_pCommandList->SetGraphicsRootDescriptorTable(0, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
-	m_pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
-	m_pCommandList->SetGraphicsRootDescriptorTable(3, GetSkyBoxTexture()->GetSRVGpuHandle());
+	m_pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_FRAMEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
+	m_pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase+m_uIndex));
+	m_pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_GLOBALTEXTURE, GetSkyBoxTexture()->GetSRVGpuHandle());
 
 	m_pCommandList->RSSetViewports(1, &g_pEngine->m_Viewport);
 	m_pCommandList->RSSetScissorRects(1, &g_pEngine->m_ScissorRect);

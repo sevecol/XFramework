@@ -123,7 +123,7 @@ void Render(ID3D12GraphicsCommandList *pCommandList, XGeometry *pGeometry, XGrap
 {
 	if (pTexture)
 	{
-		pCommandList->SetGraphicsRootDescriptorTable(2, pTexture->GetSRVGpuHandle());
+		pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, pTexture->GetSRVGpuHandle());
 	}
 
 	//
