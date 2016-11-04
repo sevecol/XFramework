@@ -20,7 +20,7 @@ PBR:
 SMAA:
 ![image](https://github.com/sevecol/XFramework/blob/master/smaa.png)
 
-SSR:Sample GBuffer:albedo
+SSR
 ![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
 
 Nvidia:HBAO
