@@ -214,7 +214,7 @@ void HDR_Bind(ID3D12GraphicsCommandList *pCommandList)
 	//pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	
 	//
-	pCommandList->SetComputeRootDescriptorTable(4, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
+	pCommandList->SetComputeRootDescriptorTable(CRDT_CBV_FRAMEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 }
 
 extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
@@ -223,15 +223,15 @@ void HDR_ToneMapping(ID3D12GraphicsCommandList* pCommandList)
 {
 	//
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-	pCommandList->SetGraphicsRootDescriptorTable(2, pRenderTarget->GetSRVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, pRenderTarget->GetSRVGpuHandle());
 
 	// ComputeLuminance
 	HDR_Luminance(pCommandList);
 
 	//
 	D3D12_GPU_DESCRIPTOR_HANDLE hStart = GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 1 + uSrcIndex - 1);
-	pCommandList->SetGraphicsRootDescriptorTable(4, hStart);
-	pCommandList->SetGraphicsRootDescriptorTable(1, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_UVA_SBUFFER, hStart);
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 
 	// ToneMapping
 	RenderFullScreen(pCommandList, pShaderToneMapping);
@@ -247,9 +247,9 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 	//
 	pCommandList->SetPipelineState(pShaderLuminance[ELUMINANCEPHASE_2DTO1D]->GetPipelineState());
 
-	pCommandList->SetComputeRootDescriptorTable(0, pRenderTarget->GetSRVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(2, pSBuffer[0]->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(3, pSBuffer[1]->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_SRV_TEXTURE, pRenderTarget->GetSRVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_SRCSBUFFER, pSBuffer[0]->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_DSTSBUFFER, pSBuffer[1]->GetUAVGpuHandle());
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
@@ -269,8 +269,8 @@ void HDR_Luminance(ID3D12GraphicsCommandList* pCommandList)
 		pCommandList->ClearUnorderedAccessViewFloat(pSBuffer[uDestIndex]->GetUAVGpuHandle(), hUAVCpuHandle[uDestIndex], pSBuffer[uDestIndex]->GetResource(), &fClearValue[0], 0, nullptr);
 
 		//
-		pCommandList->SetComputeRootDescriptorTable(2, pSBuffer[ uSrcIndex]->GetUAVGpuHandle());
-		pCommandList->SetComputeRootDescriptorTable(3, pSBuffer[uDestIndex]->GetUAVGpuHandle());
+		pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_SRCSBUFFER, pSBuffer[ uSrcIndex]->GetUAVGpuHandle());
+		pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_DSTSBUFFER, pSBuffer[uDestIndex]->GetUAVGpuHandle());
 
 		pCommandList->Dispatch(uDispatchX2Pass, 1, 1);
 

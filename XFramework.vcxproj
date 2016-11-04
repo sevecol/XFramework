@@ -148,8 +148,10 @@
     <ClInclude Include="Instance\XCamera.h" />
     <ClInclude Include="Instance\XEntity.h" />
     <ClInclude Include="Instance\XSkyBox.h" />
-    <ClInclude Include="PostProcess\SSAO.h" />
+    <ClInclude Include="PostProcess\XPostProcess.h" />
+    <ClInclude Include="PostProcess\XScreenSpaceReflection.h" />
     <ClInclude Include="PostProcess\XSMAA.h" />
+    <ClInclude Include="PostProcess\XSSAO.h" />
     <ClInclude Include="Resource\dds.h" />
     <ClInclude Include="Resource\DDSTextureLoader.h" />
     <ClInclude Include="Resource\DirectXHelpers.h" />
@@ -178,14 +180,15 @@
     <ClInclude Include="XDirectX12.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
-    <ClInclude Include="XScreenSpaceReflection.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Instance\XCamera.cpp" />
     <ClCompile Include="Instance\XEntity.cpp" />
     <ClCompile Include="Instance\XSkyBox.cpp" />
-    <ClCompile Include="PostProcess\SSAO.cpp" />
+    <ClCompile Include="PostProcess\XPostProcess.cpp" />
+    <ClCompile Include="PostProcess\XScreenSpaceReflection.cpp" />
     <ClCompile Include="PostProcess\XSMAA.cpp" />
+    <ClCompile Include="PostProcess\XSSAO.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
     <ClCompile Include="Resource\Loader\XBinLoader.cpp" />
     <ClCompile Include="Resource\Loader\XObjLoader.cpp" />
@@ -207,7 +210,6 @@
     <ClCompile Include="XDirectX12.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
-    <ClCompile Include="XScreenSpaceReflection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

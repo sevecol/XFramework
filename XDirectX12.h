@@ -41,6 +41,22 @@ void Clean();
 #define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
 
+#define GRDT_CBV_FRAMEBUFFER		0			// 1,0,b0
+#define GRDT_CBV_INSTANCEBUFFER		1			// 1,1,b1
+#define GRDT_SRV_TEXTURE			2			// 3,0,t0-t2		// GBuffer,(albedo,normal,mask)...
+#define GRDT_SRV_GLOBALTEXTURE		3			// 2,3,t3-t4		// EnvS,EnvD
+#define GRDT_UVA_SBUFFER			4			// 3,0,u0-u2
+#define GRDT_SRV_POSTPROCESSTEXTURE	5			// 1,5,t5			// PostProcess SrcTexture
+#define GRDT_COUNT					6
+
+#define CRDT_SRV_TEXTURE			0			// 3,0,t0-t2		// GBuffer,(albedo,normal,mask)...
+#define CRDT_SRV_GLOBALTEXTURE		1			// 2,3,t3-t4		// EnvS,EnvD
+#define CRDT_UVA_SRCSBUFFER			2			// 1,0,u0
+#define CRDT_UVA_DSTSBUFFER			3			// 1,1,u1
+#define CRDT_CBV_FRAMEBUFFER		4			// 1,0,b0
+#define CRDT_CBV_INSTANCEBUFFER		5			// 1,1,b1
+#define CRDT_COUNT					6
+
 struct PointLight
 {
 	FLOAT			fPosX, fPosY, fPosZ, fAttenuationBegin;

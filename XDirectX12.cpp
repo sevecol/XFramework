@@ -1,11 +1,14 @@
 
 #include "XDirectX12.h"
+
 #include "XDeferredShading.h"
 #include "XAlphaRender.h"
 #include "XHDR.h"
-#include "XScreenSpaceReflection.h"
+
+#include "PostProcess\XPostProcess.h"
+#include "PostProcess\XScreenSpaceReflection.h"
 #include "PostProcess\XSMAA.h"
-#include "PostProcess\SSAO.h"
+#include "PostProcess\XSSAO.h"
 
 #include "SceneGraph\XSceneGraph.h"
 
@@ -239,19 +242,21 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE granges[5];
-		granges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content
-		granges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
-		granges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
-		granges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);			// Texture
-		granges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);			// UAV
+		CD3DX12_DESCRIPTOR_RANGE granges[GRDT_COUNT];
+		granges[GRDT_CBV_FRAMEBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);				// Content
+		granges[GRDT_CBV_INSTANCEBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content
+		granges[GRDT_SRV_TEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);					// Texture
+		granges[GRDT_SRV_GLOBALTEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);			// Texture
+		granges[GRDT_UVA_SBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 3, 0);					// UAV
+		granges[GRDT_SRV_POSTPROCESSTEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);		// Texture
 
-		CD3DX12_ROOT_PARAMETER grootParameters[5];
-		grootParameters[0].InitAsDescriptorTable(1, &granges[0], D3D12_SHADER_VISIBILITY_ALL);
-		grootParameters[1].InitAsDescriptorTable(1, &granges[1], D3D12_SHADER_VISIBILITY_ALL);
-		grootParameters[2].InitAsDescriptorTable(1, &granges[2], D3D12_SHADER_VISIBILITY_ALL);
-		grootParameters[3].InitAsDescriptorTable(1, &granges[3], D3D12_SHADER_VISIBILITY_ALL);
-		grootParameters[4].InitAsDescriptorTable(1, &granges[4], D3D12_SHADER_VISIBILITY_ALL);
+		CD3DX12_ROOT_PARAMETER grootParameters[GRDT_COUNT];
+		grootParameters[GRDT_CBV_FRAMEBUFFER].InitAsDescriptorTable(1, &granges[GRDT_CBV_FRAMEBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[GRDT_CBV_INSTANCEBUFFER].InitAsDescriptorTable(1, &granges[GRDT_CBV_INSTANCEBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[GRDT_SRV_TEXTURE].InitAsDescriptorTable(1, &granges[GRDT_SRV_TEXTURE], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[GRDT_SRV_GLOBALTEXTURE].InitAsDescriptorTable(1, &granges[GRDT_SRV_GLOBALTEXTURE], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[GRDT_UVA_SBUFFER].InitAsDescriptorTable(1, &granges[GRDT_UVA_SBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		grootParameters[GRDT_SRV_POSTPROCESSTEXTURE].InitAsDescriptorTable(1, &granges[GRDT_SRV_POSTPROCESSTEXTURE], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -279,21 +284,21 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	//
 	{
-		CD3DX12_DESCRIPTOR_RANGE cranges[6];
-		cranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);			// Texture
-		cranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);			// Texture
-		cranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);			// UAV S
-		cranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 1);			// UAV D
-		cranges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);			// Content 0 
-		cranges[5].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content 1
+		CD3DX12_DESCRIPTOR_RANGE cranges[CRDT_COUNT];
+		cranges[CRDT_SRV_TEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);					// Texture
+		cranges[CRDT_SRV_GLOBALTEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);			// Texture
+		cranges[CRDT_UVA_SRCSBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);				// UAV S
+		cranges[CRDT_UVA_DSTSBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 1);				// UAV D
+		cranges[CRDT_CBV_FRAMEBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);				// Content 0 
+		cranges[CRDT_CBV_INSTANCEBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);			// Content 1
 
-		CD3DX12_ROOT_PARAMETER crootParameters[6];
-		crootParameters[0].InitAsDescriptorTable(1, &cranges[0], D3D12_SHADER_VISIBILITY_ALL);
-		crootParameters[1].InitAsDescriptorTable(1, &cranges[1], D3D12_SHADER_VISIBILITY_ALL);
-		crootParameters[2].InitAsDescriptorTable(1, &cranges[2], D3D12_SHADER_VISIBILITY_ALL);
-		crootParameters[3].InitAsDescriptorTable(1, &cranges[3], D3D12_SHADER_VISIBILITY_ALL);
-		crootParameters[4].InitAsDescriptorTable(1, &cranges[4], D3D12_SHADER_VISIBILITY_ALL);
-		crootParameters[5].InitAsDescriptorTable(1, &cranges[5], D3D12_SHADER_VISIBILITY_ALL);
+		CD3DX12_ROOT_PARAMETER crootParameters[CRDT_COUNT];
+		crootParameters[CRDT_SRV_TEXTURE].InitAsDescriptorTable(1, &cranges[CRDT_SRV_TEXTURE], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[CRDT_SRV_GLOBALTEXTURE].InitAsDescriptorTable(1, &cranges[CRDT_SRV_GLOBALTEXTURE], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[CRDT_UVA_SRCSBUFFER].InitAsDescriptorTable(1, &cranges[CRDT_UVA_SRCSBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[CRDT_UVA_DSTSBUFFER].InitAsDescriptorTable(1, &cranges[CRDT_UVA_DSTSBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[CRDT_CBV_FRAMEBUFFER].InitAsDescriptorTable(1, &cranges[CRDT_CBV_FRAMEBUFFER], D3D12_SHADER_VISIBILITY_ALL);
+		crootParameters[CRDT_CBV_INSTANCEBUFFER].InitAsDescriptorTable(1, &cranges[CRDT_CBV_INSTANCEBUFFER], D3D12_SHADER_VISIBILITY_ALL);
 
 		D3D12_STATIC_SAMPLER_DESC sampler = {};
 		sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -343,9 +348,14 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		g_pFrameResource[n] = new XFrameResource();
 		g_pFrameResource[n]->InitInstance(n, g_pEngine->m_pDevice, g_pEngine->m_pSwapChain.Get());
 	}
+
+	// Framework
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
 	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
+
+	// PostProcess
+	InitPostProcess(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitScreenSpaceReflection(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitSMAA(g_pEngine->m_pDevice, uWidth, uHeight);
 
@@ -412,6 +422,7 @@ bool Render()
 */
 
 	//
+	PostProcess_Bind(pCommandList);
 	ScreenSpaceReflection_Render(pCommandList);
 	
 	//
@@ -504,6 +515,9 @@ void Clean()
 	CleanDeferredShading();
 	CleanAlphaRender();
 	CleanHDR();
+
+	//
+	CleanPostProcess();
 	CleanScreenSpaceReflection();
 	CleanSMAA();
 

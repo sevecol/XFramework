@@ -150,12 +150,6 @@
     <ClInclude Include="Instance\XSkyBox.h">
       <Filter>头文件\Instance</Filter>
     </ClInclude>
-    <ClInclude Include="XScreenSpaceReflection.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PostProcess\SSAO.h">
-      <Filter>头文件\PostProcess</Filter>
-    </ClInclude>
     <ClInclude Include="PostProcess\XSMAA.h">
       <Filter>头文件\PostProcess</Filter>
     </ClInclude>
@@ -167,6 +161,15 @@
     </ClInclude>
     <ClInclude Include="Resource\Loader\XVertexIndexLoader.h">
       <Filter>头文件\Resource\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcess\XScreenSpaceReflection.h">
+      <Filter>头文件\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcess\XPostProcess.h">
+      <Filter>头文件\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcess\XSSAO.h">
+      <Filter>头文件\PostProcess</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -233,12 +236,6 @@
     <ClCompile Include="Instance\XSkyBox.cpp">
       <Filter>源文件\Instance</Filter>
     </ClCompile>
-    <ClCompile Include="XScreenSpaceReflection.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PostProcess\SSAO.cpp">
-      <Filter>源文件\PostProcess</Filter>
-    </ClCompile>
     <ClCompile Include="PostProcess\XSMAA.cpp">
       <Filter>源文件\PostProcess</Filter>
     </ClCompile>
@@ -250,6 +247,15 @@
     </ClCompile>
     <ClCompile Include="Resource\Loader\XVertexIndexLoader.cpp">
       <Filter>源文件\Resource\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess\XScreenSpaceReflection.cpp">
+      <Filter>源文件\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess\XPostProcess.cpp">
+      <Filter>源文件\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess\XSSAO.cpp">
+      <Filter>源文件\PostProcess</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

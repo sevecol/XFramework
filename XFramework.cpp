@@ -262,6 +262,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	{
 		g_pEntityVertexIndex = new XEntity();
 		g_pEntityVertexIndex->SetScale(30.0f);
+		g_pEntityVertexIndex->SetVisiable(false);
 		g_SceneGraph.AddNode(ERENDERPATH_NORMAL, g_pEntityVertexIndex);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =

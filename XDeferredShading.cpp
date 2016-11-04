@@ -152,7 +152,7 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 	{
 		pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargets[i]->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	}
-	pCommandList->SetGraphicsRootDescriptorTable(2, pRenderTargets[0]->GetSRVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, pRenderTargets[0]->GetSRVGpuHandle());
 	pCommandList->OMSetRenderTargets(0, nullptr, true, nullptr);
 
 	//
@@ -162,13 +162,13 @@ void DeferredShading_Shading(ID3D12GraphicsCommandList* pCommandList)
 	//
 	pCommandList->SetPipelineState(pClusteredShadingShader->GetPipelineState());
 
-	pCommandList->SetComputeRootDescriptorTable(0, pRenderTargets[0]->GetSRVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(1, GetSkyBoxTexture()->GetSRVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(2, pHDRRenderTarget->GetUAVGpuHandle());
-	pCommandList->SetComputeRootDescriptorTable(5, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase +3));
+	pCommandList->SetComputeRootDescriptorTable(CRDT_SRV_TEXTURE, pRenderTargets[0]->GetSRVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_SRV_GLOBALTEXTURE, GetSkyBoxTexture()->GetSRVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_SRCSBUFFER, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase +3));
 
 	// For D3DWaring
-	pCommandList->SetComputeRootDescriptorTable(3, pHDRRenderTarget->GetUAVGpuHandle());
+	pCommandList->SetComputeRootDescriptorTable(CRDT_UVA_DSTSBUFFER, pHDRRenderTarget->GetUAVGpuHandle());
 
 	//
 	pCommandList->Dispatch(uDispatchX, uDispatchY, 1);
