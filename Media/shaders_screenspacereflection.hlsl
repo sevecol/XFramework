@@ -53,6 +53,7 @@ Texture2D g_texture0 : register(t0);
 Texture2D g_texture1 : register(t1);
 Texture2D g_texture2 : register(t2);
 TextureCube g_EnvironmentLight : register(t3);
+Texture2D g_texture5 : register(t5);
 SamplerState g_sampler : register(s0);
 
 //RWStructuredBuffer<float>		g_Result  : register(u1);
@@ -82,11 +83,9 @@ float4 PSMain(PSInput input) : SV_TARGET
 		uv /= 2.0f;	
 		uv.y = 1.0f - uv.y;
 
-		//g_Result[i] = 0.0f;
 		float4 tex = g_texture2.Sample(g_sampler,uv);
 		if (tex.a!=0.0f)
 		{
-			//g_Result[i] = 1.0f;
 			float depthR = mul(float4(vPointW,1.0f),mView).z;
 			if (depthR<=-60.0f)
 				continue;
@@ -96,10 +95,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 			if (depthT>depthR)
 			{
-				//g_Result[0] = depthR;
-				//g_Result[1] = depthT;
-				//g_Result[2] = positionT.z;
-				color = tex;
+				color = g_texture5.Sample(g_sampler,uv);
 				value = (float)i/(float)nNum;
 				break;
 			}
