@@ -4,7 +4,8 @@
 #include "XAlphaRender.h"
 #include "XHDR.h"
 #include "XScreenSpaceReflection.h"
-#include "AntiAliased\XSMAA.h"
+#include "PostProcess\XSMAA.h"
+#include "PostProcess\SSAO.h"
 
 #include "SceneGraph\XSceneGraph.h"
 
@@ -16,7 +17,6 @@
 #include "Instance\XCamera.h"
 
 #include "StepTimer.h"
-#include "Loader\XBinLoader.h"
 
 #include <d2d1_3.h>
 #include <dwrite.h>
@@ -27,6 +27,7 @@
 #include <d3d11on12.h>
 #include "DXSampleHelper.h"
 
+//
 UINT g_uRenderTargetCount[ESHADINGPATH_COUNT] = { 1,3 };
 DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
 {
@@ -164,7 +165,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// Create descriptor heaps.
 	// Describe and create a render target view (RTV) descriptor heap.
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uStart = 0;
-	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = 7;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = 7+ GFSDK_SSAO_NUM_DESCRIPTORS_RTV_HEAP_D3D12;
 
 	D3D12_DESCRIPTOR_HEAP_DESC RHeapDesc = {};
 	// 3 for FrameSource RenderTarget,3 for DeferredShading RenderTarget,1 for HDR
@@ -189,11 +190,14 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, uWidth, uHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, uWidth, uHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&depthOptimizedClearValue,
 		IID_PPV_ARGS(&g_pEngine->m_pDepthStencil)
 		));
+
+	// SSAO
+	InitSSAO(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	//
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uStart = 0;
@@ -409,13 +413,15 @@ bool Render()
 
 	//
 	ScreenSpaceReflection_Render(pCommandList);
-	SMAA_Render(pCommandList);
-
+	
 	//
 	pFrameResource->BeginRender();
 	HDR_ToneMapping(pCommandList);
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
 	
+	// PostProcess
+	//SSAO_Render(pCommandList);
+	SMAA_Render(pCommandList);
 	pFrameResource->EndRender();
 
 	///////////////////////////////////////////////////////////////////////
@@ -468,6 +474,9 @@ extern XGeometry *pXZPlaneGeometry;
 void Clean()
 {
 	WaitForGpu();
+
+	//
+	CleanSSAO();
 
 	//
 	g_SceneGraph.Clean();

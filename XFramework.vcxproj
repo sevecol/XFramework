@@ -145,16 +145,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AntiAliased\XSMAA.h" />
     <ClInclude Include="Instance\XCamera.h" />
     <ClInclude Include="Instance\XEntity.h" />
     <ClInclude Include="Instance\XSkyBox.h" />
-    <ClInclude Include="Loader\XBinLoader.h" />
-    <ClInclude Include="Loader\XObjLoader.h" />
+    <ClInclude Include="PostProcess\SSAO.h" />
+    <ClInclude Include="PostProcess\XSMAA.h" />
     <ClInclude Include="Resource\dds.h" />
     <ClInclude Include="Resource\DDSTextureLoader.h" />
     <ClInclude Include="Resource\DirectXHelpers.h" />
     <ClInclude Include="Resource\LoaderHelpers.h" />
+    <ClInclude Include="Resource\Loader\XBinLoader.h" />
+    <ClInclude Include="Resource\Loader\XObjLoader.h" />
+    <ClInclude Include="Resource\Loader\XVertexIndexLoader.h" />
     <ClInclude Include="Resource\pch.h" />
     <ClInclude Include="Resource\PlatformHelpers.h" />
     <ClInclude Include="Resource\ResourceUploadBatch.h" />
@@ -179,13 +181,15 @@
     <ClInclude Include="XScreenSpaceReflection.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AntiAliased\XSMAA.cpp" />
     <ClCompile Include="Instance\XCamera.cpp" />
     <ClCompile Include="Instance\XEntity.cpp" />
     <ClCompile Include="Instance\XSkyBox.cpp" />
-    <ClCompile Include="Loader\XBinLoader.cpp" />
-    <ClCompile Include="Loader\XObjLoader.cpp" />
+    <ClCompile Include="PostProcess\SSAO.cpp" />
+    <ClCompile Include="PostProcess\XSMAA.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
+    <ClCompile Include="Resource\Loader\XBinLoader.cpp" />
+    <ClCompile Include="Resource\Loader\XObjLoader.cpp" />
+    <ClCompile Include="Resource\Loader\XVertexIndexLoader.cpp" />
     <ClCompile Include="Resource\ResourceUploadBatch.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />
     <ClCompile Include="Resource\XFrameResource.cpp" />

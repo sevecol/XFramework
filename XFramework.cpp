@@ -7,8 +7,9 @@
 #include "Instance\XEntity.h"
 #include "Instance\XCamera.h"
 #include "UI\UIManager.h"
-#include "Loader\XBinLoader.h"
-#include "Loader\XObjLoader.h"
+#include "Resource\Loader\XBinLoader.h"
+#include "Resource\Loader\XObjLoader.h"
+#include "Resource\Loader\XVertexIndexLoader.h"
 #include "Thread\XResourceThread.h"
 
 extern XCamera			g_Camera;
@@ -18,6 +19,7 @@ XEntity					*g_pEntityAlpha;
 XEntity					*g_pEntityPBRL;
 XEntity					*g_pEntityPBRC;
 XEntity					*g_pEntityPBRR;
+XEntity					*g_pEntityVertexIndex;
 
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
@@ -257,6 +259,31 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		pobjresource->pEntity = g_pEntityPBRR;
 		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
+	{
+		g_pEntityVertexIndex = new XEntity();
+		g_pEntityVertexIndex->SetScale(30.0f);
+		g_SceneGraph.AddNode(ERENDERPATH_NORMAL, g_pEntityVertexIndex);
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+		g_pEntityVertexIndex->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+
+		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metalh.jpg" };
+		g_pEntityVertexIndex->InitTexture(L"EntityPBRR", 3, pTextureFileName);
+
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		XVertexIndexResource *presource = new XVertexIndexResource();
+		presource->pEntity = g_pEntityVertexIndex;
+		g_pResourceThread->InsertResourceLoadTask(presource);
+	}
+
 	//g_ResourceThread.WaitForResource();
 
 	//
