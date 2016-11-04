@@ -163,8 +163,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityNormal->InitTexture(L"NormalEntity", 2, pTextureFileName,XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XBinResource *pbinresource = new XBinResource();
-		pbinresource->pEntity = g_pEntityNormal;
+		XBinResource *pbinresource = new XBinResource(L"Media\\occcity.bin");
+		pbinresource->m_pEntity = g_pEntityNormal;
 		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
 	{
@@ -183,8 +183,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XBinResource *pbinresource = new XBinResource();
-		pbinresource->pEntity = g_pEntityAlpha;
+		XBinResource *pbinresource = new XBinResource(L"Media\\occcity.bin");
+		pbinresource->m_pEntity = g_pEntityAlpha;
 		g_pResourceThread->InsertResourceLoadTask(pbinresource);
 	}
 	{
@@ -206,8 +206,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XObjResource *pobjresource = new XObjResource();
-		pobjresource->pEntity = g_pEntityPBRC;
+		XObjResource *pobjresource = new XObjResource(L"Media\\entity.obj");
+		pobjresource->m_pEntity = g_pEntityPBRC;
 		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
 	{
@@ -230,8 +230,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XObjResource *pobjresource = new XObjResource();
-		pobjresource->pEntity = g_pEntityPBRL;
+		XObjResource *pobjresource = new XObjResource(L"Media\\entity.obj");
+		pobjresource->m_pEntity = g_pEntityPBRL;
 		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
 	{
@@ -255,8 +255,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XObjResource *pobjresource = new XObjResource();
-		pobjresource->pEntity = g_pEntityPBRR;
+		XObjResource *pobjresource = new XObjResource(L"Media\\entity.obj");
+		pobjresource->m_pEntity = g_pEntityPBRR;
 		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
 	{
@@ -279,8 +279,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XVertexIndexResource *presource = new XVertexIndexResource();
-		presource->pEntity = g_pEntityVertexIndex;
+		XVertexIndexResource *presource = new XVertexIndexResource(L"Media\\Sibenik");
+		presource->m_pEntity = g_pEntityVertexIndex;
 		g_pResourceThread->InsertResourceLoadTask(presource);
 	}
 
