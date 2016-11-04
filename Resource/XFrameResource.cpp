@@ -2,6 +2,7 @@
 #include "XFrameResource.h"
 #include "XBuffer.h"
 #include "..\DXSampleHelper.h"
+#include "..\PostProcess\SSAO.h"
 
 #include "..\Instance\XCamera.h"
 #include "..\Instance\XSkyBox.h"
@@ -35,6 +36,7 @@ void XFrameResource::Init(ID3D12Device* pDevice)
 	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,3);
 }
 
+extern GFSDK_SSAO_RenderTargetView_D3D12 mColorRTV[FRAME_NUM];
 void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapChain3 *pSwapChain)
 {
 	m_uIndex = uIndex;
@@ -42,7 +44,40 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 
 	//
 	ThrowIfFailed(pSwapChain->GetBuffer(m_uIndex, IID_PPV_ARGS(&m_pRenderTargets)));
-	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRenderTargetBase+m_uIndex));
+
+	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRenderTargetBase + m_uIndex);
+	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, RenderTargetView);
+
+	//
+	mColorRTV[uIndex] = {};
+	mColorRTV[uIndex].CpuHandle = RenderTargetView.ptr;
+	mColorRTV[uIndex].pResource = m_pRenderTargets.Get();
+
+	{
+/*
+		// SRV
+		D3D12_SHADER_RESOURCE_VIEW_DESC NormalSRVDesc = {};
+		NormalSRVDesc.Format = NormalRTVDesc.Format;
+		NormalSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+#if MSAA_SAMPLE_COUNT > 1
+		NormalSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+#else
+		NormalSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		NormalSRVDesc.Texture2D.MipLevels = 1;
+		NormalSRVDesc.Texture2D.MostDetailedMip = 0; // No MIP
+		NormalSRVDesc.Texture2D.PlaneSlice = 0;
+		NormalSRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+#endif
+
+		mNormalSRV[FrameIndex] = {};
+		mNormalSRV[FrameIndex].pResource = mNormalBuffer[FrameIndex].Get();
+		CD3DX12_CPU_DESCRIPTOR_HANDLE NormalSRVHandle(
+			mSsaoDescHeapCbvSrvUav->GetCPUDescriptorHandleForHeapStart(),
+			SSAO_NUM_DEPTH_SRV + FrameIndex,
+			mDev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		mDev->CreateShaderResourceView(mNormalBuffer[FrameIndex].Get(), &NormalSRVDesc, NormalSRVHandle);
+*/
+	}
 
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
@@ -116,7 +151,7 @@ void XFrameResource::BeginRender()
 	// Record commands.
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(RHandle, clearColor, 0, nullptr);
-	m_pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	//m_pCommandList->ClearDepthStencilView(GetHandleHeap(XEngine::XDESCRIPTORHEAPTYPE_DSV)->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void XFrameResource::EndRender()
