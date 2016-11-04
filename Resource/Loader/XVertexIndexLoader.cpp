@@ -62,14 +62,16 @@ bool LoadIndices(const WCHAR* FileName, std::vector<uint32_t>& OutIndices)
 extern UINT8 GeometryData[20480000];
 void XVertexIndexResource::LoadFromFile()
 {
-	XGeometry *pGeometry = XGeometryManager::GetResource(L"entityvi");
+	XGeometry *pGeometry = XGeometryManager::GetResource(m_pFileName);
 	if (!pGeometry)
 	{
 		vector<Vertex> vVertex;
 		vector<uint32_t> vIndex;
 
-		LoadVertices(L"Media\\SibenikVertices.bin", vVertex);
-		LoadIndices(L"Media\\SibenikIndices.bin", vIndex);
+		wstring strVertexName = wstring(m_pFileName) + L"_Vertices.bin";
+		LoadVertices(strVertexName.c_str(), vVertex);
+		wstring strIndexName = wstring(m_pFileName) + L"_Indices.bin";
+		LoadIndices(strIndexName.c_str(), vIndex);
 
 		UINT uSize = vVertex.size()*sizeof(Vertex) + vIndex.size()*sizeof(UINT);
 
@@ -78,7 +80,7 @@ void XVertexIndexResource::LoadFromFile()
 		uOffset = vVertex.size()*sizeof(Vertex);
 		memcpy(GeometryData + uOffset, &(vIndex[0]), vIndex.size()*sizeof(UINT));
 
-		pEntity->InitGeometry(L"entityvi", vVertex.size(), sizeof(Vertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
+		m_pEntity->InitGeometry(m_pFileName, vVertex.size(), sizeof(Vertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
 
 		//
 		//delete[] pGeometryData;
@@ -87,5 +89,5 @@ void XVertexIndexResource::LoadFromFile()
 	}
 
 	//
-	pEntity->m_pGeometry = pGeometry;
+	m_pEntity->m_pGeometry = pGeometry;
 }

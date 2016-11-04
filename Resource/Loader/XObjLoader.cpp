@@ -183,12 +183,12 @@ void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT
 UINT8 GeometryData[20480000];
 void XObjResource::LoadFromFile()
 {
-	XGeometry *pGeometry = XGeometryManager::GetResource(L"entity");
+	XGeometry *pGeometry = XGeometryManager::GetResource(m_pFileName);
 	if (!pGeometry)
 	{
 		vector<sVertex> vVertex;
 		vector<UINT> vIndex;
-		ReadDataFromObjFile(L"Media\\entity.obj", vVertex, vIndex);
+		ReadDataFromObjFile(m_pFileName, vVertex, vIndex);
 
 		UINT uSize = vVertex.size()*sizeof(sVertex) + vIndex.size()*sizeof(UINT);
 
@@ -197,7 +197,7 @@ void XObjResource::LoadFromFile()
 		uOffset = vVertex.size()*sizeof(sVertex);
 		memcpy(GeometryData + uOffset, &(vIndex[0]), vIndex.size()*sizeof(UINT));
 
-		pEntity->InitGeometry(L"entity", vVertex.size(), sizeof(sVertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
+		m_pEntity->InitGeometry(m_pFileName, vVertex.size(), sizeof(sVertex), vIndex.size(), DXGI_FORMAT_R32_UINT, GeometryData);
 
 		//
 		//delete[] pGeometryData;
@@ -206,5 +206,5 @@ void XObjResource::LoadFromFile()
 	}
 
 	//
-	pEntity->m_pGeometry = pGeometry;
+	m_pEntity->m_pGeometry = pGeometry;
 }

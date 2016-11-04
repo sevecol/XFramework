@@ -7,10 +7,13 @@
 
 class XBinResource : public IResourceLoad
 {
+	UINT8* m_pMeshData;
+	UINT m_meshDataLength;
+	LPWSTR m_pFileName;
 public:
-	UINT8* pMeshData;
-	UINT meshDataLength;
-	XEntity *pEntity;
+	XEntity *m_pEntity;
+	
+	XBinResource(LPWSTR pFileName) :m_pFileName(pFileName) {};
 
 	virtual void LoadFromFile();
 	virtual void PostLoad()

@@ -7,10 +7,11 @@
 
 class XVertexIndexResource : public IResourceLoad
 {
+	LPWSTR m_pFileName;
 public:
-	UINT8* pMeshData;
-	UINT meshDataLength;
-	XEntity *pEntity;
+	XEntity *m_pEntity;
+
+	XVertexIndexResource(LPWSTR pFileName) :m_pFileName(pFileName) {};
 
 	virtual void LoadFromFile();
 	virtual void PostLoad()
