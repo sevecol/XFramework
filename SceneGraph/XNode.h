@@ -8,6 +8,7 @@ class XNode
 	bool				m_bVisiable;
 
 	float				m_fPosX, m_fPosY, m_fPosZ;
+	float				m_fRotationX, m_fRotationY, m_fRotationZ;
 	float				m_fScale;
 public:
 	XNode();
@@ -21,6 +22,8 @@ public:
 
 	void SetPos(float x, float y, float z);
 	void GetPos(float& x, float& y, float& z);
+	void SetRotation(float x, float y, float z);
+	void GetRotation(float& x, float& y, float& z);
 	void SetScale(float s);
 	float GetScale();
 };
