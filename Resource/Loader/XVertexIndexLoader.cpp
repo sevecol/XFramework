@@ -27,10 +27,12 @@ bool LoadVertices(const WCHAR* FileName, std::vector<Vertex>& OutVertices)
 	{
 		Vertex vertex;
 		fread(&vertex.position, sizeof(XMFLOAT3), 1, fp);
-		vertex.normal.x = vertex.normal.y = 0;
-		vertex.normal.z = 1.0;
+		vertex.normal.x = 0.0f;
+		vertex.normal.y = 1.0f;
+		vertex.normal.z = 1.0f;
 		vertex.textureCoordinate.x = vertex.textureCoordinate.y = 0.5f;
-		vertex.tangent.x = vertex.tangent.y = vertex.tangent.z = 0.0f;
+		vertex.tangent.x = 1.0f;
+		vertex.tangent.y = vertex.tangent.z = 0.0f;
 		OutVertices.push_back(vertex);
 	}
 
