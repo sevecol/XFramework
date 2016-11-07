@@ -3,6 +3,9 @@
 #include "..\DXSampleHelper.h"
 #include "..\Instance\XCamera.h"
 
+#include "..\Resource\XShader.h"
+#include "..\Resource\XTexture.h"
+
 // Library link for HBAO+
 #ifdef _WIN64
 #pragma comment(lib, "Lib\\GFSDK_SSAO_D3D12.win64.lib")
@@ -30,6 +33,10 @@ namespace SSAO
 	GFSDK_SSAO_Parameters mAOParams;
 
 	ComPtr<ID3D12DescriptorHeap> mSsaoDescHeapCbvSrvUav;
+
+	//
+	UINT										uRenderTargetBase, uGpuCSUBase;
+	XGraphicShader								*pShadingShader = nullptr;
 }
 using namespace SSAO;
 
@@ -39,7 +46,7 @@ void CHK(HRESULT hr)
 	//if (FAILED(hr))
 	//	throw runtime_error("HRESULT is failed value.");
 }
-bool InitSSAO(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
+bool InitSSAO_Pre(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 {
 	//
 	const UINT NodeMask = 1;
@@ -89,7 +96,7 @@ bool InitSSAO(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	assert(status == GFSDK_SSAO_OK);
 
 	mAOParams = {};
-	mAOParams.Radius = 2.f;
+	mAOParams.Radius = 1.f;
 	mAOParams.Bias = 0.2f;
 	mAOParams.PowerExponent = 2.f;
 	mAOParams.Blur.Enable = true;
@@ -98,6 +105,17 @@ bool InitSSAO(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 
 	return true;
 }
+void InitSSAO(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
+{
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+	{
+		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+	pShadingShader = XGraphicShaderManager::CreatePostProcessGraphicShaderFromFile(L"Media\\shaders_ssao.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs,3);
+}
+
 void CleanSSAO()
 {
 	if (mSSAO)
@@ -105,12 +123,36 @@ void CleanSSAO()
 		mSSAO->Release();
 		mSSAO = nullptr;
 	}
+	XGraphicShaderManager::DelResource(&pShadingShader);
 }
 
+bool bSSAO = false;
+extern void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
+extern XRenderTarget* HDR_GetRenderTarget();
 void SSAO_Render(ID3D12GraphicsCommandList *pCommandList)
 {
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(g_pEngine->m_pDepthStencil.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
+	// Set SSAO descriptor heap
+	ID3D12DescriptorHeap* descHeaps[] = { mSsaoDescHeapCbvSrvUav.Get() };
+	pCommandList->SetDescriptorHeaps(ARRAYSIZE(descHeaps), descHeaps);
+
+	//
+	//pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTarget->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	//XRenderTarget* pHDRRenderTarget = HDR_GetRenderTarget();
+	//pCommandList->OMSetRenderTargets(1, &pRenderTarget->GetRTVCpuHandle(), FALSE, nullptr);
+
+	if (!bSSAO)
+	{
+		//CD3DX12_GPU_DESCRIPTOR_HANDLE DepthSrvGpuHandle(mSsaoDescHeapCbvSrvUav->GetGPUDescriptorHandleForHeapStart());
+		//pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, DepthSrvGpuHandle);
+		//RenderFullScreen(pCommandList, pShadingShader, nullptr);
+	}
+
+	//pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	//
 	//if (gUseSSAO)
 	{
 		// Set input data
@@ -118,12 +160,9 @@ void SSAO_Render(ID3D12GraphicsCommandList *pCommandList)
 		InputData.DepthData.DepthTextureType = GFSDK_SSAO_HARDWARE_DEPTHS;
 
 		// FullResDepthTextureSRV
-		{
-			CD3DX12_GPU_DESCRIPTOR_HANDLE DepthSrvGpuHandle(
-				mSsaoDescHeapCbvSrvUav->GetGPUDescriptorHandleForHeapStart());
-			InputData.DepthData.FullResDepthTextureSRV.pResource = g_pEngine->m_pDepthStencil.Get();
-			InputData.DepthData.FullResDepthTextureSRV.GpuHandle = DepthSrvGpuHandle.ptr;
-		}
+		CD3DX12_GPU_DESCRIPTOR_HANDLE DepthSrvGpuHandle(mSsaoDescHeapCbvSrvUav->GetGPUDescriptorHandleForHeapStart());
+		InputData.DepthData.FullResDepthTextureSRV.pResource = g_pEngine->m_pDepthStencil.Get();
+		InputData.DepthData.FullResDepthTextureSRV.GpuHandle = DepthSrvGpuHandle.ptr;
 
 		// DepthData
 		XMMATRIX ProjMat = g_Camera.GetProjectionMatrix();
@@ -131,7 +170,7 @@ void SSAO_Render(ID3D12GraphicsCommandList *pCommandList)
 		InputData.DepthData.ProjectionMatrix.Layout = GFSDK_SSAO_ROW_MAJOR_ORDER;
 
 #if USE_BIN_MESH_READER
-		InputData.DepthData.MetersToViewSpaceUnits = 0.005f;
+		InputData.DepthData.MetersToViewSpaceUnits = 0.5f;
 #else
 		InputData.DepthData.MetersToViewSpaceUnits = 1.f;
 #endif
@@ -165,17 +204,14 @@ void SSAO_Render(ID3D12GraphicsCommandList *pCommandList)
 		//GFSDK_SSAO_RenderMask RenderMask = GFSDK_SSAO_RENDER_DEBUG_NORMAL;
 		GFSDK_SSAO_RenderMask RenderMask = GFSDK_SSAO_RENDER_AO;
 
-		// Set SSAO descriptor heap
-		{
-			ID3D12DescriptorHeap* descHeaps[] = { mSsaoDescHeapCbvSrvUav.Get() };
-			pCommandList->SetDescriptorHeaps(ARRAYSIZE(descHeaps), descHeaps);
-		}
-
 		GFSDK_SSAO_Output_D3D12 Output;
 		Output.pRenderTargetView = &mColorRTV[g_uFrameIndex];
 
-		GFSDK_SSAO_Status status = mSSAO->RenderAO(g_pEngine->m_pRenderCommandQueue.Get(), pCommandList, InputData, mAOParams, Output, RenderMask);
-		assert(status == GFSDK_SSAO_OK);
+		if (bSSAO)
+		{
+			GFSDK_SSAO_Status status = mSSAO->RenderAO(g_pEngine->m_pRenderCommandQueue.Get(), pCommandList, InputData, mAOParams, Output, RenderMask);
+			assert(status == GFSDK_SSAO_OK);
+		}
 
 		// Revert to the original descriptor heap
 		{

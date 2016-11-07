@@ -22,7 +22,15 @@ bool InitScreenSpaceReflection(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
-	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_screenspacereflection.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+
+	//
+	CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	depthStencilDesc.StencilEnable = FALSE;
+
+	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_screenspacereflection.hlsl", depthStencilDesc,"VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
 
 	return true;
 }
@@ -37,7 +45,7 @@ void ScreenSpaceReflection_Render(ID3D12GraphicsCommandList* pCommandList)
 /*
 	IStructuredBuffer* pSBuffer = GetHDRSBuffer(0);
 	ID3D12Resource* pResultBuffer = GetHDRResultBuffer();
-	pCommandList->SetGraphicsRootDescriptorTable(4, pSBuffer->GetUAVGpuHandle());
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_UVA_SBUFFER, pSBuffer->GetUAVGpuHandle());
 */
 	RenderXZPlane(pCommandList, pShadingShader);
 /*

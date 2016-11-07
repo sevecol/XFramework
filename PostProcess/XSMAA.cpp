@@ -15,8 +15,8 @@ namespace SMAA
 	//UINT										uDispatchX, uDispatchY;
 	//XRenderTarget								*pRenderTargets[DEFERREDSHADING_RENDERTARGET_COUNT] = { nullptr,nullptr,nullptr };
 	XGraphicShader								*pShadingShader = nullptr;
-	XTextureSet									*pTexture = nullptr;
-	ID3D12Resource								*pCpuTexture = nullptr;
+	XTextureSet									*pTexture		= nullptr;
+	ID3D12Resource								*pCpuTexture	= nullptr;
 }
 using namespace SMAA;
 
