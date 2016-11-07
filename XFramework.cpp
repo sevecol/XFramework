@@ -261,8 +261,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityVertexIndex = new XEntity();
-		g_pEntityVertexIndex->SetScale(30.0f);
-		g_pEntityVertexIndex->SetVisiable(false);
+		g_pEntityVertexIndex->SetPos(0.0f, 10.0f, 0.0f);
+		g_pEntityVertexIndex->SetScale(100.0f);
+		g_pEntityVertexIndex->SetRotation(-PI2/8.0f, PI2 / 4.0f, 0.0f);
+		//g_pEntityVertexIndex->SetVisiable(false);
 		g_SceneGraph.AddNode(ERENDERPATH_NORMAL, g_pEntityVertexIndex);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
@@ -274,8 +276,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		};
 		g_pEntityVertexIndex->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metalh.jpg" };
-		g_pEntityVertexIndex->InitTexture(L"EntityPBRR", 3, pTextureFileName);
+		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_nonmetal.jpg" };
+		g_pEntityVertexIndex->InitTexture(L"EntityPBTR", 3, pTextureFileName);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
@@ -288,7 +290,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	//g_ResourceThread.WaitForResource();
 
 	//
-	g_Camera.Init(0.8f, 1280.0f/720.0f);
+	g_Camera.Init(0.8f, 1280.0f/720.0f,1.0f,500.0f);
 	g_Camera.InitPos(XMFLOAT3(0, 0, 80));
 
 	//
@@ -321,6 +323,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 发送退出消息并返回
 //
 //
+extern bool bSSAO;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	g_Camera.ProcessMessage(message, wParam, lParam);
@@ -328,6 +331,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_COMMAND:
 	{
+	}
+	break;
+	case WM_KEYDOWN:
+	{
+		switch (wParam)
+		{
+		case 'Q':
+			bSSAO = 1 - bSSAO;
+			break;
+		}
 	}
 	break;
 	case WM_PAINT:

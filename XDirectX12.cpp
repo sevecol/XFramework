@@ -31,11 +31,12 @@
 #include "DXSampleHelper.h"
 
 //
-UINT g_uRenderTargetCount[ESHADINGPATH_COUNT] = { 1,3 };
+UINT g_uRenderTargetCount[ESHADINGPATH_COUNT] = { 1,3,1 };
 DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM] =
 {
 	{ DXGI_FORMAT_R32G32B32A32_FLOAT ,DXGI_FORMAT_R32G32B32A32_FLOAT ,DXGI_FORMAT_R32G32B32A32_FLOAT },
 	{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT },
+	{ DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R8G8B8A8_UNORM },
 	//{ DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R8G8B8A8_UNORM ,DXGI_FORMAT_R16G16_FLOAT }
 };
 
@@ -85,8 +86,10 @@ extern XTextureSet					*g_pHDRTextureScreen;
 bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 {
 	g_pEngine = new XEngine;
-
 	g_pEngine->m_hWnd = hWnd;
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CreateDevice
 	UINT d3d11DeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 	D2D1_FACTORY_OPTIONS d2dFactoryOptions = {};
 
@@ -126,6 +129,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 			));
 	}
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Describe and create the command queues.
 	D3D12_COMMAND_QUEUE_DESC renderqueueDesc = {};
 	renderqueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -133,6 +137,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommandQueue(&renderqueueDesc, IID_PPV_ARGS(&g_pEngine->m_pRenderCommandQueue)));
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 	swapChainDesc.BufferCount = FRAME_NUM;//FrameCount;
@@ -155,9 +160,11 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	ThrowIfFailed(swapChain.As(&g_pEngine->m_pSwapChain));
 	g_uFrameIndex = g_pEngine->m_pSwapChain->GetCurrentBackBufferIndex();
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Create synchronization objects.
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_pEngine->m_pFence)));
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Create an event handle to use for frame synchronization.
 	g_pEngine->m_hFenceEvent = CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS);
 	if (g_pEngine->m_hFenceEvent == nullptr)
@@ -165,10 +172,11 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
 	}
 
-	// Create descriptor heaps.
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Create RTV descriptor heaps.
 	// Describe and create a render target view (RTV) descriptor heap.
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uStart = 0;
-	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = 7+ GFSDK_SSAO_NUM_DESCRIPTORS_RTV_HEAP_D3D12;
+	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = APP_NUM_RTV + GFSDK_SSAO_NUM_DESCRIPTORS_RTV_HEAP_D3D12;
 
 	D3D12_DESCRIPTOR_HEAP_DESC RHeapDesc = {};
 	// 3 for FrameSource RenderTarget,3 for DeferredShading RenderTarget,1 for HDR
@@ -178,6 +186,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&RHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_pDescriptorHeap))));
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Describe and create a depth stencil view (DSV) descriptor heap.
 	// Create the depth stencil.
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
@@ -199,10 +208,12 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		IID_PPV_ARGS(&g_pEngine->m_pDepthStencil)
 		));
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SSAO
-	InitSSAO(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitSSAO_Pre(g_pEngine->m_pDevice, uWidth, uHeight);
 
-	//
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SRV
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uStart = 0;
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uCount = 1;
 
@@ -212,7 +223,6 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	DHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&DHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap))));
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
 	g_pEngine->m_pDevice->CreateDepthStencilView(g_pEngine->m_pDepthStencil.Get(), &depthStencilDesc, g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Describe and create a constant buffer view (CBV), Shader resource
@@ -236,11 +246,10 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	CSUHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	CSUHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&CSUHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_pDescriptorHeap))));
-
-	//
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_CCSU].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	//
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// GraphicRoot
 	{
 		CD3DX12_DESCRIPTOR_RANGE granges[GRDT_COUNT];
 		granges[GRDT_CBV_FRAMEBUFFER].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);				// Content
@@ -282,7 +291,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		ThrowIfFailed(g_pEngine->m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&g_pEngine->m_pGraphicRootSignature)));
 	}
 
-	//
+	// ComputeRoot
 	{
 		CD3DX12_DESCRIPTOR_RANGE cranges[CRDT_COUNT];
 		cranges[CRDT_SRV_TEXTURE].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);					// Texture
@@ -323,7 +332,8 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		ThrowIfFailed(g_pEngine->m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&g_pEngine->m_pComputeRootSignature)));
 	}
 
-	//
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Viewport & Scissor
 	g_pEngine->m_Viewport.TopLeftX = 0;
 	g_pEngine->m_Viewport.TopLeftY = 0;
 	g_pEngine->m_Viewport.Width = static_cast<float>(uWidth);
@@ -334,6 +344,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_ScissorRect.right = static_cast<LONG>(uWidth);
 	g_pEngine->m_ScissorRect.bottom = static_cast<LONG>(uHeight);
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
 	g_pResourceThread = new XResourceThread();
 	g_pResourceThread->Init(g_pEngine->m_pDevice);
@@ -357,6 +368,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	// PostProcess
 	InitPostProcess(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitScreenSpaceReflection(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitSSAO(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitSMAA(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	//
@@ -431,7 +443,7 @@ bool Render()
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
 	
 	// PostProcess
-	//SSAO_Render(pCommandList);
+	SSAO_Render(pCommandList);
 	SMAA_Render(pCommandList);
 	pFrameResource->EndRender();
 
