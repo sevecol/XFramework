@@ -45,6 +45,7 @@ PSInput VSMain(VSInput input)
 	float3 normal = float3(input.normal.x,input.normal.y,input.normal.z);
 	
 	result.position = mul(float4(position, 1.0f), mViewProj);
+
 	result.positionW 	= position.xyz;
 	result.normal  		= normal.xyz;
 	result.tangent		= input.tangent;
@@ -64,6 +65,7 @@ struct PsOutput
 	float4 color0 	: SV_TARGET0;
 	float4 color1  	: SV_TARGET1;
 	float4 color2  	: SV_TARGET2;
+	float depth 	: SV_DEPTH;
 };
 
 // Data that we can read or derive from the surface shader outputs
@@ -164,6 +166,10 @@ PsOutput PSMain(PSInput input)
 	//
 	//float4(0.972f,0.96f,0.915f,1.0f);//float4(1.0f,0.8f,0.5f,1.0f);
 	result.color2 = float4(g_txDiffuse.Sample(g_sampler, input.uv).xyz,1.0f);
+
+	//
+	float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
+	result.depth = position.z/position.w;
 	
 	return result;
 }

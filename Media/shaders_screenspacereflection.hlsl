@@ -58,8 +58,16 @@ SamplerState g_sampler : register(s0);
 
 //RWStructuredBuffer<float>		g_Result  : register(u1);
 
-float4 PSMain(PSInput input) : SV_TARGET
+struct PsOutput
 {
+	float4 color 	: SV_TARGET;
+	float depth 	: SV_DEPTH;
+};
+
+PsOutput PSMain(PSInput input)
+{
+	PsOutput result;
+
 	float3 p = input.positionW;//float3(0.0,-8.0f,60.0f);//
 
 	float3 vToPoint = normalize(p - vEyePos.xyz);
@@ -106,5 +114,11 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float4 environment = g_EnvironmentLight.SampleLevel(g_sampler,vReflection,0);
 	color = lerp(color,environment,value);
 
-	return float4(color.xyz,1.0f);
+	result.color = float4(color.xyz,1.0f);
+
+	//
+	float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
+	result.depth = position.z/position.w;
+
+	return result;
 }
