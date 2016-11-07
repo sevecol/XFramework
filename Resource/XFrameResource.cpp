@@ -53,32 +53,6 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	mColorRTV[uIndex].CpuHandle = RenderTargetView.ptr;
 	mColorRTV[uIndex].pResource = m_pRenderTargets.Get();
 
-	{
-/*
-		// SRV
-		D3D12_SHADER_RESOURCE_VIEW_DESC NormalSRVDesc = {};
-		NormalSRVDesc.Format = NormalRTVDesc.Format;
-		NormalSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-#if MSAA_SAMPLE_COUNT > 1
-		NormalSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-#else
-		NormalSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		NormalSRVDesc.Texture2D.MipLevels = 1;
-		NormalSRVDesc.Texture2D.MostDetailedMip = 0; // No MIP
-		NormalSRVDesc.Texture2D.PlaneSlice = 0;
-		NormalSRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-#endif
-
-		mNormalSRV[FrameIndex] = {};
-		mNormalSRV[FrameIndex].pResource = mNormalBuffer[FrameIndex].Get();
-		CD3DX12_CPU_DESCRIPTOR_HANDLE NormalSRVHandle(
-			mSsaoDescHeapCbvSrvUav->GetCPUDescriptorHandleForHeapStart(),
-			SSAO_NUM_DEPTH_SRV + FrameIndex,
-			mDev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		mDev->CreateShaderResourceView(mNormalBuffer[FrameIndex].Get(), &NormalSRVDesc, NormalSRVHandle);
-*/
-	}
-
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
 	ThrowIfFailed(pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pRenderCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_pCommandList)));
