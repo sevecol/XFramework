@@ -119,18 +119,23 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 }
 void XEntity::Update()
 {
-	XMMATRIX mModel, mScale;
+	XMMATRIX mModel, mRotationX, mRotationY, mRotationZ, mScale;
 	XMFLOAT4X4 m;
 
 	float fx, fy, fz;
 	GetPos(fx, fy, fz);
 	mModel = XMMatrixTranslation(fx, fy, fz);
 
+	GetRotation(fx, fy, fz);
+	mRotationX = XMMatrixRotationX(fx);
+	mRotationY = XMMatrixRotationX(fy);
+	mRotationZ = XMMatrixRotationX(fz);
+
 	float fscale = GetScale();
 	mScale = XMMatrixScaling(fscale, fscale, fscale);
 
 	//
-	XMMATRIX temp = XMMatrixTranspose(mScale*mModel);
+	XMMATRIX temp = XMMatrixTranspose(mScale*mRotationX*mRotationY*mRotationZ*mModel);
 	XMStoreFloat4x4(&m, temp);
 	m_pConstantBuffers->m = m;
 }
