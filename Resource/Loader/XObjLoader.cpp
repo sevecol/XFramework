@@ -34,15 +34,17 @@ void ComputeTangent(sPosition& p0, sPosition& p1, sPosition& p2, sTexcoord& t0, 
 	float		v20 = t1.fValue[1] - t0.fValue[1];
 	float		v30 = t2.fValue[1] - t0.fValue[1];
 
+	float fScale = u30 / (v20 + EPSILON);
+
 	//
-	tangent.fValue[0] = (p30.x - (u30 / v20 + EPSILON)*p20.x) / (u30 - (u30 / v20 + EPSILON)*u20);
-	tangent.fValue[1] = (p30.y - (u30 / v20 + EPSILON)*p20.y) / (u30 - (u30 / v20 + EPSILON)*u20);
-	tangent.fValue[2] = (p30.z - (u30 / v20 + EPSILON)*p20.z) / (u30 - (u30 / v20 + EPSILON)*u20);
+	tangent.fValue[0] = (p30.x - fScale*p20.x) / (u30 - fScale*u20 + EPSILON);
+	tangent.fValue[1] = (p30.y - fScale*p20.y) / (u30 - fScale*u20 + EPSILON);
+	tangent.fValue[2] = (p30.z - fScale*p20.z) / (u30 - fScale*u20 + EPSILON);
 
 	float fLength = sqrt(tangent.fValue[0] * tangent.fValue[0] + tangent.fValue[1] * tangent.fValue[1] + tangent.fValue[2] * tangent.fValue[2]);
-	tangent.fValue[0] /= fLength + EPSILON;
-	tangent.fValue[1] /= fLength + EPSILON;
-	tangent.fValue[2] /= fLength + EPSILON;
+	tangent.fValue[0] /= (fLength + EPSILON);
+	tangent.fValue[1] /= (fLength + EPSILON);
+	tangent.fValue[2] /= (fLength + EPSILON);
 }
 
 void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT>& vIndex)
@@ -173,9 +175,9 @@ void ReadDataFromObjFile(LPCWSTR filename, vector<sVertex>& vVertex, vector<UINT
 
 			sPosition& tangent = vVertex[it->second.vVertexIndex[i]].vTangent;
 			float fLength = sqrt(tangent.fValue[0] * tangent.fValue[0] + tangent.fValue[1] * tangent.fValue[1] + tangent.fValue[2] * tangent.fValue[2]);
-			tangent.fValue[0] /= fLength + EPSILON;
-			tangent.fValue[1] /= fLength + EPSILON;
-			tangent.fValue[2] /= fLength + EPSILON;
+			tangent.fValue[0] /= (fLength + EPSILON);
+			tangent.fValue[1] /= (fLength + EPSILON);
+			tangent.fValue[2] /= (fLength + EPSILON);
 		}
 	}
 }
