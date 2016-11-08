@@ -23,5 +23,5 @@ SMAA:
 SSR
 ![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
 
-Nvidia:HBAO,using nvidia's lib
+Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
