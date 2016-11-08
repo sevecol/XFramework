@@ -209,10 +209,6 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 		));
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// SSAO
-	InitSSAO_Pre(g_pEngine->m_pDevice, uWidth, uHeight);
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SRV
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uStart = 0;
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uCount = 1;
@@ -339,6 +335,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_Viewport.Width = static_cast<float>(uWidth);
 	g_pEngine->m_Viewport.Height = static_cast<float>(uHeight);
 	g_pEngine->m_Viewport.MaxDepth = 1.0f;
+	g_pEngine->m_Viewport.MinDepth = 0.0f;
 	g_pEngine->m_ScissorRect.left = 0;
 	g_pEngine->m_ScissorRect.top = 0;
 	g_pEngine->m_ScissorRect.right = static_cast<LONG>(uWidth);
