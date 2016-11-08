@@ -36,7 +36,6 @@ void XFrameResource::Init(ID3D12Device* pDevice)
 	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU,3);
 }
 
-extern GFSDK_SSAO_RenderTargetView_D3D12 mColorRTV[FRAME_NUM];
 void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapChain3 *pSwapChain)
 {
 	m_uIndex = uIndex;
@@ -48,10 +47,12 @@ void XFrameResource::InitInstance(UINT uIndex, ID3D12Device* pDevice, IDXGISwapC
 	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView = GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_RTV, uRenderTargetBase + m_uIndex);
 	pDevice->CreateRenderTargetView(m_pRenderTargets.Get(), nullptr, RenderTargetView);
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
-	mColorRTV[uIndex] = {};
-	mColorRTV[uIndex].CpuHandle = RenderTargetView.ptr;
-	mColorRTV[uIndex].pResource = m_pRenderTargets.Get();
+	GFSDK_SSAO_RenderTargetView_D3D12 *pColorRTV = GetSSAORenderTargetView();
+	pColorRTV[uIndex] = {};
+	pColorRTV[uIndex].CpuHandle = RenderTargetView.ptr;
+	pColorRTV[uIndex].pResource = m_pRenderTargets.Get();
 
 	//
 	ThrowIfFailed(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pRenderCommandAllocator)));
