@@ -65,7 +65,7 @@ struct PsOutput
 	float4 color0 	: SV_TARGET0;
 	float4 color1  	: SV_TARGET1;
 	float4 color2  	: SV_TARGET2;
-	float depth 	: SV_DEPTH;
+	//float depth 	: SV_DEPTH;
 };
 
 // Data that we can read or derive from the surface shader outputs
@@ -168,8 +168,8 @@ PsOutput PSMain(PSInput input)
 	result.color2 = float4(g_txDiffuse.Sample(g_sampler, input.uv).xyz,1.0f);
 
 	//
-	float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
-	result.depth = position.z/position.w;
+	//float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
+	//result.depth = position.z/position.w;
 	
 	return result;
 }

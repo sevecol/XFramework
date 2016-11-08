@@ -61,7 +61,7 @@ SamplerState g_sampler : register(s0);
 struct PsOutput
 {
 	float4 color 	: SV_TARGET;
-	float depth 	: SV_DEPTH;
+	//float depth 	: SV_DEPTH;
 };
 
 PsOutput PSMain(PSInput input)
@@ -117,8 +117,8 @@ PsOutput PSMain(PSInput input)
 	result.color = float4(color.xyz,1.0f);
 
 	//
-	float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
-	result.depth = position.z/position.w;
+	//float4 position = mul(float4(input.positionW.xyz, 1.0f), mViewProj);
+	//result.depth = position.z/position.w;
 
 	return result;
 }
