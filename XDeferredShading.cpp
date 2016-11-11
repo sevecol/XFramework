@@ -11,15 +11,14 @@
 #define DEFERREDSHADING_RENDERTARGET_COUNT		RENDERTARGET_MAXNUM
 
 extern XCamera									g_Camera;
-
-extern UINT	g_uRenderTargetCount[ESHADINGPATH_COUNT];
-extern DXGI_FORMAT g_RenderTargetFortmat[ESHADINGPATH_COUNT][RENDERTARGET_MAXNUM];
-
 extern XEngine *g_pEngine;
 extern ID3D12DescriptorHeap	*GetHandleHeap(XEngine::XDescriptorHeapType eType);
 extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
+
+extern D3D12_INPUT_ELEMENT_DESC FullScreenElementDescs[];
+extern UINT uFullScreenElementCount;
 
 namespace DeferredShading
 {
@@ -47,20 +46,14 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 	uDispatchX = uWidth / 32 + 1;
 	uDispatchY = uHeight / 32 + 1;
 
-	//
+	// RenderTarget
 	for (unsigned int i = 0;i < DEFERREDSHADING_RENDERTARGET_COUNT;++i)
 	{
-		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(g_RenderTargetFortmat[ESHADINGPATH_DEFERRED][i], uWidth, uHeight, uRenderTargetBase + i, uGpuCSUBase + i);
+		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, uWidth, uHeight, uRenderTargetBase + i, uGpuCSUBase + i);
 	}
 
-	//
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_ds_shading.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	// GraphicShader ComputeShader
+	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_ds_shading.hlsl", XGraphicShaderInfo5("VSMain","PSMain"), FullScreenElementDescs, uFullScreenElementCount);
 	pClusteredShadingShader = XComputeShaderManager::CreateComputeShaderFromFile(L"Media\\shaders_ds_clusteredshading.hlsl", "CSMain", "cs_5_0");
 
 	// ConstantBuffer

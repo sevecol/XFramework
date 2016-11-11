@@ -136,16 +136,8 @@ bool InitHDR(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 	}
 
-	// Shader
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-	//DXGI_FORMAT Format[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
-	pShaderToneMapping = XGraphicShaderManager::CreatePostProcessGraphicShaderFromFile(L"Media\\shaders_hdr_tonemapping.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs,3);//, inputElementDescs, 3, 1, Format);
+	// GraphicShader ComputeShader
+	pShaderToneMapping = XGraphicShaderManager::CreatePostProcessGraphicShaderFromFile(L"Media\\shaders_hdr_tonemapping.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"));
 	pShaderLuminance[HDR::ELUMINANCEPHASE_2DTO1D] = XComputeShaderManager::CreateComputeShaderFromFile(L"Media\\shaders_hdr_luminance1.hlsl", "CSMain", "cs_5_0");
 	pShaderLuminance[HDR::ELUMINANCEPHASE_1DTO0D] = XComputeShaderManager::CreateComputeShaderFromFile(L"Media\\shaders_hdr_luminance2.hlsl", "CSMain", "cs_5_0");
 

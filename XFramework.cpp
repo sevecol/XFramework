@@ -142,6 +142,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	GetWindowRect(hWnd, &winrect);
 	GetClientRect(hWnd, &clientrect);
 
+	D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
 	//
 	bool bResult = CreateDevice(hWnd, 1280, 720, true);
 
@@ -155,14 +163,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityNormal->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
 		g_SceneGraph.AddNode(g_pEntityNormal);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityNormal->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityNormal->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityNormal->InitTexture(L"NormalEntity", 2, pTextureFileName,XTextureSet::ETEXTUREFILETYPE_OTHER);
@@ -176,14 +177,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityAlpha->SetRenderPathFlag(1 << ERENDERPATH_ALPHABLEND);
 		g_SceneGraph.AddNode(g_pEntityAlpha);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityAlpha->InitGraphicShader(ERENDERPATH_ALPHABLEND,L"Media\\shaders_entity_alpha.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+		g_pEntityAlpha->InitGraphicShader(ERENDERPATH_ALPHABLEND,L"Media\\shaders_entity_alpha.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
@@ -197,14 +191,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityPBRC->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
 		g_SceneGraph.AddNode(g_pEntityPBRC);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityPBRC->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRC->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\normal.jpg",L"Media\\mask_nonmetal.jpg" };
 		g_pEntityPBRC->InitTexture(L"EntityPBRC", 3, pTextureFileName);
@@ -222,14 +209,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityPBRL->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
 		g_SceneGraph.AddNode(g_pEntityPBRL);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityPBRL->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRL->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_silver.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metall.jpg" };
 		g_pEntityPBRL->InitTexture(L"EntityPBRL", 3, pTextureFileName);
@@ -248,14 +228,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityPBRR->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
 		g_SceneGraph.AddNode(g_pEntityPBRR);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityPBRR->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRR->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metalh.jpg" };
 		g_pEntityPBRR->InitTexture(L"EntityPBRR", 3, pTextureFileName);
@@ -280,14 +253,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityVertexIndex->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
 		g_SceneGraph.AddNode(g_pEntityVertexIndex);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-		g_pEntityVertexIndex->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityVertexIndex->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\people.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_nonmetal.jpg" };
 		g_pEntityVertexIndex->InitTexture(L"EntityPBTR", 3, pTextureFileName);
@@ -305,17 +271,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityVoxel->SetRenderPathFlag((1 << ERENDERPATH_VOXEL)|(1<< ERENDERPATH_SHADOWMAP));
 		g_SceneGraph.AddNode(g_pEntityVoxel);
 
-		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		};
-
-		DXGI_FORMAT uRenderTargetFormat[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
-		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_VOXEL, L"Media\\shaders_entity_voxel.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, 1, uRenderTargetFormat);
-		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_SHADOWMAP, L"Media\\shaders_entity_voxel.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, 1, uRenderTargetFormat);
+		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_VOXEL, L"Media\\shaders_entity_voxel.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
+		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_SHADOWMAP, L"Media\\shaders_entity_voxel.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), StandardVertexDescription, 4);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\normal.jpg",L"Media\\mask_nonmetal.jpg" };
 		g_pEntityVoxel->InitTexture(L"EntityPBRC", 3, pTextureFileName);
