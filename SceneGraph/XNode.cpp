@@ -4,6 +4,7 @@
 XNode::XNode()
 {
 	m_bVisiable = true;
+	m_uRenderPathFlag = 0;
 	m_fPosX = m_fPosY = m_fPosZ = 0.0f;
 	m_fRotationX = m_fRotationY = m_fRotationZ = 0.0f;
 	m_fScale = 1.0f;
@@ -16,6 +17,14 @@ void XNode::SetVisiable(bool bVisiable)
 bool XNode::GetVisable()
 {
 	return m_bVisiable;
+}
+void XNode::SetRenderPathFlag(UINT uRenderPathFlag)
+{
+	m_uRenderPathFlag = uRenderPathFlag;
+}
+UINT XNode::GetRenderPathFlag()
+{
+	return m_uRenderPathFlag;
 }
 
 void XNode::SetPos(float x, float y, float z)
