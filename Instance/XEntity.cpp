@@ -33,8 +33,13 @@ void XEntity::Init(ID3D12Device* pDevice)
 	uGpuCSUOffset = 0;
 }
 
-XEntity::XEntity():m_pTextureSet(nullptr),m_pShader(nullptr),m_pGeometry(nullptr)
+XEntity::XEntity():m_pTextureSet(nullptr),m_pGeometry(nullptr)
 {
+	for (unsigned int i = 0;i < ERENDERPATH_COUNT;++i)
+	{
+		m_pShader[i] = nullptr;
+	}
+
 	// Create an upload heap for the constant buffers.
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -65,7 +70,11 @@ XEntity::~XEntity()
 	m_pConstantBuffers = nullptr;
 
 	XTextureSetManager::DelResource(&m_pTextureSet);
-	XGraphicShaderManager::DelResource(&m_pShader);
+	for (unsigned int i = 0;i < ERENDERPATH_COUNT;++i)
+	{
+		XGraphicShaderManager::DelResource(&m_pShader[i]);
+	}
+	
 	XGeometryManager::DelResource(&m_pGeometry);
 }
 
@@ -89,9 +98,16 @@ IntersectionResult XEntity::Update(const OptFrustum* const frustum, UINT32 delta
 	return IR_Inside;
 }
 */
-void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue)
+void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, eRenderPath ePath, UINT64 uFenceValue)
 {
-	if ((pCommandList)&&(m_pShader)&&(m_pShader->GetPipelineState()))
+	XGraphicShader *pShader = m_pShader[ePath];
+	if (!pShader)
+	{
+		return;
+	}
+
+	//
+	if ((pCommandList)&&(m_pShader)&&(pShader->GetPipelineState()))
 	{
 		if (m_pTextureSet)
 		{
@@ -100,7 +116,7 @@ void XEntity::Render(ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue
 		pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, m_pConstantBuffers->uIndex));
 		
 		//
-		pCommandList->SetPipelineState(m_pShader->GetPipelineState());
+		pCommandList->SetPipelineState(pShader->GetPipelineState());
 		pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		pCommandList->IASetVertexBuffers(0, 1, m_pGeometry->GetVertexBufferView());
 		if (m_pGeometry->GetNumIndices())
@@ -140,15 +156,15 @@ void XEntity::Update()
 	m_pConstantBuffers->m = m;
 }
 
-XGraphicShader* XEntity::InitGraphicShader(LPCWSTR pFileName,LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
+XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
 {
-	m_pShader = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
-	return m_pShader;
+	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
+	return m_pShader[ePath];
 }
-XGraphicShader* XEntity::InitGraphicShader(LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
+XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
 {
-	m_pShader = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
-	return m_pShader;
+	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
+	return m_pShader[ePath];
 }
 /*
 bool Entity::InitMaterial(LPCWSTR pName, UINT uWidth,UINT uHeight,UINT uPixelSize, CreateTextureFun pFun, UINT uParameter)

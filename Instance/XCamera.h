@@ -36,6 +36,8 @@ public:
 
 	OptFrustum* GetFrustum();
 	XMFLOAT3* GetPosition();
+	float GetNear();
+	float GetFar();
 
 private:
 	void Reset();

@@ -277,8 +277,15 @@ OptFrustum* XCamera::GetFrustum()
 {
 	return &m_frustum;
 }
-
 XMFLOAT3* XCamera::GetPosition()
 {
 	return &m_position;
+}
+float XCamera::GetNear()
+{
+	return m_nearPlane;
+}
+float XCamera::GetFar()
+{
+	return m_farPlane;
 }
