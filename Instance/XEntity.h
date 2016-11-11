@@ -42,8 +42,8 @@ public:
 	virtual void Update();
 
 	//
-	XGraphicShader* InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
-	XGraphicShader* InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, ESHADINGPATH eShadingPath = ESHADINGPATH_FORWORD);
+	XGraphicShader* InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, XGraphicShaderInfo& rGraphicShaderInfo, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[]);
+	XGraphicShader* InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, XGraphicShaderInfo& rGraphicShaderInfo, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount);
 	//virtual bool InitMaterial(LPCWSTR pName, UINT uWidth, UINT uHeight, UINT uPixelSize, CreateTextureFun pFun, UINT uParameter);
 	XTextureSet* InitTexture(LPCWSTR pName, UINT uCount, LPCWSTR pFileName[]);
 	XTextureSet* InitTexture(LPCWSTR pName, UINT uWidth, UINT uHeight, DXGI_FORMAT Format, UINT8 *pData, UINT uPixelSize);

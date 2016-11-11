@@ -26,6 +26,20 @@ namespace Entity
 }
 using namespace Entity;
 
+struct ShaderRenderTarget
+{
+	UINT			uCount;
+	DXGI_FORMAT		Format[3];
+};
+ShaderRenderTarget gShaderRenderTarget[ERENDERPATH_COUNT] =
+{
+	{ 1, DXGI_FORMAT_R16G16B16A16_FLOAT },																	//ERENDERPATH_SHADOWMAP
+	{ 3, DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT ,DXGI_FORMAT_R16G16B16A16_FLOAT },	//ERENDERPATH_GEOMETRY
+	{ 1, DXGI_FORMAT_R32G32B32A32_FLOAT },																	//ERENDERPATH_ALPHABLEND
+	{ 1, DXGI_FORMAT_R32G32B32A32_FLOAT },																	//ERENDERPATH_POST
+	{ 1, DXGI_FORMAT_R8G8B8A8_UNORM },																		//ERENDERPATH_VOXEL
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void XEntity::Init(ID3D12Device* pDevice)
 {
@@ -156,14 +170,26 @@ void XEntity::Update()
 	m_pConstantBuffers->m = m;
 }
 
-XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint,LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount, ESHADINGPATH eShadingPath)
+XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, XGraphicShaderInfo& rGraphicShaderInfo, D3D12_INPUT_ELEMENT_DESC InputElementDescs[],UINT uInputElementCount)
 {
-	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, eShadingPath);
+	CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+	depthStencilDesc.DepthEnable = true;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	depthStencilDesc.StencilEnable = FALSE;
+
+	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, rGraphicShaderInfo, depthStencilDesc, InputElementDescs, uInputElementCount, gShaderRenderTarget[ePath].uCount, gShaderRenderTarget[ePath].Format);
 	return m_pShader[ePath];
 }
-XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, LPCSTR pVSEntryPoint, LPCSTR pVSTarget, LPCSTR pPSEntryPoint, LPCSTR pPSTarget, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
+XGraphicShader* XEntity::InitGraphicShader(eRenderPath ePath, LPCWSTR pFileName, XGraphicShaderInfo& rGraphicShaderInfo, D3D12_INPUT_ELEMENT_DESC InputElementDescs[], UINT uInputElementCount, UINT uRenderTargetCount,DXGI_FORMAT RenderTargetFormat[])
 {
-	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, pVSEntryPoint, pVSTarget, pPSEntryPoint, pPSTarget, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
+	CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+	depthStencilDesc.DepthEnable = true;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	depthStencilDesc.StencilEnable = FALSE;
+
+	m_pShader[ePath] = XGraphicShaderManager::CreateGraphicShaderFromFile(pFileName, rGraphicShaderInfo, depthStencilDesc, InputElementDescs, uInputElementCount, uRenderTargetCount, RenderTargetFormat);
 	return m_pShader[ePath];
 }
 /*

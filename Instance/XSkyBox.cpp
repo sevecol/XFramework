@@ -9,6 +9,9 @@ extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
+extern D3D12_INPUT_ELEMENT_DESC FullScreenElementDescs[];
+extern UINT uFullScreenElementCount;
+
 namespace SkyBox
 {
 	UINT								uGpuCSUBase;
@@ -30,18 +33,7 @@ bool InitSkyBox(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	pSkyDiffuseTexture = XTextureSetManager::CreateCubeTexture(L"SkyDiffuseTexture", L"Media\\skydiffuse.dds", uGpuCSUBase+1);
 
 	// Shader
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-	CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
-	depthStencilDesc.DepthEnable = true;
-	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	depthStencilDesc.StencilEnable = FALSE;
-	pSkyBoxShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_skybox_ds.hlsl", depthStencilDesc, "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	pSkyBoxShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_skybox_ds.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), FullScreenElementDescs, uFullScreenElementCount);
 
 	return true;
 }
