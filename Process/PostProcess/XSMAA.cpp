@@ -8,6 +8,9 @@
 extern XEngine *g_pEngine;
 extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 
+extern D3D12_INPUT_ELEMENT_DESC FullScreenElementDescs[];
+extern UINT uFullScreenElementCount;
+
 namespace SMAA
 {
 	UINT										uGpuCSUBase;
@@ -39,14 +42,8 @@ bool InitSMAA(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 		nullptr,
 		IID_PPV_ARGS(&pCpuTexture)));
 
-	//
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\SMAA.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3);
+	// GraphicShader
+	pShadingShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\SMAA.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), FullScreenElementDescs, uFullScreenElementCount);
 
 	return true;
 }

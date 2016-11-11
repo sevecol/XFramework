@@ -51,7 +51,7 @@ bool InitVoxelConeTracing(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	ScissorRect.right	= 32;
 	ScissorRect.bottom	= 32;
 
-	//
+	// RenderTarget
 	for (unsigned int i = 0;i < 3;++i)
 	{
 		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, 32, 32, uRenderTargetBase + i, uGpuCSUBase + i);

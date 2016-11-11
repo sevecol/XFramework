@@ -14,6 +14,9 @@ extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
+extern D3D12_INPUT_ELEMENT_DESC FullScreenElementDescs[];
+extern UINT uFullScreenElementCount;
+
 namespace AlphaRender
 {
 	UINT									uGpuCSUBase;
@@ -94,14 +97,8 @@ bool InitAlphaRender(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 		pDevice->CreateUnorderedAccessView(pSBuffer[i]->GetResource(), nullptr, &UDesc, AlphaRender::hUAVCpuHandle[i]);
 	}
 
-	//
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0,	0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_oit_final.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", inputElementDescs, 3, ESHADINGPATH_FORWORD);
+	// GraphicShader ComputeShader
+	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shaders_oit_final.hlsl", XGraphicShaderInfo5("VSMain", "PSMain"), FullScreenElementDescs, uFullScreenElementCount);
 	pComputeShader = XComputeShaderManager::CreateComputeShaderFromFile(L"Media\\shaders_oit_finalcs.hlsl", "CSMain", "cs_5_0");
 
 	// ResultBuffer
