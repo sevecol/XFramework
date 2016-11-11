@@ -118,6 +118,15 @@ XGeometry* XGeometryManager::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UIN
 	return pGeometry;
 }
 
+XGeometry *pFullScreenGeometry = nullptr;
+XGeometry *pXZPlaneGeometry = nullptr;
+void XGeometry::Clean()
+{
+	//
+	XGeometryManager::DelResource(&pFullScreenGeometry);
+	XGeometryManager::DelResource(&pXZPlaneGeometry);
+}
+
 //
 void Render(ID3D12GraphicsCommandList *pCommandList, XGeometry *pGeometry, XGraphicShader *pShader, XTextureSet *pTexture)
 {
@@ -140,7 +149,6 @@ void Render(ID3D12GraphicsCommandList *pCommandList, XGeometry *pGeometry, XGrap
 }
 
 //
-XGeometry *pFullScreenGeometry = nullptr;
 class FullScreenResource : public IResourceLoad
 {
 public:
@@ -199,7 +207,6 @@ void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *p
 }
 
 //
-XGeometry *pXZPlaneGeometry = nullptr;
 class XZPlaneResource : public IResourceLoad
 {
 public:

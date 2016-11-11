@@ -26,6 +26,8 @@ public:
 	virtual D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() { return &m_IndexBufferView; }
 	virtual UINT GetNumIndices() { return m_uNumIndices; }
 	virtual UINT GetNumVertexs() { return m_uNumVertexs; }
+
+	static void Clean();
 };
 class XGeometryManager : public XResourceManager<XGeometry>
 {

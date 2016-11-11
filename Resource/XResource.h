@@ -5,6 +5,11 @@
 #include <string>
 #include <map>
 
+#define SAFE_DELETE(p)              { if(p) { delete (p);       (p)=NULL; } }
+#define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
+#define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
+#define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
+
 class XResource
 {
 	std::wstring	m_sName;

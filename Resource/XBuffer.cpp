@@ -1,7 +1,8 @@
 
 #include "XBuffer.h"
-#include "XFrameResource.h"
+#include "XResource.h"
 
+#include "..\XFrameResource.h"
 #include "..\d3dx12.h"
 #include "..\DXSampleHelper.h"
 
