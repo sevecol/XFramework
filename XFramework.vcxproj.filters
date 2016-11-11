@@ -52,17 +52,23 @@
     <Filter Include="资源文件\hlsl">
       <UniqueIdentifier>{2bf073b9-be3b-4de3-b35c-f21e5184fc9a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\PostProcess">
-      <UniqueIdentifier>{b03b362d-464d-44d8-9c68-9153a44ab9e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="源文件\PostProcess">
-      <UniqueIdentifier>{f5e0d011-9033-4563-a2e2-b26a07e5fc6c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="头文件\Resource\Loader">
       <UniqueIdentifier>{3a42d479-34f6-47f6-95cf-efb42a5af0c4}</UniqueIdentifier>
     </Filter>
     <Filter Include="源文件\Resource\Loader">
       <UniqueIdentifier>{1dba8114-89aa-4031-bf4f-a8ad3321f3f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Process">
+      <UniqueIdentifier>{23b051eb-7327-4552-b25f-9cd662d45c36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Process\PostProcess">
+      <UniqueIdentifier>{f5e0d011-9033-4563-a2e2-b26a07e5fc6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Process">
+      <UniqueIdentifier>{048e68a1-d208-405d-9169-9222620bf183}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Process\PostProcess">
+      <UniqueIdentifier>{b03b362d-464d-44d8-9c68-9153a44ab9e6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -82,9 +88,6 @@
       <Filter>头文件\UI</Filter>
     </ClInclude>
     <ClInclude Include="Resource\XBuffer.h">
-      <Filter>头文件\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource\XFrameResource.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource\XGeometry.h">
@@ -129,9 +132,6 @@
     <ClInclude Include="Resource\XResource.h">
       <Filter>头文件\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="XAlphaRender.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="XDeferredShading.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -150,9 +150,6 @@
     <ClInclude Include="Instance\XSkyBox.h">
       <Filter>头文件\Instance</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcess\XSMAA.h">
-      <Filter>头文件\PostProcess</Filter>
-    </ClInclude>
     <ClInclude Include="Resource\Loader\XBinLoader.h">
       <Filter>头文件\Resource\Loader</Filter>
     </ClInclude>
@@ -162,14 +159,29 @@
     <ClInclude Include="Resource\Loader\XVertexIndexLoader.h">
       <Filter>头文件\Resource\Loader</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcess\XScreenSpaceReflection.h">
-      <Filter>头文件\PostProcess</Filter>
+    <ClInclude Include="Process\XVoxelConeTracing.h">
+      <Filter>头文件\Process</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcess\XPostProcess.h">
-      <Filter>头文件\PostProcess</Filter>
+    <ClInclude Include="XFrameResource.h">
+      <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcess\XSSAO.h">
-      <Filter>头文件\PostProcess</Filter>
+    <ClInclude Include="Process\PostProcess\xpostprocess.h">
+      <Filter>头文件\Process\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Process\PostProcess\XScreenSpaceReflection.h">
+      <Filter>头文件\Process\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Process\PostProcess\XSMAA.h">
+      <Filter>头文件\Process\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Process\PostProcess\XSSAO.h">
+      <Filter>头文件\Process\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Process\XAlphaRender.h">
+      <Filter>头文件\Process</Filter>
+    </ClInclude>
+    <ClInclude Include="Process\XShadowMap.h">
+      <Filter>头文件\Process</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -200,9 +212,6 @@
     <ClCompile Include="Thread\XResourceThread.cpp">
       <Filter>源文件\Thread</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\XFrameResource.cpp">
-      <Filter>源文件\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Resource\XTexture.cpp">
       <Filter>源文件\Resource</Filter>
     </ClCompile>
@@ -214,9 +223,6 @@
     </ClCompile>
     <ClCompile Include="Resource\DDSTextureLoader.cpp">
       <Filter>源文件\Resource\Helper</Filter>
-    </ClCompile>
-    <ClCompile Include="XAlphaRender.cpp">
-      <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="XDeferredShading.cpp">
       <Filter>源文件</Filter>
@@ -236,9 +242,6 @@
     <ClCompile Include="Instance\XSkyBox.cpp">
       <Filter>源文件\Instance</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcess\XSMAA.cpp">
-      <Filter>源文件\PostProcess</Filter>
-    </ClCompile>
     <ClCompile Include="Resource\Loader\XBinLoader.cpp">
       <Filter>源文件\Resource\Loader</Filter>
     </ClCompile>
@@ -248,14 +251,29 @@
     <ClCompile Include="Resource\Loader\XVertexIndexLoader.cpp">
       <Filter>源文件\Resource\Loader</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcess\XScreenSpaceReflection.cpp">
-      <Filter>源文件\PostProcess</Filter>
+    <ClCompile Include="Process\XVoxelConeTracing.cpp">
+      <Filter>源文件\Process</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcess\XPostProcess.cpp">
-      <Filter>源文件\PostProcess</Filter>
+    <ClCompile Include="Process\XAlphaRender.cpp">
+      <Filter>源文件\Process</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcess\XSSAO.cpp">
-      <Filter>源文件\PostProcess</Filter>
+    <ClCompile Include="Process\XShadowMap.cpp">
+      <Filter>源文件\Process</Filter>
+    </ClCompile>
+    <ClCompile Include="XFrameResource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Process\PostProcess\XPostProcess.cpp">
+      <Filter>源文件\Process\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Process\PostProcess\XScreenSpaceReflection.cpp">
+      <Filter>源文件\Process\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Process\PostProcess\XSMAA.cpp">
+      <Filter>源文件\Process\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Process\PostProcess\XSSAO.cpp">
+      <Filter>源文件\Process\PostProcess</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

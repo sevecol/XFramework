@@ -148,10 +148,13 @@
     <ClInclude Include="Instance\XCamera.h" />
     <ClInclude Include="Instance\XEntity.h" />
     <ClInclude Include="Instance\XSkyBox.h" />
-    <ClInclude Include="PostProcess\XPostProcess.h" />
-    <ClInclude Include="PostProcess\XScreenSpaceReflection.h" />
-    <ClInclude Include="PostProcess\XSMAA.h" />
-    <ClInclude Include="PostProcess\XSSAO.h" />
+    <ClInclude Include="Process\PostProcess\xpostprocess.h" />
+    <ClInclude Include="Process\PostProcess\XScreenSpaceReflection.h" />
+    <ClInclude Include="Process\PostProcess\XSMAA.h" />
+    <ClInclude Include="Process\PostProcess\XSSAO.h" />
+    <ClInclude Include="Process\XAlphaRender.h" />
+    <ClInclude Include="Process\XShadowMap.h" />
+    <ClInclude Include="Process\XVoxelConeTracing.h" />
     <ClInclude Include="Resource\dds.h" />
     <ClInclude Include="Resource\DDSTextureLoader.h" />
     <ClInclude Include="Resource\DirectXHelpers.h" />
@@ -163,7 +166,6 @@
     <ClInclude Include="Resource\PlatformHelpers.h" />
     <ClInclude Include="Resource\ResourceUploadBatch.h" />
     <ClInclude Include="Resource\XBuffer.h" />
-    <ClInclude Include="Resource\XFrameResource.h" />
     <ClInclude Include="Resource\XGeometry.h" />
     <ClInclude Include="Resource\XResource.h" />
     <ClInclude Include="Resource\XShader.h" />
@@ -175,9 +177,9 @@
     <ClInclude Include="UI\UIImgWindow.h" />
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UI\UIWindow.h" />
-    <ClInclude Include="XAlphaRender.h" />
     <ClInclude Include="XDeferredShading.h" />
     <ClInclude Include="XDirectX12.h" />
+    <ClInclude Include="XFrameResource.h" />
     <ClInclude Include="XFramework.h" />
     <ClInclude Include="XHDR.h" />
   </ItemGroup>
@@ -185,17 +187,19 @@
     <ClCompile Include="Instance\XCamera.cpp" />
     <ClCompile Include="Instance\XEntity.cpp" />
     <ClCompile Include="Instance\XSkyBox.cpp" />
-    <ClCompile Include="PostProcess\XPostProcess.cpp" />
-    <ClCompile Include="PostProcess\XScreenSpaceReflection.cpp" />
-    <ClCompile Include="PostProcess\XSMAA.cpp" />
-    <ClCompile Include="PostProcess\XSSAO.cpp" />
+    <ClCompile Include="Process\PostProcess\XPostProcess.cpp" />
+    <ClCompile Include="Process\PostProcess\XScreenSpaceReflection.cpp" />
+    <ClCompile Include="Process\PostProcess\XSMAA.cpp" />
+    <ClCompile Include="Process\PostProcess\XSSAO.cpp" />
+    <ClCompile Include="Process\XAlphaRender.cpp" />
+    <ClCompile Include="Process\XShadowMap.cpp" />
+    <ClCompile Include="Process\XVoxelConeTracing.cpp" />
     <ClCompile Include="Resource\DDSTextureLoader.cpp" />
     <ClCompile Include="Resource\Loader\XBinLoader.cpp" />
     <ClCompile Include="Resource\Loader\XObjLoader.cpp" />
     <ClCompile Include="Resource\Loader\XVertexIndexLoader.cpp" />
     <ClCompile Include="Resource\ResourceUploadBatch.cpp" />
     <ClCompile Include="Resource\XBuffer.cpp" />
-    <ClCompile Include="Resource\XFrameResource.cpp" />
     <ClCompile Include="Resource\XGeometry.cpp" />
     <ClCompile Include="Resource\XShader.cpp" />
     <ClCompile Include="Resource\XTexture.cpp" />
@@ -205,9 +209,9 @@
     <ClCompile Include="UI\UIImgWindow.cpp" />
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UI\UIWindow.cpp" />
-    <ClCompile Include="XAlphaRender.cpp" />
     <ClCompile Include="XDeferredShading.cpp" />
     <ClCompile Include="XDirectX12.cpp" />
+    <ClCompile Include="XFrameResource.cpp" />
     <ClCompile Include="XFramework.cpp" />
     <ClCompile Include="XHDR.cpp" />
   </ItemGroup>
