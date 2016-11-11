@@ -14,7 +14,8 @@ struct Vertex
 
 bool LoadVertices(const WCHAR* FileName, std::vector<Vertex>& OutVertices)
 {
-	FILE* fp = _wfopen(FileName, L"rb");
+	FILE* fp = nullptr;
+	_wfopen_s(&fp,FileName, L"rb");
 	if (!fp) return false;
 
 	fseek(fp, 0L, SEEK_END);
@@ -42,7 +43,8 @@ bool LoadVertices(const WCHAR* FileName, std::vector<Vertex>& OutVertices)
 
 bool LoadIndices(const WCHAR* FileName, std::vector<uint32_t>& OutIndices)
 {
-	FILE* fp = _wfopen(FileName, L"rb");
+	FILE* fp = nullptr;
+	_wfopen_s(&fp,FileName, L"rb");
 	if (!fp) return false;
 
 	fseek(fp, 0L, SEEK_END);
