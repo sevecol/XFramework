@@ -12,6 +12,8 @@
 #include "Resource\Loader\XVertexIndexLoader.h"
 #include "Thread\XResourceThread.h"
 
+#include "Process\PostProcess\XSSAO.h"
+
 extern XCamera			g_Camera;
 extern XSceneGraph		g_SceneGraph;
 XEntity					*g_pEntityNormal;
@@ -20,6 +22,7 @@ XEntity					*g_pEntityPBRL;
 XEntity					*g_pEntityPBRC;
 XEntity					*g_pEntityPBRR;
 XEntity					*g_pEntityVertexIndex;
+XEntity					*g_pEntityVoxel;
 
 //extern UIManager		g_UIManager;
 extern XResourceThread	*g_pResourceThread;
@@ -149,7 +152,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	{
 		g_pEntityNormal = new XEntity();
 		g_pEntityNormal->SetVisiable(false);
-		g_SceneGraph.AddNode(ERENDERPATH_NORMAL, g_pEntityNormal);
+		g_pEntityNormal->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
+		g_SceneGraph.AddNode(g_pEntityNormal);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -158,7 +162,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityNormal->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityNormal->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityNormal->InitTexture(L"NormalEntity", 2, pTextureFileName,XTextureSet::ETEXTUREFILETYPE_OTHER);
@@ -169,7 +173,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityAlpha = new XEntity();
-		g_SceneGraph.AddNode(ERENDERPATH_ALPHABLEND,g_pEntityAlpha);
+		g_pEntityAlpha->SetRenderPathFlag(1 << ERENDERPATH_ALPHABLEND);
+		g_SceneGraph.AddNode(g_pEntityAlpha);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -178,7 +183,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityAlpha->InitGraphicShader(L"Media\\shaders_entity_alpha.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
+		g_pEntityAlpha->InitGraphicShader(ERENDERPATH_ALPHABLEND,L"Media\\shaders_entity_alpha.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
@@ -189,7 +194,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityPBRC = new XEntity();
-		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRC);
+		g_pEntityPBRC->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
+		g_SceneGraph.AddNode(g_pEntityPBRC);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -198,7 +204,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBRC->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRC->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\normal.jpg",L"Media\\mask_nonmetal.jpg" };
 		g_pEntityPBRC->InitTexture(L"EntityPBRC", 3, pTextureFileName);
@@ -213,7 +219,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	{
 		g_pEntityPBRL = new XEntity();
 		g_pEntityPBRL->SetPos(-18.0f, 0.0f, 0.0f);
-		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRL);
+		g_pEntityPBRL->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
+		g_SceneGraph.AddNode(g_pEntityPBRL);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -222,7 +229,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBRL->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRL->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_silver.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metall.jpg" };
 		g_pEntityPBRL->InitTexture(L"EntityPBRL", 3, pTextureFileName);
@@ -238,7 +245,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		g_pEntityPBRR = new XEntity();
 		g_pEntityPBRR->SetPos(18.0f, 0.0f, 0.0f);
 		g_pEntityPBRR->SetScale(1.0f);
-		g_SceneGraph.AddNode(ERENDERPATH_NORMAL,g_pEntityPBRR);
+		g_pEntityPBRR->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
+		g_SceneGraph.AddNode(g_pEntityPBRR);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -247,7 +255,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityPBRR->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityPBRR->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
 		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_gold.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_metalh.jpg" };
 		g_pEntityPBRR->InitTexture(L"EntityPBRR", 3, pTextureFileName);
@@ -261,11 +269,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	}
 	{
 		g_pEntityVertexIndex = new XEntity();
-		g_pEntityVertexIndex->SetPos(0.0f, 10.0f, 0.0f);
-		g_pEntityVertexIndex->SetScale(100.0f);
-		g_pEntityVertexIndex->SetRotation(-PI2/8.0f, PI2 / 4.0f, 0.0f);
+		//g_pEntityVertexIndex->SetPos(0.0f, 10.0f, 0.0f);
+		//g_pEntityVertexIndex->SetScale(100.0f);
+		//g_pEntityVertexIndex->SetRotation(-PI2/8.0f, PI2 / 4.0f, 0.0f);
 		//g_pEntityVertexIndex->SetVisiable(false);
-		g_SceneGraph.AddNode(ERENDERPATH_NORMAL, g_pEntityVertexIndex);
+
+		g_pEntityVertexIndex->SetScale(0.04f);
+		g_pEntityVertexIndex->SetRotation(-PI2/4.0f, 0.0f, 0.0f);
+		g_pEntityVertexIndex->SetPos(0.0f, -10.0f, 0.0f);
+		g_pEntityVertexIndex->SetRenderPathFlag(1 << ERENDERPATH_GEOMETRY);
+		g_SceneGraph.AddNode(g_pEntityVertexIndex);
 
 		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
 		{
@@ -274,17 +287,45 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
-		g_pEntityVertexIndex->InitGraphicShader(L"Media\\shaders_entity_ds.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
+		g_pEntityVertexIndex->InitGraphicShader(ERENDERPATH_GEOMETRY,L"Media\\shaders_entity_geometry.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, ESHADINGPATH_DEFERRED);
 
-		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_nonmetal.jpg" };
+		LPCWSTR pTextureFileName[3] = { L"Media\\people.jpg",L"Media\\nullnormal.jpg",L"Media\\mask_nonmetal.jpg" };
 		g_pEntityVertexIndex->InitTexture(L"EntityPBTR", 3, pTextureFileName);
 
 		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
 		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
 
-		XVertexIndexResource *presource = new XVertexIndexResource(L"Media\\Sibenik");
+		//XVertexIndexResource *presource = new XVertexIndexResource(L"Media\\Sibenik");
+		XObjResource *presource = new XObjResource(L"Media\\people.obj");
 		presource->m_pEntity = g_pEntityVertexIndex;
 		g_pResourceThread->InsertResourceLoadTask(presource);
+	}
+	{
+		g_pEntityVoxel = new XEntity();
+		g_pEntityVoxel->SetRenderPathFlag((1 << ERENDERPATH_VOXEL)|(1<< ERENDERPATH_SHADOWMAP));
+		g_SceneGraph.AddNode(g_pEntityVoxel);
+
+		D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		DXGI_FORMAT uRenderTargetFormat[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
+		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_VOXEL, L"Media\\shaders_entity_voxel.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, 1, uRenderTargetFormat);
+		g_pEntityVoxel->InitGraphicShader(ERENDERPATH_SHADOWMAP, L"Media\\shaders_entity_voxel.hlsl", "VSMain", "vs_5_0", "PSMain", "ps_5_0", StandardVertexDescription, 4, 1, uRenderTargetFormat);
+
+		LPCWSTR pTextureFileName[3] = { L"Media\\albedo_stone.jpg",L"Media\\normal.jpg",L"Media\\mask_nonmetal.jpg" };
+		g_pEntityVoxel->InitTexture(L"EntityPBRC", 3, pTextureFileName);
+
+		//LPCWSTR pTextureFileName[2] = { L"terrain.png",L"wings.bmp" };
+		//g_pEntityAlpha->InitTexture(L"AlphaEntity", 2, pTextureFileName, XTextureSet::ETEXTUREFILETYPE_OTHER);
+
+		XObjResource *pobjresource = new XObjResource(L"Media\\entity.obj");
+		pobjresource->m_pEntity = g_pEntityVoxel;
+		g_pResourceThread->InsertResourceLoadTask(pobjresource);
 	}
 
 	//g_ResourceThread.WaitForResource();
@@ -323,7 +364,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 发送退出消息并返回
 //
 //
-extern bool bSSAO;
+bool bSSAO = true;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	g_Camera.ProcessMessage(message, wParam, lParam);
@@ -339,6 +380,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case 'Q':
 			bSSAO = 1 - bSSAO;
+			ApplySSAO(bSSAO);
 			break;
 		}
 	}

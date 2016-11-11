@@ -14,7 +14,7 @@ using namespace DirectX;
 using namespace Microsoft::WRL;
 
 #include "Thread\XResourceThread.h"
-#include "Resource\XFrameResource.h"
+#include "XFrameResource.h"
 //#include "UI\UIManager.h"
 
 enum ESHADINGPATH
@@ -36,11 +36,6 @@ void WaitForGpu();
 bool Update();
 bool Render();
 void Clean();
-
-#define SAFE_DELETE(p)              { if(p) { delete (p);       (p)=NULL; } }
-#define SAFE_FREE(p)                { if(p) { free(p);          (p)=NULL; } }
-#define SAFE_DELGRP(p)              { if(p) { delete[] (p);     (p)=NULL; } }
-#define SAFE_RELEASE(p)             { if(p) { (p)->Release();   (p)=NULL; } }
 
 #define GRDT_CBV_FRAMEBUFFER		0			// 1,0,b0
 #define GRDT_CBV_INSTANCEBUFFER		1			// 1,1,b1

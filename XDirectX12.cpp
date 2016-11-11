@@ -2,13 +2,15 @@
 #include "XDirectX12.h"
 
 #include "XDeferredShading.h"
-#include "XAlphaRender.h"
 #include "XHDR.h"
 
-#include "PostProcess\XPostProcess.h"
-#include "PostProcess\XScreenSpaceReflection.h"
-#include "PostProcess\XSMAA.h"
-#include "PostProcess\XSSAO.h"
+#include "Process\XShadowMap.h"
+#include "Process\XAlphaRender.h"
+#include "Process\XVoxelConeTracing.h"
+#include "Process\PostProcess\XPostProcess.h"
+#include "Process\PostProcess\XScreenSpaceReflection.h"
+#include "Process\PostProcess\XSMAA.h"
+#include "Process\PostProcess\XSSAO.h"
 
 #include "SceneGraph\XSceneGraph.h"
 
@@ -65,6 +67,31 @@ UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType,UINT uCount)
 	g_pEngine->m_hHandleHeap[eType].m_uStart += uCount;
 
 	return uStart;
+}
+
+void CreateDefaultDepthBuffer(ID3D12Resource** ppResource,UINT uWidth,UINT uHeight, D3D12_CPU_DESCRIPTOR_HANDLE hDescriptor)
+{
+	// Create the depth stencil.
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, uWidth, uHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue,
+		IID_PPV_ARGS(ppResource)
+		));
+
+	g_pEngine->m_pDevice->CreateDepthStencilView(*ppResource, &depthStencilDesc, hDescriptor);
 }
 
 // FrameResource
@@ -179,7 +206,6 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount = APP_NUM_RTV + GFSDK_SSAO_NUM_DESCRIPTORS_RTV_HEAP_D3D12;
 
 	D3D12_DESCRIPTOR_HEAP_DESC RHeapDesc = {};
-	// 3 for FrameSource RenderTarget,3 for DeferredShading RenderTarget,1 for HDR
 	RHeapDesc.NumDescriptors = g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uCount;
 	RHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	RHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -187,29 +213,7 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_RTV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Describe and create a depth stencil view (DSV) descriptor heap.
-	// Create the depth stencil.
-	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-	depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-	depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-	depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-	ThrowIfFailed(g_pEngine->m_pDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_TYPELESS, uWidth, uHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue,
-		IID_PPV_ARGS(&g_pEngine->m_pDepthStencil)
-		));
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// SRV
+	// DSV
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uStart = 0;
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uCount = 1;
 
@@ -218,9 +222,14 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 	DHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	DHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(g_pEngine->m_pDevice->CreateDescriptorHeap(&DHeapDesc, IID_PPV_ARGS(&(g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap))));
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Describe and create a depth stencil view (DSV) descriptor heap.
+	// Create the depth stencil.
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_uSize = g_pEngine->m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	g_pEngine->m_pDevice->CreateDepthStencilView(g_pEngine->m_pDepthStencil.Get(), &depthStencilDesc, g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CreateDefaultDepthBuffer(g_pEngine->m_pDepthStencil.ReleaseAndGetAddressOf(), uWidth, uHeight, g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_DSV].m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
+	// SRV
 	// Describe and create a constant buffer view (CBV), Shader resource
 	// view (SRV), and unordered access view (UAV) descriptor heap.
 	g_pEngine->m_hHandleHeap[XEngine::XDESCRIPTORHEAPTYPE_GCSU].m_uStart = 0;
@@ -359,8 +368,12 @@ bool CreateDevice(HWND hWnd, UINT uWidth, UINT uHeight, bool bWindow)
 
 	// Framework
 	InitDeferredShading(g_pEngine->m_pDevice,uWidth,uHeight);
-	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
 	InitHDR(g_pEngine->m_pDevice, uWidth, uHeight);
+
+	//
+	InitAlphaRender(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitShadowMap(g_pEngine->m_pDevice, uWidth, uHeight);
+	InitVoxelConeTracing(g_pEngine->m_pDevice, uWidth, uHeight);
 
 	// PostProcess
 	InitPostProcess(g_pEngine->m_pDevice, uWidth, uHeight);
@@ -390,6 +403,9 @@ bool Update()
 	DeferredShading_Update(matView, matProj);
 
 	//
+	ShadowMap_Update(matView, matProj);
+
+	//
 	g_SceneGraph.Update();
 
 	return true;
@@ -401,16 +417,35 @@ bool Render()
 	XFrameResource* pFrameResource = g_pFrameResource[g_uFrameIndex];
 	ID3D12GraphicsCommandList *pCommandList = pFrameResource->m_pCommandList.Get();
 
+	pFrameResource->Prepare();
+
+	///////////////////////////////////////////////////////////////////////
+	// ShadowMap
+	ShadowMap_Begin(pCommandList);
+	g_SceneGraph.Render(ERENDERPATH_SHADOWMAP, pCommandList, pFrameResource->m_uFenceValue);
+	ShadowMap_End(pCommandList);
+
+	///////////////////////////////////////////////////////////////////////
+	// VoxelConeTracing
+	VoxelConeTracing_Begin(pCommandList,0);
+	g_SceneGraph.Render(ERENDERPATH_VOXEL, pCommandList, pFrameResource->m_uFenceValue);
+	VoxelConeTracing_End(pCommandList,0);
+	VoxelConeTracing_Begin(pCommandList, 1);
+	g_SceneGraph.Render(ERENDERPATH_VOXEL, pCommandList, pFrameResource->m_uFenceValue);
+	VoxelConeTracing_End(pCommandList, 1);
+	VoxelConeTracing_Begin(pCommandList, 2);
+	g_SceneGraph.Render(ERENDERPATH_VOXEL, pCommandList, pFrameResource->m_uFenceValue);
+	VoxelConeTracing_End(pCommandList, 02);
+
 	///////////////////////////////////////////////////////////////////////
 	// FrameResource
 	pFrameResource->PreRender();
-	AlphaRender_PreRender(pCommandList);
 
 	///////////////////////////////////////////////////////////////////////
 	// DeferredShading
 	// DeferredShading_GBuffer
 	DeferredShading_GBuffer(pCommandList);
-	g_SceneGraph.Render(ERENDERPATH_NORMAL,pCommandList,pFrameResource->m_uFenceValue);
+	g_SceneGraph.Render(ERENDERPATH_GEOMETRY,pCommandList,pFrameResource->m_uFenceValue);
 	
 	// HDR_Bind
 	HDR_Bind(pCommandList);
@@ -438,6 +473,9 @@ bool Render()
 	pFrameResource->BeginRender();
 	HDR_ToneMapping(pCommandList);
 	//g_UIManager.Render(pCommandList, sFrameResource.m_uFenceValue);
+
+	//
+	VoxelConeTracing_Render(pCommandList);
 	
 	// PostProcess
 	SSAO_Render(pCommandList);
@@ -489,48 +527,43 @@ void WaitForGpu()
 	//m_FrameResource[m_uFrameIndex].m_uFenceValue++;
 }
 
-extern XGeometry *pFullScreenGeometry;
-extern XGeometry *pXZPlaneGeometry;
 void Clean()
 {
+	//
 	WaitForGpu();
 
 	//
-	CleanSSAO();
-
-	//
-	g_SceneGraph.Clean();
-
-	//
-	if (pFullScreenGeometry)
-	{
-		XGeometryManager::DelResource(&pFullScreenGeometry);
-	}
-	if (pXZPlaneGeometry)
-	{
-		XGeometryManager::DelResource(&pXZPlaneGeometry);
-	}
 	//g_UIManager.Clean();
 
+	//
 	for (UINT i = 0;i < FRAME_NUM;++i)
 	{
-		SAFE_DELETE(g_pFrameResource[i]);
+		g_pFrameResource[i]->Clean();
 	}
-	SAFE_DELETE(g_pResourceThread);
 
-	XBuffer::Clean();
-	XTextureSet::Clean();
-
+	// Framework
 	CleanDeferredShading();
-	CleanAlphaRender();
 	CleanHDR();
+	
+	// Process
+	CleanAlphaRender();
+	CleanShadowMap();
+	CleanVoxelConeTracing();
 
-	//
+	// PostProcess
 	CleanPostProcess();
 	CleanScreenSpaceReflection();
+	CleanSSAO();
 	CleanSMAA();
 
+	// Instance
 	CleanSkyBox();
+	g_SceneGraph.Clean();
+
+	// Resource
+	XGeometry::Clean();
+	XBuffer::Clean();
+	XTextureSet::Clean();
 
 	//
 	ID3D12Device *pDevice = g_pEngine->m_pDevice;
@@ -545,6 +578,13 @@ void Clean()
 	}
 #endif
 	pDevice->Release();
+
+	//
+	for (UINT i = 0;i < FRAME_NUM;++i)
+	{
+		SAFE_DELETE(g_pFrameResource[i]);
+	}
+	SAFE_DELETE(g_pResourceThread);
 }
 
 std::vector<PointLight> vPointLight;

@@ -30,7 +30,7 @@ namespace DeferredShading
 	XComputeShader								*pClusteredShadingShader = nullptr;
 
 	LightConstantBuffer							*pConstantBuffers = nullptr;
-	ID3D12Resource								*pConstantUploadHeap = nullptr;
+	ComPtr<ID3D12Resource>						pConstantUploadHeap = nullptr;
 
 	//
 	ID3D12Resource								*pResultBuffer = nullptr;
@@ -104,11 +104,7 @@ bool InitDeferredShading(ID3D12Device* pDevice,UINT uWidth, UINT uHeight)
 void CleanDeferredShading()
 {
 	// ConstantBuffer
-	if (pConstantUploadHeap)
-	{
-		pConstantUploadHeap->Unmap(0, nullptr);
-		SAFE_RELEASE(pConstantUploadHeap);
-	}
+	pConstantUploadHeap->Unmap(0, nullptr);
 	pConstantBuffers = nullptr;
 
 	XGraphicShaderManager::DelResource(&pShadingShader);
