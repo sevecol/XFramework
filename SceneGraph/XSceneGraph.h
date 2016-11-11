@@ -4,21 +4,13 @@
 #include "XNode.h"
 #include <vector>
 
-enum eRenderPath
-{
-	ERENDERPATH_NORMAL	= 0,
-	ERENDERPATH_ALPHABLEND,
-
-	ERENDERPATH_COUNT
-};
-
 class XSceneGraph
 {
-	std::vector<XNode*>		m_vNodes[ERENDERPATH_COUNT];
+	std::vector<XNode*>		m_vNodes;
 public:
-	void AddNode(eRenderPath eRenderPath,XNode* pNode);
+	void AddNode(XNode* pNode);
 	
-	void Render(eRenderPath eRenderPath,ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue);
+	void Render(eRenderPath ePath,ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue);
 	void Update();
 	void Clean();
 };

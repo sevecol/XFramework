@@ -1,39 +1,35 @@
 
 #include "XSceneGraph.h"
+#include "..\Resource\XResource.h"
 
-void XSceneGraph::AddNode(eRenderPath eRenderPath,XNode* pNode)
+void XSceneGraph::AddNode(XNode* pNode)
 {
-	m_vNodes[eRenderPath].push_back(pNode);
+	m_vNodes.push_back(pNode);
 }
 void XSceneGraph::Update()
 {
-	for (unsigned int i = 0;i < ERENDERPATH_COUNT;++i)
+	for (unsigned int i = 0;i < m_vNodes.size();++i)
 	{
-		for (unsigned int j = 0;j < m_vNodes[i].size();++j)
-		{
-			m_vNodes[i][j]->Update();
-		}
+		m_vNodes[i]->Update();
 	}
 }
-void XSceneGraph::Render(eRenderPath eRenderPath,ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue)
+void XSceneGraph::Render(eRenderPath ePath,ID3D12GraphicsCommandList* pCommandList, UINT64 uFenceValue)
 {
-	for (unsigned int i = 0;i < m_vNodes[eRenderPath].size();++i)
+	for (unsigned int i = 0;i < m_vNodes.size();++i)
 	{
-		if (m_vNodes[eRenderPath][i]->GetVisable())
+		XNode *pNode = m_vNodes[i];
+		if ((pNode->GetVisable())&&(pNode->GetRenderPathFlag()&(1<<ePath)))
 		{
-			m_vNodes[eRenderPath][i]->Render(pCommandList, uFenceValue);
+			pNode->Render(pCommandList, ePath, uFenceValue);
 		}
 	}
 }
 
 void XSceneGraph::Clean()
 {
-	for (unsigned int i = 0;i < ERENDERPATH_COUNT;++i)
+	for (unsigned int i = 0;i < m_vNodes.size();++i)
 	{
-		for (unsigned int j = 0;j < m_vNodes[i].size();++j)
-		{
-			SAFE_DELETE(m_vNodes[i][j]);
-		}
-		m_vNodes[i].clear();
+		SAFE_DELETE(m_vNodes[i]);
 	}
+	m_vNodes.clear();
 }
