@@ -14,11 +14,15 @@ extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
-extern D3D12_INPUT_ELEMENT_DESC StandardElementDescs[];
-extern UINT uStandardElementCount;
+extern D3D12_INPUT_ELEMENT_DESC PointElementDescs[];
+extern UINT uPointElementCount;
 
 namespace VoxelConeTracing
 {
+	UINT								uVoxelViewWorldW, uVoxelViewWorldH;
+	UINT								uVoxelViewPixelW, uVoxelViewPixelH;
+	float								fVoxelViewWPScale;
+
 	UINT								uRenderTargetBase, uGpuCSUBase;
 	XRenderTarget						*pRenderTargets[3] = { nullptr,nullptr,nullptr };
 	D3D12_VIEWPORT						Viewport;
@@ -26,7 +30,7 @@ namespace VoxelConeTracing
 	
 	XGraphicShader						*pGraphicShader = nullptr;
 
-	struct ConstantBuffer
+	struct FrameConstantBuffer
 	{
 		XMFLOAT4X4	mMv;
 		XMFLOAT4X4	mMvp;				// Model-view-projection (MVP) matrix.
@@ -35,32 +39,47 @@ namespace VoxelConeTracing
 		XMFLOAT4	vCameraNF;
 		FLOAT		fPadding[8];
 	};
-	ConstantBuffer*						pConstantBuffers;
-	ComPtr<ID3D12Resource>				pConstantUploadHeap;
+	FrameConstantBuffer*				pFrameConstantBuffers;
+	ComPtr<ID3D12Resource>				pFrameConstantUploadHeap;
+
+	struct InstanceConstantBuffer
+	{
+		XMFLOAT4	vParameter;
+		FLOAT		fPadding[60];
+	};
+	InstanceConstantBuffer*				pInstanceConstantBuffers;
+	ComPtr<ID3D12Resource>				pInstanceConstantUploadHeap;
 }
 using namespace VoxelConeTracing;
 
 extern D3D12_PRIMITIVE_TOPOLOGY_TYPE gTopologyType;
+extern D3D12_FILL_MODE gFillMode;
 bool InitVoxelConeTracing(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 {
 	uRenderTargetBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_RTV, 3);
-	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU, 4);
+	uGpuCSUBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_GCSU, 5);
 
+	//
+	uVoxelViewPixelW = uVoxelViewPixelH = 32;
+	uVoxelViewWorldW = uVoxelViewWorldH = 16;
+	fVoxelViewWPScale = (float)uVoxelViewWorldW / (float)uVoxelViewPixelW;
+
+	//
 	Viewport.TopLeftX	= 0;
 	Viewport.TopLeftY	= 0;
-	Viewport.Width		= 16;
-	Viewport.Height		= 16;
+	Viewport.Width		= uVoxelViewPixelW;
+	Viewport.Height		= uVoxelViewPixelH;
 	Viewport.MaxDepth	= 1.0f;
 	Viewport.MinDepth	= 0.0f;
 	ScissorRect.left	= 0;
 	ScissorRect.top		= 0;
-	ScissorRect.right	= 16;
-	ScissorRect.bottom	= 16;
+	ScissorRect.right	= uVoxelViewPixelW;
+	ScissorRect.bottom	= uVoxelViewPixelH;
 
 	// RenderTarget
 	for (unsigned int i = 0;i < 3;++i)
 	{
-		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, 16, 16, uRenderTargetBase + i, uGpuCSUBase + i);
+		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, uVoxelViewPixelW, uVoxelViewPixelH, uRenderTargetBase + i, uGpuCSUBase + i);
 	}
 
 	// GraphicShader
@@ -73,40 +92,74 @@ bool InitVoxelConeTracing(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 	depthStencilDesc.StencilEnable = FALSE;
 
 	gTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shader_voxelconetracing.hlsl", XGraphicShaderInfo5("VSMain", "PSMain","GSMain"), depthStencilDesc, StandardElementDescs, uStandardElementCount,1, uRenderTargetFormat);
+	gFillMode = D3D12_FILL_MODE_WIREFRAME;
+	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shader_voxelconetracing.hlsl", XGraphicShaderInfo5("VSMain", "PSMain","GSMain"), depthStencilDesc, PointElementDescs, uPointElementCount,1, uRenderTargetFormat);
+	gFillMode = D3D12_FILL_MODE_SOLID;
 	gTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//
 	// CB
-	// Create an upload heap for the constant buffers.
-	ThrowIfFailed(pDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(sizeof(ConstantBuffer)),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&pConstantUploadHeap)));
+	{
+		// Create an upload heap for the constant buffers.
+		ThrowIfFailed(pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(sizeof(FrameConstantBuffer)),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&pFrameConstantUploadHeap)));
 
-	// Map the constant buffers. Note that unlike D3D11, the resource 
-	// does not need to be unmapped for use by the GPU. In this sample, 
-	// the resource stays 'permenantly' mapped to avoid overhead with 
-	// mapping/unmapping each frame.
-	CD3DX12_RANGE readRange(0, 0);
-	ThrowIfFailed(pConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&pConstantBuffers)));
+		// Map the constant buffers. Note that unlike D3D11, the resource 
+		// does not need to be unmapped for use by the GPU. In this sample, 
+		// the resource stays 'permenantly' mapped to avoid overhead with 
+		// mapping/unmapping each frame.
+		CD3DX12_RANGE readRange(0, 0);
+		ThrowIfFailed(pFrameConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&pFrameConstantBuffers)));
 
-	//
-	D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
-	ConstantDesc.BufferLocation = pConstantUploadHeap->GetGPUVirtualAddress();
-	ConstantDesc.SizeInBytes = sizeof(VoxelConeTracing::ConstantBuffer);
-	pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 3));
+		//
+		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
+		ConstantDesc.BufferLocation = pFrameConstantUploadHeap->GetGPUVirtualAddress();
+		ConstantDesc.SizeInBytes = sizeof(VoxelConeTracing::FrameConstantBuffer);
+		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 3));
+	}
+
+	{
+		// Create an upload heap for the constant buffers.
+		ThrowIfFailed(pDevice->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(sizeof(InstanceConstantBuffer)),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&pInstanceConstantUploadHeap)));
+
+		// Map the constant buffers. Note that unlike D3D11, the resource 
+		// does not need to be unmapped for use by the GPU. In this sample, 
+		// the resource stays 'permenantly' mapped to avoid overhead with 
+		// mapping/unmapping each frame.
+		CD3DX12_RANGE readRange(0, 0);
+		ThrowIfFailed(pInstanceConstantUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&pInstanceConstantBuffers)));
+
+		//
+		D3D12_CONSTANT_BUFFER_VIEW_DESC ConstantDesc = {};
+		ConstantDesc.BufferLocation = pInstanceConstantUploadHeap->GetGPUVirtualAddress();
+		ConstantDesc.SizeInBytes = sizeof(VoxelConeTracing::InstanceConstantBuffer);
+		pDevice->CreateConstantBufferView(&ConstantDesc, GetCpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
+
+		//
+		pInstanceConstantBuffers->vParameter.x = fVoxelViewWPScale;
+		pInstanceConstantBuffers->vParameter.y = uVoxelViewWorldH / 2.0f - (0.5f*fVoxelViewWPScale);
+	}
 
 	return true;
 }
 void CleanVoxelConeTracing()
 {
 	// ConstantBuffer
-	pConstantUploadHeap->Unmap(0, nullptr);
-	pConstantBuffers = nullptr;
+	pFrameConstantUploadHeap->Unmap(0, nullptr);
+	pFrameConstantBuffers = nullptr;
+	pInstanceConstantUploadHeap->Unmap(0, nullptr);
+	pInstanceConstantBuffers = nullptr;
 
 	for (unsigned int i = 0;i < 3;++i)
 	{
@@ -122,7 +175,7 @@ void VoxelConeTracing_Update(UINT uIndex)
 	XMFLOAT4X4 mv, mvp;
 
 	XMMATRIX matView;
-	XMMATRIX matProj = XMMatrixOrthographicLH(16, 16, 1, 19);
+	XMMATRIX matProj = XMMatrixOrthographicLH(uVoxelViewWorldW, uVoxelViewWorldH, 1, 19);
 	switch (uIndex)
 	{
 	case 0:
@@ -140,12 +193,12 @@ void VoxelConeTracing_Update(UINT uIndex)
 	//XMMATRIX temp = model * view;
 	XMMATRIX temp = XMMatrixTranspose(matView);
 	XMStoreFloat4x4(&mv, temp);
-	pConstantBuffers->mMv = mv;
+	pFrameConstantBuffers->mMv = mv;
 
 	// Compute the model-view-projection matrix.
 	temp = XMMatrixTranspose(matView * matProj);
 	XMStoreFloat4x4(&mvp, temp);
-	pConstantBuffers->mMvp = mvp;
+	pFrameConstantBuffers->mMvp = mvp;
 
 	//
 	XMMATRIX tView = g_Camera.GetViewMatrix();
@@ -157,13 +210,13 @@ void VoxelConeTracing_Update(UINT uIndex)
 	XMVECTOR det;
 	XMMATRIX mvpinv = XMMatrixInverse(&det, temp);
 	XMStoreFloat4x4(&mvp, mvpinv);
-	pConstantBuffers->mMvpInv = mvp;
+	pFrameConstantBuffers->mMvpInv = mvp;
 
-	pConstantBuffers->vEyePos.x = 0.0f;
-	pConstantBuffers->vEyePos.y = 0.0f;
-	pConstantBuffers->vEyePos.z = 0.0f;
-	pConstantBuffers->vEyePos.w = 1.0f;
-	pConstantBuffers->vCameraNF = XMFLOAT4(1.0f, 19.0f, 0.0f, 0.0f);
+	pFrameConstantBuffers->vEyePos.x = 0.0f;
+	pFrameConstantBuffers->vEyePos.y = 0.0f;
+	pFrameConstantBuffers->vEyePos.z = 0.0f;
+	pFrameConstantBuffers->vEyePos.w = 1.0f;
+	pFrameConstantBuffers->vCameraNF = XMFLOAT4(1.0f, 19.0f, 0.0f, 0.0f);
 
 	return;
 }
@@ -200,6 +253,7 @@ void VoxelConeTracing_End(ID3D12GraphicsCommandList *pCommandList, UINT uIndex)
 extern void RenderPoint(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
 void VoxelConeTracing_Render(ID3D12GraphicsCommandList *pCommandList)
 {
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_CBV_INSTANCEBUFFER, GetGpuDescriptorHandle(XEngine::XDESCRIPTORHEAPTYPE_GCSU, uGpuCSUBase + 4));
 	pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, pRenderTargets[0]->GetSRVGpuHandle());
 	RenderPoint(pCommandList, pGraphicShader);
 	return;
