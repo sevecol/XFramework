@@ -120,10 +120,12 @@ XGeometry* XGeometryManager::CreateGeometry(LPCWSTR pName,UINT uVertexCount, UIN
 
 XGeometry *pFullScreenGeometry = nullptr;
 XGeometry *pXZPlaneGeometry = nullptr;
+XGeometry *pPointGeometry = nullptr;
 void XGeometry::Clean()
 {
 	//
 	XGeometryManager::DelResource(&pFullScreenGeometry);
+	XGeometryManager::DelResource(&pXZPlaneGeometry);
 	XGeometryManager::DelResource(&pXZPlaneGeometry);
 }
 
@@ -137,7 +139,6 @@ void Render(ID3D12GraphicsCommandList *pCommandList, XGeometry *pGeometry, XGrap
 
 	//
 	pCommandList->SetPipelineState(pShader->GetPipelineState());
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	//
 	pCommandList->IASetVertexBuffers(0, 1, pGeometry->GetVertexBufferView());
@@ -203,6 +204,7 @@ void RenderFullScreen(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *p
 		g_pResourceThread->InsertResourceLoadTask(pResource);
 	}
 
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	Render(pCommandList, pFullScreenGeometry, pShader, pTexture);
 }
 
@@ -262,5 +264,66 @@ void RenderXZPlane(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pSha
 		g_pResourceThread->InsertResourceLoadTask(pResource);
 	}
 
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	Render(pCommandList, pXZPlaneGeometry, pShader, pTexture);
+}
+
+//
+class PointResource : public IResourceLoad
+{
+public:
+	virtual void LoadFromFile()
+	{
+		//
+		struct Vertex
+		{
+			DirectX::XMFLOAT3 position;
+		};
+		Vertex triangleVertices[4096];
+		for (unsigned int i = 0;i < 16;++i)
+			for (unsigned int j = 0;j < 16;++j)
+				for (unsigned int k = 0;k < 16;++k)
+				{
+					triangleVertices[i * 256 + j * 16 + k].position.x = -7.5 + k;
+					triangleVertices[i * 256 + j * 16 + k].position.y = -7.5 + j;
+					triangleVertices[i * 256 + j * 16 + k].position.z = -7.5 + i;
+				}
+		UINT uIndex[4096];
+		for (unsigned int i = 0;i < 4096;++i)
+		{
+			uIndex[i] = i;
+		}
+
+		UINT8 *pData = new UINT8[4096 * sizeof(Vertex)+ 4096 *sizeof(UINT)];
+		UINT8 *pVertexData = pData;
+		memcpy(pVertexData, &triangleVertices[0], 4096 * sizeof(Vertex));
+		UINT8 *pIndexData = pData + 4096 * sizeof(Vertex);
+		memcpy(pIndexData, &uIndex[0], 4096 * sizeof(UINT));
+
+		XGeometry *pGeometry = XGeometryManager::CreateGeometry(L"PointGeometry", 4096, sizeof(Vertex), 4096, DXGI_FORMAT_R32_UINT, pData);//dynamic_cast<Geometry*>(GetXEngine()->GetGeometryManager()->CreateGeometry(L"UIGeometry"));
+		if (pGeometry)
+		{
+			pPointGeometry = pGeometry;
+		}
+		delete[] pData;
+	}
+	virtual void PostLoad()
+	{
+		//pUIManager->IncreaseResourceComplate();
+	}
+	virtual bool IsNeedWaitForResource()
+	{
+		return true;
+	}
+};
+void RenderPoint(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr)
+{
+	if (!pPointGeometry)
+	{
+		PointResource *pResource = new PointResource();
+		g_pResourceThread->InsertResourceLoadTask(pResource);
+	}
+
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+	Render(pCommandList, pPointGeometry, pShader, pTexture);
 }

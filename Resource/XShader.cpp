@@ -57,6 +57,7 @@ XGraphicShader* XGraphicShaderManager::CreatePostProcessGraphicShaderFromFile(LP
 }
 
 //
+D3D12_PRIMITIVE_TOPOLOGY_TYPE gTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 XGraphicShader* XGraphicShaderManager::CreateGraphicShaderFromFile(LPCWSTR pFileName, XGraphicShaderInfo& rGraphicShaderInfo, D3D12_DEPTH_STENCIL_DESC &rDepthStencilDesc, D3D12_INPUT_ELEMENT_DESC *pInputElementDescs, UINT uInputElementCount, UINT uRenderTargetCount, DXGI_FORMAT RenderTargetFormat[])
 {
 	//
@@ -91,7 +92,7 @@ XGraphicShader* XGraphicShaderManager::CreateGraphicShaderFromFile(LPCWSTR pFile
 	gpsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	gpsoDesc.DepthStencilState = rDepthStencilDesc;
 	gpsoDesc.SampleMask = UINT_MAX;
-	gpsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	gpsoDesc.PrimitiveTopologyType = gTopologyType;
 	gpsoDesc.NumRenderTargets = uRenderTargetCount;
 	for (unsigned int i = 0;i < gpsoDesc.NumRenderTargets;++i)
 	{
