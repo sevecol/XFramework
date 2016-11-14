@@ -466,10 +466,11 @@ bool Render()
 
 	//
 	VoxelConeTracing_Render(pCommandList);
-	
+
 	// PostProcess
 	SSAO_Render(pCommandList);
 	SMAA_Render(pCommandList);
+
 	pFrameResource->EndRender();
 
 	///////////////////////////////////////////////////////////////////////
