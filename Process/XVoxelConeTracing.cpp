@@ -14,12 +14,17 @@ extern UINT GetHandleHeapStart(XEngine::XDescriptorHeapType eType, UINT uCount);
 extern D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 extern D3D12_GPU_DESCRIPTOR_HANDLE GetGpuDescriptorHandle(XEngine::XDescriptorHeapType eType, UINT uIndex);
 
+extern D3D12_INPUT_ELEMENT_DESC StandardElementDescs[];
+extern UINT uStandardElementCount;
+
 namespace VoxelConeTracing
 {
 	UINT								uRenderTargetBase, uGpuCSUBase;
 	XRenderTarget						*pRenderTargets[3] = { nullptr,nullptr,nullptr };
 	D3D12_VIEWPORT						Viewport;
 	D3D12_RECT							ScissorRect;
+	
+	XGraphicShader						*pGraphicShader = nullptr;
 
 	struct ConstantBuffer
 	{
@@ -35,6 +40,7 @@ namespace VoxelConeTracing
 }
 using namespace VoxelConeTracing;
 
+extern D3D12_PRIMITIVE_TOPOLOGY_TYPE gTopologyType;
 bool InitVoxelConeTracing(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 {
 	uRenderTargetBase = GetHandleHeapStart(XEngine::XDESCRIPTORHEAPTYPE_RTV, 3);
@@ -42,20 +48,33 @@ bool InitVoxelConeTracing(ID3D12Device* pDevice, UINT uWidth, UINT uHeight)
 
 	Viewport.TopLeftX	= 0;
 	Viewport.TopLeftY	= 0;
-	Viewport.Width		= 32;
-	Viewport.Height		= 32;
+	Viewport.Width		= 16;
+	Viewport.Height		= 16;
 	Viewport.MaxDepth	= 1.0f;
 	Viewport.MinDepth	= 0.0f;
 	ScissorRect.left	= 0;
 	ScissorRect.top		= 0;
-	ScissorRect.right	= 32;
-	ScissorRect.bottom	= 32;
+	ScissorRect.right	= 16;
+	ScissorRect.bottom	= 16;
 
 	// RenderTarget
 	for (unsigned int i = 0;i < 3;++i)
 	{
-		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, 32, 32, uRenderTargetBase + i, uGpuCSUBase + i);
+		pRenderTargets[i] = XRenderTarget::CreateRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, 16, 16, uRenderTargetBase + i, uGpuCSUBase + i);
 	}
+
+	// GraphicShader
+	DXGI_FORMAT uRenderTargetFormat[] = { DXGI_FORMAT_R8G8B8A8_UNORM };
+
+	CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	depthStencilDesc.StencilEnable = FALSE;
+
+	gTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+	pGraphicShader = XGraphicShaderManager::CreateGraphicShaderFromFile(L"Media\\shader_voxelconetracing.hlsl", XGraphicShaderInfo5("VSMain", "PSMain","GSMain"), depthStencilDesc, StandardElementDescs, uStandardElementCount,1, uRenderTargetFormat);
+	gTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//
 	// CB
@@ -93,6 +112,7 @@ void CleanVoxelConeTracing()
 	{
 		SAFE_DELETE(pRenderTargets[i]);
 	}
+	XGraphicShaderManager::DelResource(&pGraphicShader);
 
 	return;
 }
@@ -176,7 +196,11 @@ void VoxelConeTracing_End(ID3D12GraphicsCommandList *pCommandList, UINT uIndex)
 	pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargets[uIndex]->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 	return;
 }
+
+extern void RenderPoint(ID3D12GraphicsCommandList *pCommandList, XGraphicShader *pShader, XTextureSet *pTexture = nullptr);
 void VoxelConeTracing_Render(ID3D12GraphicsCommandList *pCommandList)
 {
+	pCommandList->SetGraphicsRootDescriptorTable(GRDT_SRV_TEXTURE, pRenderTargets[0]->GetSRVGpuHandle());
+	RenderPoint(pCommandList, pGraphicShader);
 	return;
 }
