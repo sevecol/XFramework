@@ -25,3 +25,6 @@ SSR
 
 Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
+
+Voxel:
+![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
