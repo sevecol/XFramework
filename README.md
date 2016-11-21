@@ -28,3 +28,6 @@ Nvidia:HBAO,use nvidia's lib
 
 Voxel:
 ![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
+
+Sky:A Practical Analytic Model for Daylight
+![image](https://github.com/sevecol/XFramework/blob/master/sky.png)
