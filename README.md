@@ -34,3 +34,6 @@ Sky:A Practical Analytic Model for Daylight
 
 Scattering:whitout shadowmap
 ![image](https://github.com/sevecol/XFramework/blob/master/scattering.png)
+
+Ocean:
+![image](https://github.com/sevecol/XFramework/blob/master/water.png)
