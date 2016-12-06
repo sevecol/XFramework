@@ -26,8 +26,9 @@ SSR:
 Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
 
+Dof:
 Blur:ComputeShader linear time GaussianBlur use box filter
-![image](https://github.com/sevecol/XFramework/blob/master/blur.png)
+![image](https://github.com/sevecol/XFramework/blob/master/dof.png)
 
 Voxel:
 ![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
