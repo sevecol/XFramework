@@ -13,6 +13,8 @@ HDR:
 TiledBase DS:
 Use ComputeShader cull light,shading
 ![image](https://github.com/sevecol/XFramework/blob/master/ds.png)
+POM:
+![image](https://github.com/sevecol/XFramework/blob/master/pom.png)
 
 PBR:
 ![image](https://github.com/sevecol/XFramework/blob/master/PBR.png)
