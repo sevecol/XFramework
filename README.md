@@ -38,7 +38,7 @@ Voxel:
 Sky:A Practical Analytic Model for Daylight
 ![image](https://github.com/sevecol/XFramework/blob/master/sky.png)
 
-Scattering:whitout shadowmap
+Scattering(volumetricLighting):whit shadowmap
 ![image](https://github.com/sevecol/XFramework/blob/master/scattering.png)
 
 Ocean:
