@@ -2,8 +2,10 @@
 DirectX 12,Tile-based deferred shading,Dynamic resolution,Order-independent transparency,PBR,SSR,HDR,Nvidia:HBAO,SMAA
 
 OIT Grass Rendering:
-GeometryShader create grass geometry,PixelShader Link Compute AlphaBlend,Compute Shader total
+1 PixelShader Link Compute AlphaBlend,Compute Shader total
 ![image](https://github.com/sevecol/XFramework/blob/master/grass.png)
+2 Weighted Blended
+![image](https://github.com/sevecol/XFramework/blob/master/grass_oitwb.png)
 
 HDR:
 1 ComputeShader Compute Luminance
