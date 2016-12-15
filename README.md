@@ -29,6 +29,10 @@ SSR:
 
 RealTime GI,VoxelConeTracing:
 ![image](https://github.com/sevecol/XFramework/blob/master/VCT.png)
+1:normal render
+![image](https://github.com/sevecol/XFramework/blob/master/geometry.png)
+2:voxel render
+![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
 
 Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
@@ -36,9 +40,6 @@ Nvidia:HBAO,use nvidia's lib
 Dof:
 Blur:ComputeShader linear time GaussianBlur use box filter
 ![image](https://github.com/sevecol/XFramework/blob/master/dof.png)
-
-Voxel:
-![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
 
 Sky:A Practical Analytic Model for Daylight
 ![image](https://github.com/sevecol/XFramework/blob/master/sky.png)
