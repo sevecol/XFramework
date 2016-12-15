@@ -27,6 +27,9 @@ SMAA:
 SSR:
 ![image](https://github.com/sevecol/XFramework/blob/master/SSR.png)
 
+RealTime GI,VoxelConeTracing:
+![image](https://github.com/sevecol/XFramework/blob/master/VCT.png)
+
 Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
 
