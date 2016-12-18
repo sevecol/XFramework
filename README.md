@@ -41,6 +41,12 @@ Dof:
 Blur:ComputeShader linear time GaussianBlur use box filter
 ![image](https://github.com/sevecol/XFramework/blob/master/dof.png)
 
+MotionBlur:
+CameraMotionBlur:
+![image](https://github.com/sevecol/XFramework/blob/master/cameramotionblur.png)
+ObjectMotionBlur:
+![image](https://github.com/sevecol/XFramework/blob/master/entitymotionblur.png)
+
 Sky:A Practical Analytic Model for Daylight
 ![image](https://github.com/sevecol/XFramework/blob/master/sky.png)
 
