@@ -34,6 +34,11 @@ RealTime GI,VoxelConeTracing:
 2:voxel render
 ![image](https://github.com/sevecol/XFramework/blob/master/voxel.png)
 
+AreaLighting:
+![image](https://github.com/sevecol/XFramework/blob/master/arealighting1.png)
+![image](https://github.com/sevecol/XFramework/blob/master/arealighting2.png)
+http://jsfiddle.net/hh74z2ft/69/
+
 Nvidia:HBAO,use nvidia's lib
 ![image](https://github.com/sevecol/XFramework/blob/master/HBAO.png)
 
