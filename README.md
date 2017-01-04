@@ -29,6 +29,7 @@ SSR:
 
 RealTime GI,VoxelConeTracing:
 ![image](https://github.com/sevecol/XFramework/blob/master/VCT.png)
+![image](https://github.com/sevecol/XFramework/blob/master/VCT1.png)
 1:normal render
 ![image](https://github.com/sevecol/XFramework/blob/master/geometry.png)
 2:voxel render
