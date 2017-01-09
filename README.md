@@ -38,6 +38,8 @@ RealTime GI,VoxelConeTracing:
 AreaLighting:
 ![image](https://github.com/sevecol/XFramework/blob/master/arealighting1.png)
 ![image](https://github.com/sevecol/XFramework/blob/master/arealighting2.png)
+with shadow,using voxel cone tracing compute shadow.
+![image](https://github.com/sevecol/XFramework/blob/master/arealighting3.png)
 http://jsfiddle.net/hh74z2ft/69/
 
 Nvidia:HBAO,use nvidia's lib
